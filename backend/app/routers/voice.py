@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.asr_client import BhashiniASR
+from app.ai.tts_client import BhashiniTTS
 from app.ai.red_flag_engine import RedFlagEngine
 from app.database import get_db
 from app.models.session import Session, SessionMessage
@@ -61,3 +62,22 @@ async def transcribe_audio(
         "confidence": confidence,
         "red_flags": red_flags,
     }
+
+
+from pydantic import BaseModel
+
+class TTSRequest(BaseModel):
+    text: str
+    language: str
+    gender: str = "female"
+
+tts_client = BhashiniTTS()
+
+@router.post("/tts")
+async def synthesize_audio(req: TTSRequest):
+    """
+    Generate Text-to-Speech audio using Bhashini.
+    """
+    audio_b64 = await tts_client.synthesize(req.text, req.language, req.gender)
+    return {"audio": audio_b64}
+
