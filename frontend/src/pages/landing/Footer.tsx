@@ -40,7 +40,7 @@ export default function Footer() {
 
         {/* bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[14px] text-white/50">
-          <div>© 2026 MediKiosk. Smart India Hackathon Submission.</div>
+          <div>© 2026 MediKiosk. All rights reserved.</div>
           <div className="flex items-center gap-4">
             <span>Made in India 🇮🇳</span>
             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">DPDP Compliant</span>
