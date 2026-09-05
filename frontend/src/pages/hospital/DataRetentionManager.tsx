@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ShieldAlert, Trash2, History, Play, CheckCircle2, FileClock, XCircle, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ShieldAlert, Trash2, History, Play, CheckCircle2, FileClock, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useAdvancedStore, type RetentionPolicy, type DeletionLogEntry } from '../../stores/advancedFeaturesStore';
+import { advancedApi } from '../../api/client';
 
 interface DeletionRequest {
   id: string;
   patientId: number;
-  patientName: string;
   dataTypes: string[];
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -13,14 +14,10 @@ interface DeletionRequest {
   result?: string;
 }
 
-const mockRequests: DeletionRequest[] = [
-  { id: 'req-1', patientId: 1, patientName: 'Demo Patient', dataTypes: ['voice_recording', 'session_temp'], requestedAt: new Date().toISOString(), status: 'pending', requestedBy: 'patient-app' },
-  { id: 'req-2', patientId: 2, patientName: 'Sunita Devi', dataTypes: ['voice_recording'], requestedAt: new Date(Date.now() - 86400_000).toISOString(), status: 'approved', requestedBy: 'patient-app' },
-];
-
 export default function DataRetentionManager() {
+  const navigate = useNavigate();
   const { policies, deletionLogs, runCleanup, erasePatient, loadAll } = useAdvancedStore();
-  const [requests, setRequests] = useState<DeletionRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<DeletionRequest[]>([]);
   const [running, setRunning] = useState(false);
   const [erasingId, setErasingId] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<string | null>(null);
@@ -28,6 +25,22 @@ export default function DataRetentionManager() {
 
   useEffect(() => {
     loadAll();
+    advancedApi
+      .retentionRequests()
+      .then((res) => {
+        const list = (res.data?.requests ?? []).map((r) => ({
+          id: `erasure-${r.patient_id}`,
+          patientId: r.patient_id,
+          dataTypes: r.data_types,
+          requestedAt: r.requested_at,
+          status: 'pending' as const,
+          requestedBy: r.requested_by,
+        }));
+        setRequests(list);
+      })
+      .catch(() => {
+        setRequests([]);
+      });
   }, [loadAll]);
 
   const togglePolicy = async (policy: RetentionPolicy) => {
@@ -79,6 +92,13 @@ export default function DataRetentionManager() {
     <div className="min-h-screen bg-surface-50 text-surface-900">
       <header className="bg-white border-b border-surface-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => navigate('/hospital/dashboard')}
+            className="touch-target flex items-center gap-2 rounded-xl border border-surface-300 px-3 py-2 text-sm font-semibold text-surface-700 hover:bg-surface-50 transition-colors"
+            aria-label="Back to dashboard"
+          >
+            <ArrowLeft size={16} /> Dashboard
+          </button>
           <div className="w-11 h-11 rounded-2xl bg-danger-600 flex items-center justify-center">
             <ShieldAlert className="w-6 h-6 text-white" />
           </div>
@@ -161,12 +181,19 @@ export default function DataRetentionManager() {
             <h2 className="text-lg font-bold">Patient Deletion Requests</h2>
           </div>
           <p className="text-sm text-surface-400 mb-5">Patient initiated under DPDPA right-to-erasure. Approve to apply.</p>
+          {requests.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-surface-200 rounded-2xl">
+              <ShieldAlert className="w-8 h-8 text-surface-300 mx-auto" />
+              <p className="mt-2 text-sm font-medium text-surface-500">No pending erasure requests.</p>
+              <p className="text-xs text-surface-400 mt-1">Requests submitted by patients will appear here for approval.</p>
+            </div>
+          ) : (
           <div className="space-y-3">
             {requests.map((r) => (
               <div key={r.id} className="bg-surface-50 border border-surface-200 rounded-2xl p-4 animate-fade-in">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="font-bold text-surface-800">{r.patientName}</p>
+                    <p className="font-bold text-surface-800">Patient #{r.patientId}</p>
                     <p className="text-xs text-surface-400">{new Date(r.requestedAt).toLocaleString()} · {r.dataTypes.join(', ')}</p>
                   </div>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase ${
@@ -205,6 +232,7 @@ export default function DataRetentionManager() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Cleanup log */}
