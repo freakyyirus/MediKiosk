@@ -3,11 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Activity, ShieldCheck, Heart, User, Building2, Stethoscope } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import { isSupabaseConfigured } from '../../lib/mockData';
+import { isClerkConfigured } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
+import Logo from '../../components/brand/Logo';
 
 const isConfigured = isSupabaseConfigured();
+const clerkEnabled = isClerkConfigured();
+const demoMode = !isConfigured && !clerkEnabled;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -40,6 +44,25 @@ export default function LoginPage() {
     if (!validate()) return;
 
     try {
+      if (clerkEnabled) {
+        const clerk = window.Clerk as unknown as {
+          signIn?: { create?: (p: { identifier: string; password: string }) => Promise<{ status?: string; createdSessionId?: string | null }> };
+          setActive?: (p: { session?: string | null }) => Promise<unknown>;
+        } | undefined;
+        if (clerk?.signIn?.create) {
+          const result = await clerk.signIn.create({ identifier: email, password });
+          if (result.status === 'complete' && result.createdSessionId) {
+            await clerk.setActive?.({ session: result.createdSessionId });
+            await login(email, password);
+            const { user } = useAuthStore.getState();
+            if (user?.role) navigate(getRoleRedirect(user.role));
+            return;
+          }
+          addToast('warning', 'Verification required — please open the email we sent you.');
+          return;
+        }
+      }
+
       await login(email, password);
       const { user } = useAuthStore.getState();
       if (user?.role) {
@@ -61,10 +84,7 @@ export default function LoginPage() {
         </div>
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 text-white">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <Activity className="w-7 h-7 text-white" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">MediFlow</span>
+            <Logo size={46} variant="white" />
           </div>
 
           <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-6">
@@ -100,10 +120,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-surface-900">MediFlow</span>
+            <Logo size={40} variant="gradient" />
           </div>
 
           <div className="mb-8">
@@ -175,10 +192,10 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          {!isConfigured && (
+          {demoMode && (
             <div className="mt-8 p-4 bg-accent-50 border border-accent-200 rounded-xl">
               <p className="text-center text-sm font-medium text-accent-700 mb-3">
-                Demo Mode &mdash; no Supabase configured
+                Demo Mode &mdash; no auth provider configured
               </p>
               <div className="grid grid-cols-3 gap-2">
                 <button
