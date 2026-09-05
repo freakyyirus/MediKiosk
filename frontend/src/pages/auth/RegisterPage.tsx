@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import type { UserRole } from '../../stores/authStore';
-import { isClerkConfigured } from '../../lib/clerk';
+import { isClerkConfigured, waitForClerk } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
@@ -149,6 +149,10 @@ export default function RegisterPage() {
     if (!code.trim()) return;
     setVerifyingCode(true);
     try {
+      if (!(await waitForClerk())) {
+        addToast('error', 'Clerk is still loading — please wait a moment and try again.');
+        return;
+      }
       const clerk = getClerkAuth();
       if (!clerk?.signUp) throw new Error('Clerk sign-up unavailable');
       const res = await clerk.signUp.attemptEmailAddressVerification({ code: code.trim() });
@@ -172,6 +176,10 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       if (clerkEnabled) {
+        if (!(await waitForClerk())) {
+          addToast('error', 'Clerk is still loading — please wait a moment and try again.');
+          return;
+        }
         const clerk = getClerkAuth();
         if (!clerk?.signUp) throw new Error('Clerk sign-up is not loaded yet — refresh and retry.');
         const result = await clerk.signUp.create({
