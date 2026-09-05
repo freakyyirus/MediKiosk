@@ -1,15 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Building2, LayoutGrid, Stethoscope, User, Calendar, Clock,
   ClipboardList, Check, ChevronRight, ChevronLeft, MapPin, Star,
-  Upload, X, FileText, AlertCircle,
+  Upload, X, FileText, AlertCircle, Mic, MicOff,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore, useUIStore } from '../../stores';
+import { useT, type DictKey } from '../../lib/i18n';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { Button, Card, Input, LoadingSpinner, EmptyState } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
+import QRCode from 'qrcode';
+import { saveOpdDraft, loadOpdDraft, clearOpdDraft, type OpdDraft } from '../../lib/opdDraft';
 import type { Patient } from '../../types';
 
 interface Hospital {
@@ -69,8 +73,8 @@ const ASSOCIATED_SYMPTOMS = [
   'Skin Rash', 'Swelling', 'Bleeding', 'Other',
 ];
 
-const STEP_LABELS = [
-  'Hospital', 'Department', 'Doctor', 'Date & Time', 'Intake', 'Review', 'Confirmed',
+const STEP_LABELS: DictKey[] = [
+  'stepHospital', 'stepDepartment', 'stepDoctor', 'stepDateTime', 'stepIntake', 'stepReview', 'stepConfirmed',
 ];
 
 const slideVariants = {
@@ -82,7 +86,13 @@ const slideVariants = {
 export default function BookOPD() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { language } = useUIStore();
+  const t = useT();
   const addToast = useToastStore(s => s.addToast);
+  const voice = useVoiceInput({ language: () => language.code });
+  const [intakeMicField, setIntakeMicField] = useState<null | 'chief_complaint' | 'description'>(null);
+
+  useEffect(() => () => voice.cleanup(), [voice.cleanup]);
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -119,6 +129,76 @@ export default function BookOPD() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (!user?.id) { hydratedRef.current = true; return; }
+    const draft = loadOpdDraft();
+    if (draft && draft.patientId === user.id) {
+      const meaningful = !!(draft.hospital || draft.department || draft.doctor || draft.slot || draft.date || draft.tokenNumber || draft.intake?.chief_complaint || draft.hadFiles);
+      if (meaningful) {
+        if (draft.hospital) setSelectedHospital(draft.hospital);
+        if (draft.department) setSelectedDept(draft.department);
+        if (draft.doctor) setSelectedDoctor(draft.doctor);
+        if (draft.slot) setSelectedSlot(draft.slot);
+        if (draft.date) setSelectedDate(draft.date);
+        if (draft.tokenNumber) setTokenNumber(draft.tokenNumber);
+        if (draft.intake) setIntakeForm(draft.intake);
+        if (typeof draft.step === 'number' && draft.step > 0 && draft.step < 6) setStep(draft.step);
+        addToast('info', draft.hadFiles
+          ? 'Restored your draft. Please re-attach your documents.'
+          : 'Restored your in-progress booking.');
+      } else {
+        clearOpdDraft();
+      }
+    }
+    hydratedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!hydratedRef.current || !user?.id) return;
+    if (bookingComplete) {
+      clearOpdDraft();
+      return;
+    }
+    if (step === 0 && !selectedHospital && !intakeForm.chief_complaint) {
+      clearOpdDraft();
+      return;
+    }
+    const draft: OpdDraft = {
+      patientId: user.id,
+      step,
+      hospital: selectedHospital,
+      department: selectedDept,
+      doctor: selectedDoctor,
+      slot: selectedSlot,
+      date: selectedDate,
+      tokenNumber,
+      intake: intakeForm,
+      hadFiles: uploadedFiles.length > 0,
+      savedAt: new Date().toISOString(),
+    };
+    saveOpdDraft(draft);
+  }, [user?.id, bookingComplete, step, selectedHospital, selectedDept, selectedDoctor, selectedSlot, selectedDate, tokenNumber, intakeForm, uploadedFiles]);
+
+  useEffect(() => {
+    if (!bookingComplete || !tokenNumber) return;
+    const core = {
+      v: 1,
+      t: tokenNumber,
+      p: patientProfile?.name || 'Patient',
+      dept: selectedDept?.name || 'General Medicine',
+      cc: (intakeForm.chief_complaint || '').slice(0, 120),
+      pr: 3,
+      exp: Date.now() + 30 * 60 * 1000,
+    };
+    const payload = 'MEDIKIOSK|' + btoa(JSON.stringify(core));
+    QRCode.toDataURL(payload, { width: 320, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } })
+      .then(setQrDataUrl)
+      .catch(() => setQrDataUrl(null));
+  }, [bookingComplete, tokenNumber, patientProfile?.name, selectedDept?.name, intakeForm.chief_complaint]);
 
   useEffect(() => {
     (async () => {
@@ -214,6 +294,34 @@ export default function BookOPD() {
       });
       if (error) throw error;
       await supabase.from('opd_slots').update({ current_tokens: (selectedSlot.current_tokens || 0) + 1 }).eq('id', selectedSlot.id);
+
+      if (uploadedFiles.length > 0) {
+        try {
+          await Promise.all(uploadedFiles.map(async (file) => {
+            const filePath = `documents/${user.id}/${Date.now()}-${file.name}`;
+            const { error: upErr } = await supabase.storage
+              .from('patient-documents')
+              .upload(filePath, file);
+            if (upErr) throw upErr;
+            const { error: insErr } = await supabase.from('documents').insert({
+              patient_id: user.id,
+              file_name: file.name,
+              file_size_bytes: file.size,
+              mime_type: file.type,
+              document_type: 'other',
+              document_date: selectedSlot.slot_date,
+              hospital_name: selectedHospital.name,
+              doctor_name: `Dr. ${selectedDoctor.name}`,
+              processing_status: 'pending',
+            });
+            if (insErr) throw insErr;
+          }));
+        } catch (err) {
+          console.error('Document upload failed:', err);
+          addToast('warning', 'Booking confirmed, but some documents could not be uploaded.');
+        }
+      }
+
       setBookingComplete(true);
       setStep(6);
       addToast('success', 'OPD booked successfully!');
@@ -251,6 +359,30 @@ export default function BookOPD() {
     }));
   };
 
+  const handleMic = async (field: 'chief_complaint' | 'description') => {
+    if (voice.recording || intakeMicField) {
+      const text = await voice.stop();
+      setIntakeMicField(null);
+      if (text.trim()) {
+        setIntakeForm(f => ({ ...f, [field]: (f[field] + ' ' + text.trim()).trim() }));
+      } else {
+        addToast('info', 'Did not catch that. Please try again.');
+      }
+      return;
+    }
+    setIntakeMicField(field);
+    const started = await voice.begin();
+    if (!started) {
+      const text = await voice.dictate();
+      setIntakeMicField(null);
+      if (text.trim()) {
+        setIntakeForm(f => ({ ...f, [field]: (f[field] + ' ' + text.trim()).trim() }));
+      } else {
+        addToast('info', 'Did not catch that. Please try again.');
+      }
+    }
+  };
+
   const canProceed = () => {
     switch (step) {
       case 0: return !!selectedHospital;
@@ -266,7 +398,7 @@ export default function BookOPD() {
   const renderStepIndicator = () => (
     <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2">
       {STEP_LABELS.map((label, i) => (
-        <div key={label} className="flex items-center shrink-0">
+        <div key={t(label)} className="flex items-center shrink-0">
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             i === step
               ? 'bg-primary-600 text-white'
@@ -275,7 +407,7 @@ export default function BookOPD() {
               : 'bg-surface-100 text-surface-500'
           }`}>
             {i < step ? <Check size={14} /> : <span>{i + 1}</span>}
-            <span className="hidden sm:inline">{label}</span>
+            <span className="hidden sm:inline">{t(label)}</span>
           </div>
           {i < STEP_LABELS.length - 1 && (
             <div className={`w-6 h-0.5 mx-1 ${i < step ? 'bg-primary-300' : 'bg-surface-200'}`} />
@@ -288,13 +420,13 @@ export default function BookOPD() {
   const renderHospitalStep = () => (
     <div className="space-y-4">
       <Input
-        placeholder="Search hospitals..."
+        placeholder={t('searchHospitals')}
         icon={<Search size={18} />}
         value={hospitalSearch}
         onChange={e => setHospitalSearch(e.target.value)}
       />
       {filteredHospitals.length === 0 ? (
-        <EmptyState icon={<Building2 size={24} />} title="No hospitals found" description="Try a different search term." />
+        <EmptyState icon={<Building2 size={24} />} title={t('noHospitals')} description="Try a different search term." />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {filteredHospitals.map(h => (
@@ -344,7 +476,7 @@ export default function BookOPD() {
           </p>
         )}
         {departments.length === 0 ? (
-          <EmptyState icon={<LayoutGrid size={24} />} title="No departments found" />
+          <EmptyState icon={<LayoutGrid size={24} />} title={t('noDepartments')} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {sortedDepts.map(d => {
@@ -385,7 +517,7 @@ export default function BookOPD() {
     return (
       <div className="space-y-4">
         {doctors.length === 0 ? (
-          <EmptyState icon={<User size={24} />} title="No doctors available" description="Try selecting a different department." />
+          <EmptyState icon={<User size={24} />} title={t('noDoctors')} description="Try selecting a different department." />
         ) : (
           <div className="space-y-3">
             {doctors.map(d => (
@@ -412,9 +544,9 @@ export default function BookOPD() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-lg font-bold text-primary-700">
-                      {d.consultation_fee ? `₹${d.consultation_fee}` : 'Free'}
+                      {d.consultation_fee ? `₹${d.consultation_fee}` : t('free')}
                     </p>
-                    <p className="text-[11px] text-surface-400">consultation</p>
+                    <p className="text-[11px] text-surface-400">{t('consultation')}</p>
                   </div>
                 </div>
               </button>
@@ -430,7 +562,7 @@ export default function BookOPD() {
     return (
       <div className="space-y-6">
         <div>
-          <h4 className="text-sm font-semibold text-surface-700 mb-3">Select Date</h4>
+          <h4 className="text-sm font-semibold text-surface-700 mb-3">{t('selectDate')}</h4>
           <div className="grid grid-cols-7 gap-2">
             {nextDays.map(d => {
               const date = new Date(d);
@@ -457,9 +589,9 @@ export default function BookOPD() {
 
         {selectedDate && (
           <div>
-            <h4 className="text-sm font-semibold text-surface-700 mb-3">Select Time Slot</h4>
+            <h4 className="text-sm font-semibold text-surface-700 mb-3">{t('selectTimeSlot')}</h4>
             {slots.length === 0 ? (
-              <EmptyState icon={<Clock size={24} />} title="No slots available" description="Try a different date." />
+              <EmptyState icon={<Clock size={24} />} title={t('noSlots')} description="Try a different date." />
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {slots.map(s => {
@@ -481,7 +613,7 @@ export default function BookOPD() {
                     >
                       <p className="text-lg font-bold text-surface-900">{s.slot_time}</p>
                       <p className={`text-xs mt-1 ${isFull ? 'text-danger-500' : 'text-success-600'}`}>
-                        {isFull ? 'Full' : `${avail} slots left`}
+                        {isFull ? t('full') : t('slotsLeft', { n: avail })}
                       </p>
                     </button>
                   );
@@ -494,12 +626,32 @@ export default function BookOPD() {
     );
   };
 
-  const renderIntakeStep = () => (
+  const renderIntakeStep = () => {
+    const micActive = (f: 'chief_complaint' | 'description') => voice.recording && intakeMicField === f;
+    const micBtn = (f: 'chief_complaint' | 'description') => (
+      <button
+        type="button"
+        onClick={() => handleMic(f)}
+        disabled={voice.processing}
+        aria-pressed={micActive(f)}
+        title="Dictate with your voice"
+        className={`flex items-center gap-1.5 text-xs font-semibold rounded-lg px-2.5 py-1 transition-colors ${
+          micActive(f) ? 'bg-primary-600 text-white animate-pulse' : 'bg-surface-100 text-primary-700 hover:bg-primary-50'
+        }`}
+      >
+        {micActive(f) ? <MicOff size={14} /> : <Mic size={14} />}
+        {micActive(f) ? t('listening') : t('tapToSpeak')}
+      </button>
+    );
+    return (
     <div className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-surface-700 mb-1">
-          Chief Complaint <span className="text-danger-500">*</span>
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-surface-700 mb-1">
+            {t('chiefComplaint')} <span className="text-danger-500">*</span>
+          </label>
+          {micBtn('chief_complaint')}
+        </div>
         <input
           value={intakeForm.chief_complaint}
           onChange={e => setIntakeForm(f => ({ ...f, chief_complaint: e.target.value }))}
@@ -509,7 +661,10 @@ export default function BookOPD() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-surface-700 mb-1">Description of Problem</label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-surface-700 mb-1">{t('descriptionOfProblem')}</label>
+          {micBtn('description')}
+        </div>
         <textarea
           value={intakeForm.description}
           onChange={e => setIntakeForm(f => ({ ...f, description: e.target.value }))}
@@ -521,7 +676,7 @@ export default function BookOPD() {
 
       <div>
         <label className="block text-sm font-medium text-surface-700 mb-2">
-          Pain Severity: {intakeForm.pain_severity}/10 {PAIN_EMOJIS[Math.min(Math.floor((intakeForm.pain_severity - 1) / 1.11), 8)]}
+          {t('painSeverity')}: {intakeForm.pain_severity}/10 {PAIN_EMOJIS[Math.min(Math.floor((intakeForm.pain_severity - 1) / 1.11), 8)]}
         </label>
         <input
           type="range"
@@ -537,7 +692,7 @@ export default function BookOPD() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-surface-700 mb-2">Associated Symptoms</label>
+        <label className="block text-sm font-medium text-surface-700 mb-2">{t('associatedSymptoms')}</label>
         <div className="flex flex-wrap gap-2">
           {ASSOCIATED_SYMPTOMS.map(s => (
             <button
@@ -557,7 +712,7 @@ export default function BookOPD() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-surface-700 mb-1">Current Medications</label>
+          <label className="block text-sm font-medium text-surface-700 mb-1">{t('currentMedications')}</label>
           <textarea
             value={intakeForm.current_medications}
             onChange={e => setIntakeForm(f => ({ ...f, current_medications: e.target.value }))}
@@ -567,7 +722,7 @@ export default function BookOPD() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-surface-700 mb-1">Known Allergies</label>
+          <label className="block text-sm font-medium text-surface-700 mb-1">{t('knownAllergies')}</label>
           <textarea
             value={intakeForm.known_allergies}
             onChange={e => setIntakeForm(f => ({ ...f, known_allergies: e.target.value }))}
@@ -579,7 +734,7 @@ export default function BookOPD() {
       </div>
 
       <div className="border border-surface-200 rounded-xl p-4 space-y-3">
-        <p className="text-sm font-semibold text-surface-700">Vital Signs (Optional)</p>
+        <p className="text-sm font-semibold text-surface-700">{t('vitalSigns')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Input label="BP Systolic" type="number" placeholder="120" value={intakeForm.bp_systolic}
             onChange={e => setIntakeForm(f => ({ ...f, bp_systolic: e.target.value }))} />
@@ -597,7 +752,7 @@ export default function BookOPD() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-surface-700 mb-2">Past Documents (Optional)</label>
+        <label className="block text-sm font-medium text-surface-700 mb-2">{t('pastDocuments')}</label>
         <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-surface-300 rounded-xl cursor-pointer hover:bg-surface-50 transition-colors">
           <Upload size={20} className="text-surface-400 mb-1" />
           <span className="text-xs text-surface-500">Click to upload (max 5 files)</span>
@@ -614,7 +769,7 @@ export default function BookOPD() {
             }}
           />
         </label>
-        {uploadedFiles.length > 0 && (
+{uploadedFiles.length > 0 && (
           <div className="mt-2 space-y-1">
             {uploadedFiles.map((f, i) => (
               <div key={i} className="flex items-center justify-between bg-surface-50 rounded-lg px-3 py-1.5 text-xs">
@@ -629,11 +784,12 @@ export default function BookOPD() {
       </div>
     </div>
   );
+};
 
-  const renderReviewStep = () => (
+const renderReviewStep = () => (
     <div className="space-y-4">
       <Card className="bg-primary-50 border border-primary-200">
-        <p className="text-sm font-medium text-primary-700 mb-3">Booking Summary</p>
+        <p className="text-sm font-medium text-primary-700 mb-3">{t('bookingSummary')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           <div><span className="text-surface-500">Hospital:</span> <span className="font-medium text-surface-900 ml-1">{selectedHospital?.name}</span></div>
           <div><span className="text-surface-500">Department:</span> <span className="font-medium text-surface-900 ml-1">{selectedDept?.name}</span></div>
@@ -645,7 +801,7 @@ export default function BookOPD() {
       </Card>
 
       <Card>
-        <p className="text-sm font-medium text-surface-700 mb-3">Patient Intake</p>
+        <p className="text-sm font-medium text-surface-700 mb-3">{t('patientIntake')}</p>
         <div className="space-y-2 text-sm">
           <div><span className="text-surface-500">Chief Complaint:</span> <span className="text-surface-900 ml-1">{intakeForm.chief_complaint}</span></div>
           {intakeForm.description && <div><span className="text-surface-500">Description:</span> <span className="text-surface-900 ml-1">{intakeForm.description}</span></div>}
@@ -680,29 +836,34 @@ export default function BookOPD() {
         <Check size={40} className="text-success-600" />
       </motion.div>
       <div>
-        <h3 className="text-2xl font-bold text-surface-900">Booking Confirmed!</h3>
+        <h3 className="text-2xl font-bold text-surface-900">{t('bookingConfirmed')}</h3>
         <p className="text-surface-500 mt-1">Your OPD appointment has been booked successfully.</p>
       </div>
       <div className="bg-primary-50 rounded-2xl p-6 inline-block">
-        <p className="text-sm text-primary-600 font-medium">Your Token Number</p>
+        <p className="text-sm text-primary-600 font-medium">{t('tokenLabel')}</p>
         <p className="text-5xl font-bold text-primary-700 mt-2 tracking-wider">{tokenNumber}</p>
       </div>
-      <div className="w-32 h-32 bg-white border-2 border-surface-200 rounded-xl mx-auto flex items-center justify-center">
-        <div className="text-center">
-          <FileText size={24} className="text-surface-300 mx-auto" />
-          <p className="text-[10px] text-surface-400 mt-1">QR Code</p>
-        </div>
+      <div className="w-56 h-56 bg-white border-2 border-surface-200 rounded-xl mx-auto flex items-center justify-center">
+        {qrDataUrl ? (
+          <img src={qrDataUrl} alt="Quick Response code for your OPD appointment" className="w-48 h-48" />
+        ) : (
+          <div className="text-center">
+            <FileText size={24} className="text-surface-300 mx-auto" />
+            <p className="text-[10px] text-surface-400 mt-1">Generating QR…</p>
+          </div>
+        )}
       </div>
+      <p className="text-xs text-surface-400">{t('scanQrHint')}</p>
       <div className="bg-surface-50 rounded-xl p-4 inline-block">
-        <p className="text-sm text-surface-500">Estimated Wait Time</p>
+        <p className="text-sm text-surface-500">{t('estimatedWait')}</p>
         <p className="text-xl font-bold text-surface-900">~20-30 minutes</p>
       </div>
       <div className="flex gap-3 justify-center">
         <Button variant="primary" onClick={() => navigate('/patient/visits')}>
-          View My Visits
+          {t('viewMyVisits')}
         </Button>
         <Button variant="outline" onClick={() => navigate('/patient/dashboard')}>
-          Back to Dashboard
+          {t('backToDashboard')}
         </Button>
       </div>
     </div>
@@ -721,17 +882,17 @@ export default function BookOPD() {
     }
   };
 
-  const stepTitle = ['Select Hospital', 'Select Department', 'Select Doctor', 'Select Date & Time', 'Patient Intake', 'Review & Confirm', 'Booking Confirmed'][step];
+  const stepTitle = (['selectHospital', 'selectDepartment', 'selectDoctor', 'selectDateTime', 'patientIntake', 'reviewConfirm', 'bookingConfirmed'] as DictKey[])[step];
 
   return (
     <div className="min-h-screen bg-surface-50">
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-surface-900">Book OPD Appointment</h1>
-            <p className="text-sm text-surface-500">{stepTitle}</p>
+            <h1 className="text-xl font-bold text-surface-900">{t('bookOpdPageTitle')}</h1>
+            <p className="text-sm text-surface-500">{t(stepTitle)}</p>
           </div>
-          <Button variant="ghost" onClick={() => navigate('/patient/dashboard')}>Cancel</Button>
+          <Button variant="ghost" onClick={() => navigate('/patient/dashboard')}>{t('cancel')}</Button>
         </div>
 
         {renderStepIndicator()}
@@ -760,7 +921,7 @@ export default function BookOPD() {
               onClick={goBack}
               disabled={step === 0}
             >
-              Back
+              {t('back')}
             </Button>
             {step === 5 ? (
               <Button
@@ -769,7 +930,7 @@ export default function BookOPD() {
                 onClick={handleBooking}
                 loading={submitting}
               >
-                Confirm Booking
+                {t('confirmBooking')}
               </Button>
             ) : (
               <Button
@@ -778,7 +939,7 @@ export default function BookOPD() {
                 disabled={!canProceed()}
                 icon={<ChevronRight size={18} />}
               >
-                Next
+                {t('next')}
               </Button>
             )}
           </div>
