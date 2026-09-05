@@ -7,12 +7,30 @@ import {
 } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import type { UserRole } from '../../stores/authStore';
+import { isClerkConfigured } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
 import Select from '../../components/shared/Select';
+import Logo from '../../components/brand/Logo';
 
 const steps = ['Account', 'Profile', 'Confirm'];
+
+const clerkEnabled = isClerkConfigured();
+
+interface ClerkSignUpLike {
+  create: (p: {
+    emailAddress: string;
+    password: string;
+    firstName: string;
+    publicMetadata: Record<string, unknown>;
+  }) => Promise<{ status: string; createdSessionId?: string | null }>;
+  prepareEmailAddressVerification: (p: { strategy: 'email_code' }) => Promise<unknown>;
+  attemptEmailAddressVerification: (p: { code: string }) => Promise<{ status: string; createdSessionId?: string | null }>;
+}
+
+const getClerkAuth = () =>
+  window.Clerk as unknown as { signUp?: ClerkSignUpLike; setActive?: (p: { session?: string | null }) => Promise<unknown> } | undefined;
 
 const roleOptions: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
   { value: 'patient', label: 'Patient', icon: <User size={24} />, desc: 'Access health records & appointments' },
@@ -42,6 +60,9 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [awaitingCode, setAwaitingCode] = useState(false);
+  const [code, setCode] = useState('');
+  const [verifyingCode, setVerifyingCode] = useState(false);
 
   const [form, setForm] = useState({
     email: '',
@@ -113,9 +134,64 @@ export default function RegisterPage() {
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
+  const completeAuth = async (sessionId?: string | null) => {
+    const clerk = getClerkAuth();
+    if (clerk?.setActive && sessionId) {
+      await clerk.setActive({ session: sessionId });
+    }
+    await useAuthStore.getState().fetchUser();
+    const { user } = useAuthStore.getState() as unknown as { user?: { role?: string } | null };
+    if (user?.role) navigate(getRoleRedirect(user.role as UserRole));
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code.trim()) return;
+    setVerifyingCode(true);
+    try {
+      const clerk = getClerkAuth();
+      if (!clerk?.signUp) throw new Error('Clerk sign-up unavailable');
+      const res = await clerk.signUp.attemptEmailAddressVerification({ code: code.trim() });
+      if (res.status === 'complete') {
+        addToast('success', 'Account verified successfully!');
+        await completeAuth(res.createdSessionId);
+      } else {
+        addToast('error', 'Verification incomplete. Check the code and try again.');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error
+        ? err.message
+        : 'Verification failed. Please try again.';
+      addToast('error', message);
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (clerkEnabled) {
+        const clerk = getClerkAuth();
+        if (!clerk?.signUp) throw new Error('Clerk sign-up is not loaded yet — refresh and retry.');
+        const result = await clerk.signUp.create({
+          emailAddress: form.email,
+          password: form.password,
+          firstName: form.full_name || form.email,
+          publicMetadata: { role: form.role },
+        });
+
+        if (result.status === 'complete') {
+          addToast('success', 'Account created successfully!');
+          await completeAuth(result.createdSessionId);
+        } else {
+          await clerk.signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+          setAwaitingCode(true);
+          addToast('info', 'We emailed you a 6-digit verification code.');
+        }
+        return;
+      }
+
       await register({
         email: form.email,
         password: form.password,
@@ -160,10 +236,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-2xl">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center">
-            <Activity className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-xl font-bold text-surface-900">MediFlow</span>
+          <Logo size={42} variant="gradient" />
         </div>
 
         {/* Progress Stepper */}
@@ -197,6 +270,36 @@ export default function RegisterPage() {
 
         {/* Card */}
         <div className="card p-6 sm:p-8">
+          {awaitingCode ? (
+            <div className="space-y-6 animate-fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-surface-900">Verify your email</h2>
+                <p className="text-surface-500 text-sm mt-1">
+                  Enter the 6-digit code we emailed to <span className="font-semibold text-surface-700">{form.email}</span>
+                </p>
+              </div>
+              <form onSubmit={handleVerifyCode} className="space-y-5">
+                <Input
+                  label="Verification Code"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="000000"
+                  icon={<Mail size={18} />}
+                  required
+                />
+                <Button type="submit" className="w-full" size="lg" loading={verifyingCode} icon={<Check size={16} />}>
+                  Verify & Create Account
+                </Button>
+              </form>
+              <button
+                type="button"
+                onClick={() => setAwaitingCode(false)}
+                className="text-sm text-surface-500 hover:text-surface-700 font-medium"
+              >
+                Back to form
+              </button>
+            </div>
+          ) : (
           <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
             {/* Step 1: Account */}
             {step === 1 && (
@@ -484,7 +587,7 @@ export default function RegisterPage() {
 
                 <div className="bg-primary-50 rounded-lg p-4">
                   <p className="text-sm text-primary-700">
-                    By clicking "Create Account", you agree to MediFlow's Terms of Service and Privacy Policy.
+                    By clicking "Create Account", you agree to MediKiosk's Terms of Service and Privacy Policy.
                   </p>
                 </div>
               </div>
@@ -510,6 +613,7 @@ export default function RegisterPage() {
               )}
             </div>
           </form>
+          )}
         </div>
 
         <p className="mt-6 text-center text-sm text-surface-500">
