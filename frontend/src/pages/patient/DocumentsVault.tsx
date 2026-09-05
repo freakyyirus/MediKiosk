@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { icon: <FileText size={20} />, label: 'Dashboard', path: '/patient/dashboard' },
   { icon: <FileText size={20} />, label: 'Book OPD', path: '/patient/book-opd' },
   { icon: <FileText size={20} />, label: 'My Visits', path: '/patient/visits' },
-  { icon: <FileText size={20} />, label: 'Health Timeline', path: '/patient/timeline' },
+  { icon: <FileText size={20} />, label: 'Health Timeline', path: '/patient/health-timeline' },
   { icon: <FileText size={20} />, label: 'Documents', path: '/patient/documents' },
   { icon: <FileText size={20} />, label: 'Profile', path: '/patient/profile' },
 ];
@@ -148,6 +148,32 @@ export default function DocumentsVault() {
     }
   };
 
+  const handleDownload = async (doc: DocRecord) => {
+    try {
+      const { data: files, error: listError } = await supabase.storage
+        .from('patient-documents')
+        .list('documents', { search: doc.file_name || '' });
+      if (listError) throw listError;
+      const file = files?.[0];
+      if (!file) throw new Error('File not found');
+      const { data: urlData, error: urlError } = await supabase.storage
+        .from('patient-documents')
+        .createSignedUrl(`documents/${user?.id}/${file.name}`, 60);
+      if (urlError || !urlData) throw urlError || new Error('Could not create download link');
+      const a = document.createElement('a');
+      a.href = urlData.signedUrl;
+      a.download = doc.file_name || file.name;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error(err);
+      addToast('error', 'Could not download document');
+    }
+  };
+
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -183,7 +209,7 @@ export default function DocumentsVault() {
         )}
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-100">
           <button
-            onClick={() => addToast('info', 'Download coming soon')}
+            onClick={() => handleDownload(doc)}
             className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-surface-50 hover:bg-surface-100 text-xs font-medium text-surface-600 transition-colors"
           >
             <Download size={14} /> Download
@@ -223,7 +249,7 @@ export default function DocumentsVault() {
         <td className="px-4 py-3">
           <div className="flex items-center gap-1">
             <button
-              onClick={() => addToast('info', 'Download coming soon')}
+              onClick={() => handleDownload(doc)}
               className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
             >
               <Download size={14} />
