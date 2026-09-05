@@ -1,9 +1,34 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { isClerkConfigured } from '../lib/clerk';
 import { mockCurrentUser, mockHospitalAdmin, mockDoctor } from '../lib/mockData';
 import type { User } from '@supabase/supabase-js';
 
 export type UserRole = 'patient' | 'hospital_admin' | 'doctor';
+
+export interface ClerkUserLike {
+  id: string;
+  email: string | null;
+  fullName: string | null;
+  role?: string | null;
+  imageUrl?: string | null;
+}
+
+const clerkInstance = () => (window as unknown as { Clerk?: { user?: unknown; signIn?: unknown; signOut?: unknown } | undefined }).Clerk;
+
+const clerkUserLikeFromInstance = (cu: unknown): ClerkUserLike | null => {
+  if (!cu || typeof cu !== 'object') return null;
+  const c = cu as { id?: string; fullName?: string | null; imageUrl?: string | null; primaryEmailAddress?: { emailAddress?: string | null }; emailAddresses?: { emailAddress?: string }[]; publicMetadata?: Record<string, unknown> };
+  if (!c.id) return null;
+  const email = c.primaryEmailAddress?.emailAddress ?? c.emailAddresses?.[0]?.emailAddress ?? null;
+  return {
+    id: c.id,
+    email: email ?? null,
+    fullName: c.fullName ?? null,
+    role: (c.publicMetadata?.role as string | undefined) ?? null,
+    imageUrl: c.imageUrl ?? null,
+  };
+};
 
 export interface UserProfile {
   id: string;
@@ -57,6 +82,7 @@ interface AuthState {
   updateProfile: (data: Partial<Profile>) => Promise<void>;
   initialize: () => Promise<void>;
   setMockRole: (role: UserRole) => void;
+  syncFromClerk: (u: ClerkUserLike | null) => Promise<void>;
 }
 
 export interface RegisterData {
@@ -90,6 +116,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
 
   login: async (email: string, password: string) => {
+    if (isClerkConfigured()) {
+      const clerk = window.Clerk as unknown as { signIn?: { create?: (p: { identifier: string; password: string }) => Promise<{ status?: string }> } } | undefined;
+      const signIn = clerk?.signIn;
+      if (signIn?.create) {
+        try {
+          const result = await signIn.create({ identifier: email, password });
+          if (result.status === 'complete') {
+            await get().fetchUser();
+          }
+          return;
+        } catch (err) {
+          const msg =
+            err && typeof err === 'object' && 'errors' in err
+              ? String((err as { errors?: { message?: string }[] }).errors?.[0]?.message || (err as { message?: string }).message || 'Login failed')
+              : err instanceof Error ? err.message : 'Login failed. Please try again.';
+          throw new Error(msg);
+        }
+      }
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     await get().fetchUser();
@@ -154,11 +200,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    await supabase.auth.signOut();
+    if (isClerkConfigured()) {
+      const clerk = window.Clerk as unknown as { signOut?: (opts?: { redirectUrl?: string }) => Promise<void> } | undefined;
+      try {
+        await clerk?.signOut?.({ redirectUrl: '/' });
+      } catch {
+        void 0;
+      }
+    }
+    await supabase.auth.signOut().catch(() => {});
     set({ user: null, profile: null, isAuthenticated: false });
   },
 
   fetchUser: async () => {
+    if (isClerkConfigured()) {
+      const cu = clerkInstance();
+      await get().syncFromClerk(cu?.user ? clerkUserLikeFromInstance(cu.user) : null);
+      return;
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
@@ -204,17 +264,84 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { user } = get();
     if (!user) throw new Error('Not authenticated');
 
+    if (isClerkConfigured()) {
+      const cu = clerkInstance() as { user?: { update?: (p: { publicMetadata?: Record<string, unknown> }) => Promise<unknown> } } | undefined;
+      try {
+        const current = cu?.user;
+        if (current?.update) {
+          const core = {
+            role: (data as { role?: UserRole }).role ?? user.role,
+            full_name: (data as { full_name?: string }).full_name ?? user.full_name,
+            email: (data as { email?: string }).email ?? user.email,
+            phone: (data as { phone?: string | null }).phone ?? user.phone ?? null,
+          };
+          await current.update({ publicMetadata: { ...core } });
+        }
+      } catch (err) {
+        console.error('Clerk profile mirror failed (non-fatal):', err);
+      }
+    }
+
     const { error } = await supabase
       .from('profiles')
       .update({ ...data, updated_at: new Date().toISOString() })
       .eq('id', user.id);
 
-    if (error) throw error;
+    if (error) {
+      console.warn('Supabase profile update skipped:', error.message);
+    }
     await get().fetchUser();
+  },
+
+  syncFromClerk: async (u: ClerkUserLike | null) => {
+    if (!u) {
+      set({ user: null, profile: null, isAuthenticated: false, isLoading: false });
+      return;
+    }
+
+    set({ isLoading: true });
+
+    let dbProfile: Profile | null = null;
+    try {
+      const { data } = await supabase.from('profiles').select('*').eq('id', u.id).single();
+      if (data) dbProfile = data as Profile;
+    } catch {
+      dbProfile = null;
+    }
+
+    const validRoles: UserRole[] = ['patient', 'hospital_admin', 'doctor'];
+    const role: UserRole = u.role && validRoles.includes(u.role as UserRole)
+      ? (u.role as UserRole)
+      : (dbProfile?.role ?? 'patient');
+
+    const base: UserProfile = {
+      id: u.id,
+      email: u.email || dbProfile?.email || '',
+      full_name: u.fullName || dbProfile?.full_name || '',
+      role,
+      phone: (dbProfile as { phone?: string | null } | null)?.phone ?? null,
+      avatar_url: u.imageUrl || (dbProfile as { avatar_url?: string | null } | null)?.avatar_url || null,
+      created_at: (dbProfile as { created_at?: string } | null)?.created_at || new Date().toISOString(),
+      updated_at: (dbProfile as { updated_at?: string } | null)?.updated_at || new Date().toISOString(),
+    };
+
+    const mergedProfile: Profile = (
+      dbProfile
+        ? { ...dbProfile, id: u.id, email: base.email, full_name: base.full_name, role }
+        : { ...base }
+    ) as Profile;
+
+    set({ user: base, profile: mergedProfile, isAuthenticated: true, isLoading: false });
   },
 
   initialize: async () => {
     set({ isLoading: true });
+
+    if (isClerkConfigured()) {
+      const clerk = window.Clerk as unknown as { user?: unknown } | undefined;
+      await get().syncFromClerk(clerk?.user ? clerkUserLikeFromInstance(clerk.user) : null);
+      return;
+    }
 
     if (!isSupabaseConfigured) {
       const fallbackUser: UserProfile = {
