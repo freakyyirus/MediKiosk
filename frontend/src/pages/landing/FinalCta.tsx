@@ -44,7 +44,7 @@ export default function FinalCta() {
           <input
             type="email" required placeholder="Work email address"
             value={email} onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 h-14 px-5 rounded-xl bg-white text-[#1A1A2E] placeholder-surface-400 outline-none"
+            className="flex-1 h-14 px-5 rounded-xl bg-white text-[#111827] placeholder-surface-400 outline-none"
           />
           <button type="submit"
             className="h-14 px-6 rounded-xl bg-primary-800 text-white font-semibold flex items-center justify-center gap-2 hover:bg-primary-900 transition-colors">
