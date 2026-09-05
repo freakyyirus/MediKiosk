@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { icon: <UserCircle size={20} />, label: 'Dashboard', path: '/patient/dashboard' },
   { icon: <UserCircle size={20} />, label: 'Book OPD', path: '/patient/book-opd' },
   { icon: <UserCircle size={20} />, label: 'My Visits', path: '/patient/visits' },
-  { icon: <UserCircle size={20} />, label: 'Health Timeline', path: '/patient/timeline' },
+  { icon: <UserCircle size={20} />, label: 'Health Timeline', path: '/patient/health-timeline' },
   { icon: <UserCircle size={20} />, label: 'Documents', path: '/patient/documents' },
   { icon: <UserCircle size={20} />, label: 'Profile', path: '/patient/profile' },
 ];
