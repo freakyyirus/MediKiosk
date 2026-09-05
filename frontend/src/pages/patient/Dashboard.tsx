@@ -3,11 +3,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard, CalendarPlus, ClipboardList, Heart, FileUser, UserCircle,
-  CalendarClock, FileText, ArrowRight, Plus,
+  CalendarClock, FileText, ArrowRight, Plus, Monitor,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Sidebar, Header, StatsCard, Card, Button, LoadingSpinner, EmptyState } from '../../components/shared';
 import { useAuthStore } from '../../stores';
+import { useT } from '../../lib/i18n';
 import type { Patient } from '../../types';
 
 interface VisitRecord {
@@ -51,6 +52,7 @@ export default function PatientDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
+  const t = useT();
 
   const [profile, setProfile] = useState<Patient | null>(null);
   const [visits, setVisits] = useState<VisitRecord[]>([]);
@@ -167,6 +169,33 @@ export default function PatientDashboard() {
               icon={<FileText size={20} />}
               color="warning"
             />
+          </motion.div>
+
+          {/* Kiosk Mode entry */}
+          <motion.div {...fadeUp} transition={{ delay: 0.25 }}>
+            <Card className="border-2 border-primary-200 bg-gradient-to-r from-primary-50 via-white to-accent-50">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center shrink-0">
+                    <Monitor size={28} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-surface-900">{t('kioskMode')}</p>
+                    <p className="text-surface-600 mt-0.5">
+                      {t('kioskModeDesc')}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  icon={<Monitor size={18} />}
+                  onClick={() => navigate('/patient/kiosk')}
+                >
+                  {t('startKioskMode')}
+                </Button>
+              </div>
+            </Card>
           </motion.div>
 
           {nextAppointment && (
