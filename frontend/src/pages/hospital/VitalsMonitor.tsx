@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Activity, HeartPulse, BellRing, ShieldCheck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Activity, HeartPulse, BellRing, ShieldCheck, ArrowLeft, LayoutDashboard } from 'lucide-react';
 import Logo from '../../components/brand/Logo';
 import VitalsPanel, { type AbnormalVital } from '../../components/advanced/VitalsPanel';
 import EarlyWarningAlarm from '../../components/advanced/EarlyWarningAlarm';
 import { useAdvancedStore } from '../../stores/advancedFeaturesStore';
+import { useAuthStore } from '../../stores/authStore';
 
 export default function VitalsMonitor() {
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { vitals, emergencyAlerts, acknowledgeEmergency, resolveEmergency, loadAll } = useAdvancedStore();
   const [alarm, setAlarm] = useState<{ alertType: string; alertTypeHindi?: string; severity: 'critical' | 'high' | 'medium'; abnormalVitals: AbnormalVital[]; confidenceScore: number } | null>(null);
 
@@ -60,6 +64,13 @@ export default function VitalsMonitor() {
       <header className="bg-white border-b border-surface-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(user?.role === 'doctor' ? '/doctor/dashboard' : '/hospital/dashboard')}
+              className="touch-target flex items-center gap-2 rounded-xl border border-surface-300 px-3 py-2 text-sm font-semibold text-surface-700 hover:bg-surface-50 transition-colors"
+              aria-label="Back to dashboard"
+            >
+              <ArrowLeft size={16} /> Dashboard
+            </button>
             <Logo size={44} variant="gradient" showWordmark={false} />
             <div>
               <h1 className="text-xl font-black tracking-tight">Vitals & Early Warning Station</h1>
