@@ -56,8 +56,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="MediKiosk API",
     description=(
-        "AI-Powered Clinical History & Document Digitization Platform. "
-        "Built for Smart India Hackathon 2026."
+        "AI-Powered Clinical History & Document Digitization Platform for "
+        "self-service healthcare kiosks."
     ),
     version="1.0.0",
     docs_url="/docs",
