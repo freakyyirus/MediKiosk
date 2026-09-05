@@ -1,4 +1,5 @@
 import { Globe, AtSign, Share2, Mail, Sparkles } from 'lucide-react';
+import Logo from '../../components/brand/Logo';
 
 const COLS = [
   { title: 'Product', links: ['Features', 'How It Works', 'AYUSH Mode', 'Security', 'Pricing'] },
@@ -14,8 +15,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2 font-bold text-xl" style={{ fontFamily: 'Inter' }}>
-              <span className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center"><Sparkles className="w-4 h-4" /></span>
-              MediKiosk
+              <Logo size={34} variant="white" />
             </div>
             <p className="mt-4 text-white/60 max-w-[260px]">Built with compassion for every Indian patient.</p>
             <div className="flex gap-3 mt-6">
