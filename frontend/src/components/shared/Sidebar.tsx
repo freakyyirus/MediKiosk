@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LogOut } from 'lucide-react';
+import Logo from '../brand/Logo';
 
 interface SidebarItem {
   icon: React.ReactNode;
@@ -59,14 +60,7 @@ export default function Sidebar({
         }`}
       >
         <div className="p-4 border-b border-surface-200">
-          {logo || (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
-              </div>
-              <span className="font-bold text-surface-900">MediFlow</span>
-            </div>
-          )}
+          {logo || <Logo size={32} variant="mono" />}
         </div>
 
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
