@@ -17,7 +17,7 @@ export default function Partners() {
         <div className="text-center mb-12">
           <motion.h2
             variants={fadeUp}
-            className="text-[32px] leading-tight font-semibold text-[#1A1A2E]"
+            className="text-[32px] leading-tight font-semibold text-[#111827]"
             style={{ fontFamily: 'Inter' }}
           >
             Plays well with India's health infrastructure.
@@ -33,7 +33,7 @@ export default function Partners() {
               <div className="mx-auto w-14 h-14 rounded-xl bg-surface-100 group-hover:bg-primary-50 flex items-center justify-center text-surface-400 group-hover:text-primary-600 transition-colors mb-4">
                 <p.icon className="w-7 h-7" />
               </div>
-              <div className="font-bold text-[#1A1A2E]">{p.name}</div>
+              <div className="font-bold text-[#111827]">{p.name}</div>
               <p className="text-[13px] text-[#6B7280] mt-1.5 leading-snug">{p.desc}</p>
             </motion.div>
           ))}
