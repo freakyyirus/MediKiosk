@@ -80,13 +80,13 @@ const DOSHAS = [
 
 export default function Ayush() {
   return (
-    <Section id="ayush" bg="linear-gradient(135deg,#2DD4BF0D, #F8F7FF 55%)" className="py-[120px]">
+    <Section id="ayush" bg="linear-gradient(135deg,#2DD4BF0D, #F8F7FF 55%)" className="py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-14">
           <SectionLabel className="mb-4" color="#2DD4BF">AYUSH Integration</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#1A1A2E] max-w-[720px] mx-auto"
+            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#111827] max-w-[720px] mx-auto"
             style={{ fontFamily: 'Inter' }}
           >
             Ayurveda, Unani, Siddha, and Homeopathy — supported natively.
@@ -103,7 +103,7 @@ export default function Ayush() {
           {/* Dashavidha content */}
           <div className="space-y-6">
             <motion.div variants={fadeUp}>
-              <h3 className="text-2xl font-semibold text-[#1A1A2E] mb-2" style={{ fontFamily: 'Inter' }}>Dashavidha Pariksha</h3>
+              <h3 className="text-2xl font-semibold text-[#111827] mb-2" style={{ fontFamily: 'Inter' }}>Dashavidha Pariksha</h3>
               <p className="text-[16px] text-[#6B7280] leading-relaxed">The tenfold examination, digitized with the same care a seasoned Vaidya brings to a consultation.</p>
             </motion.div>
             {[
@@ -112,7 +112,7 @@ export default function Ayush() {
               { t: 'Nidana & Samprapti', d: 'Causative factors and pathogenesis summarized for the Vaidya.' },
             ].map((c, i) => (
               <motion.div key={c.t} variants={fadeUp} className="p-5 rounded-xl bg-white shadow-sm border border-surface-100">
-                <div className="font-semibold text-[#1A1A2E] text-lg">{c.t}</div>
+                <div className="font-semibold text-[#111827] text-lg">{c.t}</div>
                 <p className="text-[15px] text-[#6B7280] mt-1">{c.d}</p>
               </motion.div>
             ))}
@@ -132,7 +132,7 @@ export default function Ayush() {
                   animate={{ scale: [1, 1.5], opacity: [0.3, 0] }} transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }} />
                 <d.icon className="w-7 h-7 relative" style={{ color: d.color }} />
               </div>
-              <div className="text-xl font-semibold text-[#1A1A2E] mt-4" style={{ fontFamily: 'Inter' }}>{d.name}</div>
+              <div className="text-xl font-semibold text-[#111827] mt-4" style={{ fontFamily: 'Inter' }}>{d.name}</div>
               <p className="text-[15px] text-[#6B7280] mt-2 leading-relaxed">{d.desc}</p>
             </motion.div>
           ))}
