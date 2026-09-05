@@ -20,7 +20,7 @@ const ALERTS = [
 
 export default function RedFlag() {
   return (
-    <Section id="safety" bg="linear-gradient(135deg,#FEE2E2,#ffffff 60%)" className="py-[120px] overflow-hidden">
+    <Section id="safety" bg="linear-gradient(135deg,#FEE2E2,#ffffff 60%)" className="py-20 md:py-28 overflow-hidden">
       <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10 grid lg:grid-cols-2 gap-12 items-center">
         {/* LEFT */}
         <div>
@@ -29,7 +29,7 @@ export default function RedFlag() {
           </motion.div>
           <motion.h2
             variants={fadeUp}
-            className="text-[48px] leading-tight font-bold text-[#1A1A2E] max-w-[560px]"
+            className="text-[48px] leading-tight font-bold text-[#111827] max-w-[560px]"
             style={{ fontFamily: 'Inter' }}
           >
             Emergencies don't wait in line.
@@ -52,7 +52,7 @@ export default function RedFlag() {
                   <a.icon className="w-5 h-5 text-white relative" />
                 </div>
                 <div>
-                  <div className="font-semibold text-[#1A1A2E] text-[17px]">{a.title}</div>
+                  <div className="font-semibold text-[#111827] text-[17px]">{a.title}</div>
                   <div className="text-[15px] text-[#6B7280] mt-0.5">{a.desc}</div>
                 </div>
               </motion.div>
@@ -77,7 +77,7 @@ export default function RedFlag() {
             animate={{ y: [0, -6, 0] }}
           >
             <div className="text-[11px] font-bold text-danger-600 uppercase tracking-wide">Priority</div>
-            <div className="text-2xl font-black text-[#1A1A2E]">P-001</div>
+            <div className="text-2xl font-black text-[#111827]">P-001</div>
           </motion.div>
 
           {/* notification card slides in */}
@@ -87,7 +87,7 @@ export default function RedFlag() {
           >
             <span className="w-9 h-9 rounded-full bg-danger-500 flex items-center justify-center shrink-0"><Bell className="w-4 h-4 text-white" /></span>
             <div>
-              <div className="text-[13px] font-semibold text-[#1A1A2E]">Emergency detected in Kiosk 4</div>
+              <div className="text-[13px] font-semibold text-[#111827]">Emergency detected in Kiosk 4</div>
               <div className="text-[12px] text-[#6B7280]">Patient routed to Cardiac Bay.</div>
             </div>
           </motion.div>
