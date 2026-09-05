@@ -14,13 +14,13 @@ const FLOW = ['Patient', 'Kiosk', 'Encrypted Tunnel', 'Hospital Server', 'ABDM C
 
 export default function Security() {
   return (
-    <Section id="security" bg="#ffffff" className="py-[120px]">
+    <Section id="security" bg="#ffffff" className="py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-14">
-          <SectionLabel className="mb-4" color="#6B4EE6">Security</SectionLabel>
+          <SectionLabel className="mb-4" color="#4F46E5">Security</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#1A1A2E] max-w-[720px] mx-auto"
+            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#111827] max-w-[720px] mx-auto"
             style={{ fontFamily: 'Inter' }}
           >
             Your health data stays yours. Protected by law, encrypted by design.
@@ -34,7 +34,7 @@ export default function Security() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: `${p.color}18` }}>
                 <p.icon className="w-7 h-7" style={{ color: p.color }} />
               </div>
-              <h3 className="text-xl font-semibold text-[#1A1A2E] mb-2" style={{ fontFamily: 'Inter' }}>{p.title}</h3>
+              <h3 className="text-xl font-semibold text-[#111827] mb-2" style={{ fontFamily: 'Inter' }}>{p.title}</h3>
               <p className="text-[15px] text-[#6B7280] leading-relaxed">{p.desc}</p>
             </motion.div>
           ))}
@@ -43,7 +43,7 @@ export default function Security() {
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           {/* encryption flow */}
           <motion.div variants={fadeUp} className="bg-[#F0EBFF] rounded-2xl p-8">
-            <div className="text-lg font-semibold text-[#1A1A2E] mb-7 text-center">Encryption Flow</div>
+            <div className="text-lg font-semibold text-[#111827] mb-7 text-center">Encryption Flow</div>
             <div className="flex items-center justify-between gap-1 flex-wrap">
               {FLOW.map((f, i) => (
                 <div key={f} className="flex items-center flex-1 min-w-0">
