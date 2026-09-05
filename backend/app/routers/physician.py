@@ -2,16 +2,16 @@
 Physician dashboard API endpoints.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.middleware.error_handler import MediKioskError, NotFoundError
-from app.models.session import Session
+from app.middleware.error_handler import NotFoundError
 from app.models.clinical import Summary
+from app.models.session import Session
 from app.schemas.schemas import (
     DashboardResponse,
     PhysicianQueueItem,
@@ -44,7 +44,7 @@ async def get_physician_dashboard(
     for session in sessions:
         wait_minutes = 0
         if session.completed_at:
-            delta = datetime.now(timezone.utc) - session.completed_at.replace(tzinfo=timezone.utc)
+            delta = datetime.now(UTC) - session.completed_at.replace(tzinfo=UTC)
             wait_minutes = int(delta.total_seconds() / 60)
 
         priority = "normal"
@@ -109,7 +109,7 @@ async def confirm_session(
     # Update summary
     summary.review_status = review.status
     summary.physician_id = review.physician_id
-    summary.reviewed_at = datetime.now(timezone.utc)
+    summary.reviewed_at = datetime.now(UTC)
     if review.physician_edits:
         summary.physician_edits = review.physician_edits
 

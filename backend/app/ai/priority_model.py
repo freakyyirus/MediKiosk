@@ -37,6 +37,7 @@ try:
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
     from sklearn.model_selection import train_test_split
+
     _SKLEARN_OK = True
 except Exception as exc:  # pragma: no cover
     logger.warning("scikit-learn unavailable: %s", exc)
@@ -70,7 +71,7 @@ _SEED = 42
 def _synthetic_dataset(n: int = 4000) -> tuple[np.ndarray, np.ndarray]:
     """Generate a clinically-plausible dataset from expert threshold rules."""
     rng = np.random.default_rng(_SEED)
-    X = np.zeros((n, len(FEATURES)))
+    X = np.zeros((n, len(FEATURES)))  # noqa: N806
     y = np.zeros(n, dtype=int)
 
     for i in range(n):
@@ -122,7 +123,18 @@ def _synthetic_dataset(n: int = 4000) -> tuple[np.ndarray, np.ndarray]:
         else:
             cls = 0  # low
 
-        X[i] = [age, spo2, pulse, bp_sys, bp_dia, temp, red_flags, critical_sym, has_chest_pain, has_breath]
+        X[i] = [
+            age,
+            spo2,
+            pulse,
+            bp_sys,
+            bp_dia,
+            temp,
+            red_flags,
+            critical_sym,
+            has_chest_pain,
+            has_breath,
+        ]
         y[i] = cls
 
     return X, y
@@ -158,12 +170,16 @@ class PriorityQueueModel:
                 self._features_ = meta["features"]
                 self._real_samples = int(meta.get("real_samples", 0))
                 self._is_ready = True
-                logger.info("Loaded cached priority model (%d trees, %d samples)", self._model.n_estimators, meta.get("samples", 0))
+                logger.info(
+                    "Loaded cached priority model (%d trees, %d samples)",
+                    self._model.n_estimators,
+                    meta.get("samples", 0),
+                )
                 return
             except Exception as exc:  # pragma: no cover
                 logger.warning("Failed loading cached model — retraining: %s", exc)
 
-        X, y = _synthetic_dataset()
+        X, y = _synthetic_dataset()  # noqa: N806
         clf = RandomForestClassifier(
             n_estimators=200,
             max_depth=10,
@@ -286,8 +302,7 @@ class PriorityQueueModel:
             real_pair = await asyncio.to_thread(self._load_real_samples)
             if real_pair is None:
                 raise ValueError(
-                    "No real training samples found — "
-                    "POST /api/v1/advanced/ml/samples first."
+                    "No real training samples found — POST /api/v1/advanced/ml/samples first."
                 )
             x_real, y_real = real_pair
             if len(x_real) < min_real:
@@ -314,14 +329,22 @@ class PriorityQueueModel:
                     x_real, y_real, test_size=holdout, stratify=y_real, random_state=_SEED
                 )
                 clf_hold = RandomForestClassifier(
-                    n_estimators=150, max_depth=10, min_samples_leaf=5,
-                    class_weight="balanced", random_state=_SEED, n_jobs=-1,
+                    n_estimators=150,
+                    max_depth=10,
+                    min_samples_leaf=5,
+                    class_weight="balanced",
+                    random_state=_SEED,
+                    n_jobs=-1,
                 )
                 clf_hold.fit(x_tr, y_tr)
                 pred = clf_hold.predict(x_te)
                 report = classification_report(
-                    y_te, pred, labels=list(range(len(CLASSES))),
-                    target_names=CLASSES, output_dict=True, zero_division=0,
+                    y_te,
+                    pred,
+                    labels=list(range(len(CLASSES))),
+                    target_names=CLASSES,
+                    output_dict=True,
+                    zero_division=0,
                 )
                 metrics = {
                     "accuracy": round(float(accuracy_score(y_te, pred)), 4),
@@ -340,20 +363,26 @@ class PriorityQueueModel:
                 }
 
             _ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
-            dump({"model": clf,
-                  "features": list(FEATURES),
-                  "samples": int(len(y_all)),
-                  "real_samples": int(len(x_real)),
-                  "synthetic_backfill": int(len(y_syn)),
-                  "retrained_at": datetime.now(UTC).isoformat(),
-                  "holdout_metrics": metrics}, _MODEL_PATH)
+            dump(
+                {
+                    "model": clf,
+                    "features": list(FEATURES),
+                    "samples": int(len(y_all)),
+                    "real_samples": int(len(x_real)),
+                    "synthetic_backfill": int(len(y_syn)),
+                    "retrained_at": datetime.now(UTC).isoformat(),
+                    "holdout_metrics": metrics,
+                },
+                _MODEL_PATH,
+            )
             self._model = clf
             self._features_ = list(FEATURES)
             self._is_ready = True
             self._real_samples = int(len(x_real))
             logger.info(
                 "Retrained priority model on %d real + %d synthetic samples.",
-                len(x_real), len(y_syn),
+                len(x_real),
+                len(y_syn),
             )
             return {
                 "trained_on": {"real": int(len(x_real)), "synthetic": int(len(y_syn))},
@@ -417,7 +446,11 @@ class PriorityQueueModel:
         # Top factors via feature importances for this prediction
         importances = self._model.feature_importances_
         rang = sorted(zip(self._features_, importances), key=lambda t: -t[1])[:4]
-        top_factors = [name.replace("_", " ") for name, _ in rang if name in fields and fields.get(name) not in (None, 0, "", False)]
+        top_factors = [
+            name.replace("_", " ")
+            for name, _ in rang
+            if name in fields and fields.get(name) not in (None, 0, "", False)
+        ]
 
         return {
             "priority_score": score,
@@ -429,7 +462,9 @@ class PriorityQueueModel:
                 "low": "Can wait",
             }[class_name],
             "top_factors": top_factors or [name.replace("_", " ") for name, _ in rang[:2]],
-            "confidence": round(float(probs[cls_idx]), 3) if not math.isnan(probs[cls_idx]) else 0.0,
+            "confidence": round(float(probs[cls_idx]), 3)
+            if not math.isnan(probs[cls_idx])
+            else 0.0,
             "model": "ml/sklearn-rf",
         }
 
@@ -444,13 +479,17 @@ class PriorityQueueModel:
 
         factors: list[str] = []
         if not math.isnan(spo2) and spo2 < 90:
-            risk += 3; factors.append("low oxygen")
+            risk += 3
+            factors.append("low oxygen")
         if not math.isnan(pulse) and (pulse > 130 or pulse < 45):
-            risk += 3; factors.append("critical heart rate")
+            risk += 3
+            factors.append("critical heart rate")
         if not math.isnan(bp_sys) and bp_sys >= 180:
-            risk += 3; factors.append("high blood pressure")
+            risk += 3
+            factors.append("high blood pressure")
         if not math.isnan(temp) and temp >= 40.5:
-            risk += 3; factors.append("very high fever")
+            risk += 3
+            factors.append("very high fever")
         risk += int(fields.get("red_flag_count", 0)) + int(fields.get("critical_symptom_count", 0))
         if fields.get("has_chest_pain") or fields.get("has_breathlessness"):
             risk += 2

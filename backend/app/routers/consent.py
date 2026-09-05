@@ -2,7 +2,7 @@
 Consent management endpoints.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -10,9 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.middleware.error_handler import NotFoundError
 from app.models.clinical import ConsentRecord
 from app.models.session import Session
-from app.middleware.error_handler import NotFoundError
 
 router = APIRouter(prefix="/api/v1/consent", tags=["Consent"])
 
@@ -54,7 +54,7 @@ async def submit_consents(
             patient_id=req.patient_id or session.patient_id,
             consent_type=item.consent_type,
             granted=item.granted,
-            granted_at=datetime.now(timezone.utc) if item.granted else None,
+            granted_at=datetime.now(UTC) if item.granted else None,
         )
         db.add(cr)
         records.append(cr)

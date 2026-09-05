@@ -2,7 +2,7 @@
 Session management API endpoints.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
@@ -81,13 +81,13 @@ async def update_session(
             raise MediKioskError(
                 code="MK_INVALID_TRANSITION",
                 message=f"Cannot transition from '{session.status}' to '{new_status}'. "
-                        f"Allowed transitions: {allowed}",
+                f"Allowed transitions: {allowed}",
                 status_code=422,
             )
         if new_status == "completed":
-            update_data["completed_at"] = datetime.now(timezone.utc)
+            update_data["completed_at"] = datetime.now(UTC)
             if session.started_at:
-                delta = datetime.now(timezone.utc) - session.started_at.replace(tzinfo=timezone.utc)
+                delta = datetime.now(UTC) - session.started_at.replace(tzinfo=UTC)
                 update_data["duration_seconds"] = int(delta.total_seconds())
 
     for field, value in update_data.items():
@@ -113,6 +113,7 @@ async def delete_session(
 
 
 # ---- Voice & Touch Input ----
+
 
 @router.post("/{session_id}/touch", response_model=VoiceInputResponse)
 async def submit_touch_input(
@@ -147,6 +148,7 @@ async def submit_touch_input(
 
 
 # ---- Conversation History ----
+
 
 @router.get("/{session_id}/history", response_model=list[MessageResponse])
 async def get_conversation_history(

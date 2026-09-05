@@ -53,12 +53,20 @@ class Document(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="documents",
-                          foreign_keys=[session_id],
-                          primaryjoin="Document.session_id == Session.id")
-    patient = relationship("Patient", back_populates="documents",
-                          foreign_keys=[patient_id],
-                          primaryjoin="Document.patient_id == Patient.id")
+    session = relationship(
+        "Session",
+        back_populates="documents",
+        foreign_keys=[session_id],
+        primaryjoin="Document.session_id == Session.id",
+    )
+    patient = relationship(
+        "Patient",
+        back_populates="documents",
+        foreign_keys=[patient_id],
+        primaryjoin="Document.patient_id == Patient.id",
+    )
 
     def __repr__(self) -> str:
-        return f"<Document(id={self.id}, type={self.document_type}, status={self.processing_status})>"
+        return (
+            f"<Document(id={self.id}, type={self.document_type}, status={self.processing_status})>"
+        )

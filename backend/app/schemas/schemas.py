@@ -7,10 +7,10 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
 # ============================================
 # PATIENT SCHEMAS
 # ============================================
+
 
 class PatientCreate(BaseModel):
     """Create a new patient."""
@@ -73,6 +73,7 @@ class PatientResponse(BaseModel):
 # SESSION SCHEMAS
 # ============================================
 
+
 class SessionCreate(BaseModel):
     """Create a new clinical session."""
 
@@ -95,7 +96,9 @@ class SessionUpdate(BaseModel):
     personal_history: dict[str, Any] | None = None
     review_of_systems: dict[str, Any] | None = None
     ayush_assessment: dict[str, Any] | None = None
-    status: str | None = Field(None, pattern="^(in_progress|completed|under_review|reviewed|cancelled)$")
+    status: str | None = Field(
+        None, pattern="^(in_progress|completed|under_review|reviewed|cancelled)$"
+    )
 
 
 class SessionResponse(BaseModel):
@@ -141,6 +144,7 @@ class SessionCreateResponse(BaseModel):
 # MESSAGE SCHEMAS
 # ============================================
 
+
 class MessageCreate(BaseModel):
     """Create a session message."""
 
@@ -168,6 +172,7 @@ class MessageResponse(BaseModel):
 # VOICE INPUT SCHEMAS
 # ============================================
 
+
 class VoiceInputResponse(BaseModel):
     """Response after processing voice input."""
 
@@ -189,6 +194,7 @@ class TouchInputRequest(BaseModel):
 # ============================================
 # DOCUMENT SCHEMAS
 # ============================================
+
 
 class DocumentResponse(BaseModel):
     """Document response object."""
@@ -227,6 +233,7 @@ class DocumentUploadResponse(BaseModel):
 # ============================================
 # SUMMARY SCHEMAS
 # ============================================
+
 
 class SummaryResponse(BaseModel):
     """Summary response object."""
@@ -268,6 +275,7 @@ class SummaryReviewRequest(BaseModel):
 # CONSENT SCHEMAS
 # ============================================
 
+
 class ConsentRequest(BaseModel):
     """Consent collection request."""
 
@@ -290,6 +298,7 @@ class ConsentResponse(BaseModel):
 # AUTH SCHEMAS
 # ============================================
 
+
 class TokenResponse(BaseModel):
     """JWT token response."""
 
@@ -302,6 +311,7 @@ class TokenResponse(BaseModel):
 # ============================================
 # PHYSICIAN DASHBOARD SCHEMAS
 # ============================================
+
 
 class PhysicianQueueItem(BaseModel):
     """Single item in the physician's patient queue."""
@@ -325,6 +335,7 @@ class DashboardResponse(BaseModel):
 # ============================================
 # COMMON SCHEMAS
 # ============================================
+
 
 class PaginatedResponse(BaseModel):
     """Paginated list response."""

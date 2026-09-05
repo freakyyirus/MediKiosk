@@ -71,15 +71,17 @@ async def _audit(
     new_values: dict | None = None,
 ) -> None:
     """Append-only audit record (survives the row deletion it describes)."""
-    db.add(AuditLog(
-        table_name=table_name,
-        record_id=record_id,
-        action=action,
-        performed_by=performed_by or "unknown",
-        performed_by_role=performed_by_role,
-        old_values=old_values,
-        new_values=new_values,
-    ))
+    db.add(
+        AuditLog(
+            table_name=table_name,
+            record_id=record_id,
+            action=action,
+            performed_by=performed_by or "unknown",
+            performed_by_role=performed_by_role,
+            old_values=old_values,
+            new_values=new_values,
+        )
+    )
     await db.flush()
 
 
@@ -87,7 +89,9 @@ async def _all_session_ids(db, patient_id: int) -> list[int]:
     rows = await db.execute(select(Session.id).where(Session.patient_id == patient_id))
     return [r[0] for r in rows.all()]
 
+
 # ─── F2: Handwritten Prescription OCR ────────────────────────────
+
 
 def _merge_entities(rule_based: dict, gemini: dict) -> dict:
     """Blend rule-based NER with Gemini validation output."""
@@ -146,8 +150,7 @@ async def ocr_process(file: UploadFile = File(...)):
         "ocr_raw_text": raw_text,
         "ocr_confidence": doc.page_confidence,
         "ocr_engine": doc.engine,
-        "handwriting_detected": merged["handwriting_detected"]
-        or doc.handwriting_heuristic > 0.35,
+        "handwriting_detected": merged["handwriting_detected"] or doc.handwriting_heuristic > 0.35,
         "handwriting_score": doc.handwriting_heuristic,
         **merged,
         "validation_status": "needs_review" if merged["low_confidence_fields"] else "verified",
@@ -179,6 +182,7 @@ async def ocr_validate(payload: dict):
 
 
 # ─── F3: Smart QR Slip ───────────────────────────────────────────
+
 
 @router.post("/qr/create")
 async def qr_create(payload: dict):
@@ -224,6 +228,7 @@ async def qr_create(payload: dict):
 
 
 # ─── ML: Priority Queue Prediction ───────────────────────────────
+
 
 @router.post("/ml/predict-priority")
 async def ml_predict_priority(payload: dict):
@@ -285,13 +290,14 @@ async def ml_train(payload: dict = Body(...)):
     holdout = float(payload.get("holdout", 0.2))
     try:
         return await retrain_on_real(
-        min_real=min_real, backfill_synthetic=backfill, holdout=holdout
-    )
+            min_real=min_real, backfill_synthetic=backfill, holdout=holdout
+        )
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
 
 
 # ─── F4: Vitals + threshold analysis ─────────────────────────────
+
 
 @router.post("/vitals/analyze")
 async def vitals_analyze(payload: dict):
@@ -338,6 +344,7 @@ async def vitals_analyze(payload: dict):
 
 
 # ─── F5: Emergency verification ──────────────────────────────────
+
 
 @router.post("/emergency/verify")
 async def emergency_verify(payload: dict):
@@ -391,6 +398,7 @@ async def emergency_verify(payload: dict):
 
 # ─── F1: Body Map ────────────────────────────────────────────────
 
+
 @router.post("/body-map/tap")
 async def body_map_tap(payload: dict):
     """Record a body-map tap for analytics/triage priority."""
@@ -398,7 +406,11 @@ async def body_map_tap(payload: dict):
     if not body_part:
         raise HTTPException(422, "body_part required")
     severity_weights = {
-        "head": 1, "chest": 2, "stomach": 1, "nose_throat": 1, "eyes": 1,
+        "head": 1,
+        "chest": 2,
+        "stomach": 1,
+        "nose_throat": 1,
+        "eyes": 1,
     }
     suggested_department = {
         "head": "neurology",
@@ -422,6 +434,7 @@ async def body_map_tap(payload: dict):
 
 
 # ─── F6: Retention metadata ──────────────────────────────────────
+
 
 @router.get("/retention/policies")
 async def retention_policies():
@@ -473,8 +486,12 @@ async def _purge_sessions(db, session_ids: list[int]) -> dict:
     """Physically delete a batch of sessions and every dependent row."""
     if not session_ids:
         return {
-            "sessions": 0, "messages": 0, "summaries": 0,
-            "consents": 0, "red_flags": 0, "ayush": 0,
+            "sessions": 0,
+            "messages": 0,
+            "summaries": 0,
+            "consents": 0,
+            "red_flags": 0,
+            "ayush": 0,
         }
 
     sid = session_ids
@@ -532,12 +549,14 @@ async def retention_run(payload: dict = Body(default_factory=dict), db=Depends(g
     job: dict[str, Any] = {"actions": [], "rows_deleted": 0, "files_removed": 0}
 
     # 1) voice_recording → 1 day
-    msgs = (await db.execute(
-        select(SessionMessage).where(
-            SessionMessage.message_type == "patient_voice",
-            SessionMessage.created_at < now_naive - timedelta(days=1),
+    msgs = (
+        await db.execute(
+            select(SessionMessage).where(
+                SessionMessage.message_type == "patient_voice",
+                SessionMessage.created_at < now_naive - timedelta(days=1),
+            )
         )
-    )).all()
+    ).all()
     audio = 0
     for m in msgs:
         if m[0].audio_url:
@@ -545,25 +564,35 @@ async def retention_run(payload: dict = Body(default_factory=dict), db=Depends(g
                 _safe_unlink(m[0].audio_url)
             audio += 1
     if not dry_run:
-        await db.execute(delete(SessionMessage).where(
-            SessionMessage.message_type == "patient_voice",
-            SessionMessage.created_at < now_naive - timedelta(days=1),
-        ))
+        await db.execute(
+            delete(SessionMessage).where(
+                SessionMessage.message_type == "patient_voice",
+                SessionMessage.created_at < now_naive - timedelta(days=1),
+            )
+        )
     job["actions"].append({"policy": "voice_recording", "rows": len(msgs), "files": audio})
     job["rows_deleted"] += len(msgs)
     job["files_removed"] += audio
 
     # 2) session_temp → cancelled sessions older than 1 hour
-    temps = (await db.execute(
-        select(Session).where(
-            Session.status == "cancelled",
-            Session.started_at < now_naive - timedelta(hours=1),
+    temps = (
+        await db.execute(
+            select(Session).where(
+                Session.status == "cancelled",
+                Session.started_at < now_naive - timedelta(hours=1),
+            )
         )
-    )).all()
+    ).all()
     temp_ids = [s[0].id for s in temps]
     purged = await _purge_sessions(db, temp_ids)
-    job["actions"].append({"policy": "session_temp", "sessions": purged["sessions"],
-                           "messages": purged["messages"], "documents": purged["documents"]})
+    job["actions"].append(
+        {
+            "policy": "session_temp",
+            "sessions": purged["sessions"],
+            "messages": purged["messages"],
+            "documents": purged["documents"],
+        }
+    )
     job["rows_deleted"] += purged["sessions"] + purged["messages"] + purged["documents"]
     job["files_removed"] += purged["audio_files"]
 
@@ -576,16 +605,23 @@ async def retention_run(payload: dict = Body(default_factory=dict), db=Depends(g
         )
         .values(ocr_raw_text=None)
     )
-    job["actions"].append({
-        "policy": "prescription_ocr_raw",
-        "note": "ocr_raw_text nulled for records older than 30 days",
-    })
+    job["actions"].append(
+        {
+            "policy": "prescription_ocr_raw",
+            "note": "ocr_raw_text nulled for records older than 30 days",
+        }
+    )
 
     # Append-only audit of the whole job
     if not dry_run:
         await _audit(
-            db, "retention_job", None, "CREATE",
-            "retention-scheduler", "system", new_values=job,
+            db,
+            "retention_job",
+            None,
+            "CREATE",
+            "retention-scheduler",
+            "system",
+            new_values=job,
         )
     await _commit_or_rollback()
 
@@ -659,18 +695,14 @@ async def erase_patient(payload: dict = Body(...), db=Depends(get_db)):
     )
 
     if session_ids:
-        await db.execute(
-            delete(SessionMessage).where(SessionMessage.session_id.in_(session_ids))
-        )
+        await db.execute(delete(SessionMessage).where(SessionMessage.session_id.in_(session_ids)))
     await db.execute(delete(Document).where(Document.patient_id == int(patient_id)))
     if session_ids:
         await db.execute(delete(Summary).where(Summary.session_id.in_(session_ids)))
     await db.execute(delete(ConsentRecord).where(ConsentRecord.patient_id == int(patient_id)))
     await db.execute(delete(RedFlagAlert).where(RedFlagAlert.patient_id == int(patient_id)))
     if session_ids:
-        await db.execute(
-            delete(AyushAssessment).where(AyushAssessment.session_id.in_(session_ids))
-        )
+        await db.execute(delete(AyushAssessment).where(AyushAssessment.session_id.in_(session_ids)))
         await db.execute(delete(Session).where(Session.id.in_(session_ids)))
     await db.execute(delete(Patient).where(Patient.id == int(patient_id)))
     await db.commit()
@@ -719,16 +751,24 @@ async def request_erasure(payload: dict = Body(...), db=Depends(get_db)):
 async def retention_requests(db=Depends(get_db)):
     """List erasure requests recorded on the backend (approval workflow)."""
     rows = (
-        await db.execute(
-            select(AuditLog)
-            .where(AuditLog.table_name == "erasure_requests", AuditLog.action == "CREATE")
-            .order_by(AuditLog.created_at.desc())
+        (
+            await db.execute(
+                select(AuditLog)
+                .where(AuditLog.table_name == "erasure_requests", AuditLog.action == "CREATE")
+                .order_by(AuditLog.created_at.desc())
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     requests = [
-        {"patient_id": a.record_id, "requested_by": a.performed_by,
-         "data_types": (a.new_values or {}).get("data_types", ["all"]),
-         "requested_at": a.created_at.isoformat(), "status": "pending"}
+        {
+            "patient_id": a.record_id,
+            "requested_by": a.performed_by,
+            "data_types": (a.new_values or {}).get("data_types", ["all"]),
+            "requested_at": a.created_at.isoformat(),
+            "status": "pending",
+        }
         for a in rows
     ]
     return {"requests": requests}

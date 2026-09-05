@@ -14,7 +14,19 @@ from app.config import get_settings
 from app.database import close_db, init_db
 from app.middleware.error_handler import register_exception_handlers
 from app.middleware.logging_mw import LoggingMiddleware
-from app.routers import health, patients, sessions, physician, auth, voice, documents, summaries, abdm, consent, advanced
+from app.routers import (
+    abdm,
+    advanced,
+    auth,
+    consent,
+    documents,
+    health,
+    patients,
+    physician,
+    sessions,
+    summaries,
+    voice,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -102,6 +114,7 @@ app.include_router(advanced.router)
 
 
 # ---- Root ----
+
 
 @app.get("/", tags=["Root"])
 async def root():

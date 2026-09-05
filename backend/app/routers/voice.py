@@ -5,15 +5,16 @@ Voice and ASR API endpoints.
 import logging
 
 from fastapi import APIRouter, Depends, File, Form, UploadFile
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.asr_client import BhashiniASR
-from app.ai.tts_client import BhashiniTTS
 from app.ai.red_flag_engine import RedFlagEngine
+from app.ai.tts_client import BhashiniTTS
 from app.database import get_db
-from app.models.session import Session, SessionMessage
 from app.middleware.error_handler import NotFoundError
+from app.models.session import Session, SessionMessage
 
 logger = logging.getLogger("medikiosk.routers.voice")
 router = APIRouter(prefix="/api/v1/voice", tags=["Voice & ASR"])
@@ -64,14 +65,16 @@ async def transcribe_audio(
     }
 
 
-from pydantic import BaseModel
+
 
 class TTSRequest(BaseModel):
     text: str
     language: str
     gender: str = "female"
 
+
 tts_client = BhashiniTTS()
+
 
 @router.post("/tts")
 async def synthesize_audio(req: TTSRequest):
@@ -80,4 +83,3 @@ async def synthesize_audio(req: TTSRequest):
     """
     audio_b64 = await tts_client.synthesize(req.text, req.language, req.gender)
     return {"audio": audio_b64}
-

@@ -3,6 +3,7 @@ Global exception handler for structured error responses.
 """
 
 import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError, NoResultFound
@@ -13,7 +14,9 @@ logger = logging.getLogger("medikiosk.errors")
 class MediKioskError(Exception):
     """Base exception for MediKiosk application errors."""
 
-    def __init__(self, code: str, message: str, status_code: int = 400, details: dict | None = None):
+    def __init__(
+        self, code: str, message: str, status_code: int = 400, details: dict | None = None
+    ):
         self.code = code
         self.message = message
         self.status_code = status_code

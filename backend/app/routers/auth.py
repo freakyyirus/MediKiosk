@@ -3,12 +3,13 @@ Authentication endpoints.
 """
 
 from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.config import get_settings
 from app.schemas.schemas import TokenResponse
-from app.utils.security import create_access_token, verify_password
+from app.utils.security import create_access_token
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 settings = get_settings()
@@ -26,7 +27,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     role = "physician"
     if form_data.username == "admin":
         role = "admin"
-    
+
     # In a real app, query DB and verify_password()
     if not form_data.username or not form_data.password:
         raise HTTPException(
@@ -37,8 +38,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     access_token_expires = timedelta(minutes=settings.jwt_access_token_expire_minutes)
     access_token = create_access_token(
-        data={"sub": form_data.username, "role": role},
-        expires_delta=access_token_expires
+        data={"sub": form_data.username, "role": role}, expires_delta=access_token_expires
     )
 
     return {

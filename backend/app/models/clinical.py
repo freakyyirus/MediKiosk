@@ -5,8 +5,8 @@ Summary, Consent, Red Flag, Audit Log, and AYUSH Assessment models.
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import INET, JSONB
+from sqlalchemy import BigInteger, Boolean, Numeric, String, Text, func
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -41,9 +41,12 @@ class Summary(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="summaries",
-                          foreign_keys=[session_id],
-                          primaryjoin="Summary.session_id == Session.id")
+    session = relationship(
+        "Session",
+        back_populates="summaries",
+        foreign_keys=[session_id],
+        primaryjoin="Summary.session_id == Session.id",
+    )
 
     def __repr__(self) -> str:
         return f"<Summary(id={self.id}, status={self.review_status})>"
@@ -73,12 +76,18 @@ class ConsentRecord(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="consent_records",
-                          foreign_keys=[session_id],
-                          primaryjoin="ConsentRecord.session_id == Session.id")
-    patient = relationship("Patient", back_populates="consent_records",
-                          foreign_keys=[patient_id],
-                          primaryjoin="ConsentRecord.patient_id == Patient.id")
+    session = relationship(
+        "Session",
+        back_populates="consent_records",
+        foreign_keys=[session_id],
+        primaryjoin="ConsentRecord.session_id == Session.id",
+    )
+    patient = relationship(
+        "Patient",
+        back_populates="consent_records",
+        foreign_keys=[patient_id],
+        primaryjoin="ConsentRecord.patient_id == Patient.id",
+    )
 
     def __repr__(self) -> str:
         return f"<ConsentRecord(id={self.id}, type={self.consent_type}, granted={self.granted})>"
@@ -110,9 +119,12 @@ class RedFlagAlert(Base):
     resolved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # Relationships
-    session = relationship("Session", back_populates="red_flag_alerts",
-                          foreign_keys=[session_id],
-                          primaryjoin="RedFlagAlert.session_id == Session.id")
+    session = relationship(
+        "Session",
+        back_populates="red_flag_alerts",
+        foreign_keys=[session_id],
+        primaryjoin="RedFlagAlert.session_id == Session.id",
+    )
 
     def __repr__(self) -> str:
         return f"<RedFlagAlert(id={self.id}, type={self.alert_type}, severity={self.severity})>"
@@ -162,8 +174,12 @@ class AyushAssessment(Base):
     vikriti_dominant: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     # 10 Dashavidha Pariksha parameters
-    agni_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # tikshna, vishama, manda, sama
-    koshtha_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # mrudu, madhya, krura
+    agni_type: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )  # tikshna, vishama, manda, sama
+    koshtha_type: Mapped[str | None] = mapped_column(
+        String(20), nullable=True
+    )  # mrudu, madhya, krura
     sara: Mapped[str | None] = mapped_column(String(20), nullable=True)
     samhanana: Mapped[str | None] = mapped_column(String(20), nullable=True)
     pramana: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -180,9 +196,12 @@ class AyushAssessment(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="ayush_assessment_record",
-                          foreign_keys=[session_id],
-                          primaryjoin="AyushAssessment.session_id == Session.id")
+    session = relationship(
+        "Session",
+        back_populates="ayush_assessment_record",
+        foreign_keys=[session_id],
+        primaryjoin="AyushAssessment.session_id == Session.id",
+    )
 
     def __repr__(self) -> str:
         return f"<AyushAssessment(id={self.id}, prakriti={self.prakriti_dominant})>"

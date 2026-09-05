@@ -4,7 +4,6 @@ Dependencies for FastAPI routes (e.g. Current User extraction).
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
 
 from app.utils.security import verify_access_token
 
@@ -31,6 +30,7 @@ async def get_current_active_user(token_payload: dict = Depends(get_current_user
 
 async def require_role(role: str):
     """Dependency generator to require a specific role."""
+
     async def role_checker(user: dict = Depends(get_current_active_user)):
         user_role = user.get("role")
         if user_role != role and user_role != "super_admin":
@@ -39,4 +39,5 @@ async def require_role(role: str):
                 detail="Not enough permissions",
             )
         return user
+
     return role_checker

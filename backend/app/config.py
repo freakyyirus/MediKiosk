@@ -4,8 +4,8 @@ MediKiosk Application Configuration.
 Loads settings from environment variables / .env file using Pydantic Settings.
 """
 
-from functools import lru_cache
 import shutil
+from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

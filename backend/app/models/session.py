@@ -17,9 +17,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
-    patient_id: Mapped[int | None] = mapped_column(
-        BigInteger, nullable=True, index=True
-    )
+    patient_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     kiosk_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     department: Mapped[str] = mapped_column(
         String(50), default="allopathy"
@@ -39,7 +37,9 @@ class Session(Base):
     family_history: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     personal_history: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     review_of_systems: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    ayush_assessment: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # Dashavidha Pariksha
+    ayush_assessment: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True
+    )  # Dashavidha Pariksha
 
     # ---- AI Metadata ----
     asr_transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -61,23 +61,39 @@ class Session(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     # Relationships
-    patient = relationship("Patient", back_populates="sessions", lazy="selectin",
-                          foreign_keys=[patient_id],
-                          primaryjoin="Session.patient_id == Patient.id")
-    messages = relationship("SessionMessage", back_populates="session", lazy="selectin",
-                           cascade="all, delete-orphan")
-    documents = relationship("Document", back_populates="session", lazy="selectin",
-                            cascade="all, delete-orphan",
-                            foreign_keys="Document.session_id")
-    summaries = relationship("Summary", back_populates="session", lazy="selectin",
-                            cascade="all, delete-orphan")
-    consent_records = relationship("ConsentRecord", back_populates="session", lazy="selectin",
-                                  cascade="all, delete-orphan")
-    red_flag_alerts = relationship("RedFlagAlert", back_populates="session", lazy="selectin",
-                                  cascade="all, delete-orphan")
-    ayush_assessment_record = relationship("AyushAssessment", back_populates="session",
-                                          lazy="selectin", cascade="all, delete-orphan",
-                                          uselist=False)
+    patient = relationship(
+        "Patient",
+        back_populates="sessions",
+        lazy="selectin",
+        foreign_keys=[patient_id],
+        primaryjoin="Session.patient_id == Patient.id",
+    )
+    messages = relationship(
+        "SessionMessage", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+    )
+    documents = relationship(
+        "Document",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="Document.session_id",
+    )
+    summaries = relationship(
+        "Summary", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+    )
+    consent_records = relationship(
+        "ConsentRecord", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+    )
+    red_flag_alerts = relationship(
+        "RedFlagAlert", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+    )
+    ayush_assessment_record = relationship(
+        "AyushAssessment",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
     def __repr__(self) -> str:
         return f"<Session(id={self.id}, status={self.status}, department={self.department})>"
@@ -99,9 +115,12 @@ class SessionMessage(Base):
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
     # Relationships
-    session = relationship("Session", back_populates="messages",
-                          foreign_keys=[session_id],
-                          primaryjoin="SessionMessage.session_id == Session.id")
+    session = relationship(
+        "Session",
+        back_populates="messages",
+        foreign_keys=[session_id],
+        primaryjoin="SessionMessage.session_id == Session.id",
+    )
 
     def __repr__(self) -> str:
         return f"<SessionMessage(id={self.id}, type={self.message_type})>"

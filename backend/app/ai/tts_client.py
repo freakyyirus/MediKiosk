@@ -4,8 +4,8 @@ Bhashini TTS (Text-to-Speech) Client.
 Calls the Dhruva compute endpoint for inference to generate speech from text.
 """
 
-import base64
 import logging
+
 import httpx
 
 from app.config import get_settings
@@ -27,6 +27,7 @@ _TTS_SERVICE_IDS = {
     "en": "ai4bharat/indic-tts-coqui-misc-gpu--t4",
 }
 
+
 class BhashiniTTS:
     def __init__(self):
         self.auth_key = settings.bhashini_ulca_api_key or settings.bhashini_api_key
@@ -40,7 +41,9 @@ class BhashiniTTS:
             logger.warning("Bhashini TTS credentials missing.")
             return ""
 
-        service_id = _TTS_SERVICE_IDS.get(target_lang, "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4")
+        service_id = _TTS_SERVICE_IDS.get(
+            target_lang, "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4"
+        )
 
         payload = {
             "pipelineTasks": [
@@ -49,13 +52,11 @@ class BhashiniTTS:
                     "config": {
                         "language": {"sourceLanguage": target_lang},
                         "serviceId": service_id,
-                        "gender": gender
-                    }
+                        "gender": gender,
+                    },
                 }
             ],
-            "inputData": {
-                "input": [{"source": text}]
-            }
+            "inputData": {"input": [{"source": text}]},
         }
 
         try:
@@ -63,11 +64,11 @@ class BhashiniTTS:
                 resp = await client.post(
                     TTS_COMPUTE_URL,
                     headers={"Authorization": self.auth_key, "Content-Type": "application/json"},
-                    json=payload
+                    json=payload,
                 )
                 resp.raise_for_status()
                 data = resp.json()
-                
+
                 pipeline = data.get("pipelineResponse", [])
                 if pipeline and len(pipeline) > 0:
                     audio_list = pipeline[0].get("audio", [])

@@ -44,7 +44,13 @@ class SessionStateManager:
     async def set_session_state(self, session_id: int, state: dict[str, Any]) -> None:
         """Store active session state in Redis."""
         key = f"{self.SESSION_PREFIX}{session_id}"
-        await self.redis.hset(key, mapping={k: json.dumps(v) if isinstance(v, (dict, list)) else str(v) for k, v in state.items()})
+        await self.redis.hset(
+            key,
+            mapping={
+                k: json.dumps(v) if isinstance(v, (dict, list)) else str(v)
+                for k, v in state.items()
+            },
+        )
         await self.redis.expire(key, self.SESSION_TTL)
 
     async def get_session_state(self, session_id: int) -> dict[str, Any] | None:
@@ -84,7 +90,9 @@ class SessionStateManager:
         key = f"{self.ASR_CACHE_PREFIX}{audio_hash}"
         return await self.redis.get(key)
 
-    async def check_rate_limit(self, identifier: str, max_requests: int = 100, window: int = 60) -> bool:
+    async def check_rate_limit(
+        self, identifier: str, max_requests: int = 100, window: int = 60
+    ) -> bool:
         """Check if request is within rate limit. Returns True if allowed."""
         key = f"{self.RATE_LIMIT_PREFIX}{identifier}"
         current = await self.redis.get(key)
@@ -96,7 +104,9 @@ class SessionStateManager:
         await self.redis.incr(key)
         return True
 
-    async def add_to_queue(self, department: str, date: str, session_id: int, priority: float) -> None:
+    async def add_to_queue(
+        self, department: str, date: str, session_id: int, priority: float
+    ) -> None:
         """Add session to department queue (sorted set)."""
         key = f"{self.QUEUE_PREFIX}{department}:{date}"
         await self.redis.zadd(key, {str(session_id): priority})
