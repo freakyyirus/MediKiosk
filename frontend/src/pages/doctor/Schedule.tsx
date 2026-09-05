@@ -39,7 +39,7 @@ interface DaySchedule {
 
 const sidebarItems = [
   { label: 'Dashboard', path: '/doctor/dashboard' },
-  { label: 'My Patients', path: '/doctor/patients' },
+  { label: 'My Patients', path: '/doctor/queue' },
   { label: 'Schedule', path: '/doctor/schedule' },
   { label: 'Profile', path: '/doctor/profile' },
 ];
