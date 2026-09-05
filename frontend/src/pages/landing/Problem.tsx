@@ -81,35 +81,49 @@ export default function Problem() {
       </div>
 
       {/* fragment figure + quote marquee */}
-      <div className="px-6 lg:px-10">
-        <div className="relative max-w-[1200px] mx-auto overflow-hidden mb-6">
-          {/* marquee */}
-          <motion.div variants={fadeUp} className="relative py-4 overflow-hidden" aria-hidden="true">
-            <MarqueeRow quotes={QUOTES.slice(0, 5)} />
-            <MarqueeRow quotes={QUOTES.slice(5)} reverse />
-          </motion.div>
-        </div>
+      <div className="w-full overflow-hidden mb-12">
+        {/* marquee */}
+        <motion.div variants={fadeUp} className="relative py-4 overflow-hidden" aria-hidden="true">
+          <MarqueeRow quotes={QUOTES.slice(0, 5)} />
+          <MarqueeRow quotes={QUOTES.slice(5)} reverse />
+        </motion.div>
+      </div>
 
-        {/* fragmented guardian with quote */}
-        <div className="flex items-center gap-8 max-w-[1200px] mx-auto">
-          <div className="hidden lg:block w-[240px] shrink-0">
+      <div className="px-6 lg:px-10 relative z-10">
+        <motion.div 
+          variants={fadeUp}
+          className="mt-8 bg-gradient-to-br from-white to-primary-50 border border-primary-100 rounded-[32px] p-8 md:p-12 shadow-xl shadow-primary-900/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 md:gap-16 max-w-[1200px] mx-auto"
+        >
+          {/* Decorative background glows */}
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-300/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-accent-300/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
+
+          {/* Guardian Image */}
+          <div className="relative z-10 w-[200px] md:w-[260px] shrink-0">
             <Guardian state="fragmented" />
           </div>
-          <div className="text-center lg:text-left flex-1">
-            <motion.h3
-              variants={fadeUp}
-              className="text-xl sm:text-2xl md:text-3xl font-semibold text-[#1A1A2E] mb-4"
-              style={{ fontFamily: 'Inter' }}
-            >
-              Millions of stories, lost in fragmented paperwork.
-            </motion.h3>
-            <motion.p variants={fadeUp} className="text-lg text-[#6B7280] leading-relaxed max-w-xl mx-auto lg:mx-0">
+          
+          {/* Text Content */}
+          <div className="relative z-10 text-center md:text-left flex-1">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary-700 font-semibold text-sm mb-6 shadow-sm border border-primary-100">
+              <ClipboardX className="w-4 h-4 text-primary-500" />
+              The Reality
+            </div>
+            
+            <h3 className="text-[clamp(28px,4vw,42px)] font-bold text-[#1A1A2E] mb-5 leading-tight" style={{ fontFamily: 'Inter' }}>
+              Millions of stories, lost in <br className="hidden xl:block"/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500">
+                fragmented paperwork.
+              </span>
+            </h3>
+            
+            <p className="text-lg md:text-[20px] text-[#4B5563] leading-relaxed max-w-2xl mx-auto md:mx-0">
               A patient's real history lives across crumpled prescriptions, faded
-              reports, and misfiled folders — and the pressure of a crowded waiting
-              room means it rarely makes it into the doctor's hands in time.
-            </motion.p>
+              reports, and misfiled folders. The pressure of a crowded waiting
+              room means critical context rarely makes it to the doctor in time.
+            </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </Section>
   );
