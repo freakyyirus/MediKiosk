@@ -1,0 +1,32 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
+    "@types/qrcode": "^1.5.6",
+    "axios": "^1.20.0",
+    "framer-motion": "^13.2.0",
+    "gsap": "^3.15.0",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^1.40.0",
+    "qrcode": "^1.5.4",
+    "react-router-dom": "^7.18.3",
+    "zustand": "^5.0.15"
+  }
+}
