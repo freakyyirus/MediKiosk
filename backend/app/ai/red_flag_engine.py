@@ -1,7 +1,7 @@
 """
 Red Flag Detection Engine.
 Detects medical emergencies from transcribed text.
-Target: 30+ patterns for hackathon MVP.
+Target: 30+ patterns for the clinical MVP.
 """
 
 import re
