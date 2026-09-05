@@ -33,7 +33,7 @@ function ConfidenceBadge({ confidence }: { confidence: number }) {
 export default function Interview() {
   const navigate = useNavigate();
   const { isRecording, transcription, confidence, setRecording, setTranscription, resetAudio } = useAudioStore();
-  const { lowLiteracyMode, highContrast } = useUIStore();
+  const { language, lowLiteracyMode, highContrast } = useUIStore();
   const [currentQ, setCurrentQ] = useState(0);
   const [painLevel, setPainLevel] = useState(5);
   const [sending, setSending] = useState(false);
@@ -44,17 +44,40 @@ export default function Interview() {
   const progress = ((currentQ + 1) / INTERVIEW_SECTIONS.length) * 100;
   const isSeverityQ = question.id === 'hpi_severity';
 
-  const speakQuestion = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(question.question);
-      utterance.rate = 0.9;
-      utterance.lang = 'en-IN';
-      utterance.volume = 1;
-      speechSynthesis.speak(utterance);
-    }
+  const speakQuestion = useCallback(async () => {
     if (navigator.vibrate) navigator.vibrate(15);
-  }, [question]);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || '/api/v1'}/voice/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: question.question,
+          language: language.code || 'en'
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.audio) {
+          const snd = new Audio("data:audio/wav;base64," + data.audio);
+          snd.play();
+          return;
+        }
+      }
+      throw new Error("No audio returned");
+    } catch (e) {
+      console.warn("Bhashini TTS Failed, falling back to browser TTS:", e);
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(question.question);
+        utterance.rate = 0.9;
+        utterance.lang = language.code === 'hi' ? 'hi-IN' : 'en-IN';
+        utterance.volume = 1;
+        speechSynthesis.speak(utterance);
+      }
+    }
+  }, [question, language.code]);
 
   useEffect(() => {
     const t = setTimeout(speakQuestion, 600);
