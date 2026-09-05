@@ -3,6 +3,7 @@ import { Globe, Accessibility, HelpCircle, Shield, Heart, Sparkles, ArrowRight }
 import { useState } from 'react';
 import EmergencyFab from '../../components/EmergencyFab';
 import { useUIStore } from '../../stores';
+import Logo from '../../components/brand/Logo';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -14,10 +15,7 @@ export default function Home() {
       {/* Header */}
       <header className="w-full flex items-center justify-between px-10 py-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-400 rounded-xl flex items-center justify-center shadow-lg shadow-primary-600/25">
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-2xl font-bold text-primary-800 tracking-tight">MediKiosk</span>
+          <Logo size={46} variant="gradient" />
         </div>
 
         <div className="flex items-center gap-3">
