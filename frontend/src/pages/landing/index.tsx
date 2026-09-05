@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useReducedMotion } from 'framer-motion';
+import { motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import Preloader from './Preloader';
 import Nav from './Nav';
 import Hero from './Hero';
@@ -32,7 +32,7 @@ export default function LandingPage() {
   }, [reducedMotion]);
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       {loading && <Preloader onDone={() => setLoading(false)} />}
       <Nav />
       <main>
@@ -51,6 +51,6 @@ export default function LandingPage() {
         <FinalCta />
       </main>
       <Footer />
-    </>
+    </MotionConfig>
   );
 }
