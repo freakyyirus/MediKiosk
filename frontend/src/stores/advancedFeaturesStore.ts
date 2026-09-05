@@ -14,6 +14,7 @@
  */
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
+import { advancedApi } from '../api/client';
 
 // ─── Types ──────────────────────────────────────────────────────
 export interface BodyPartTap {
@@ -260,6 +261,7 @@ interface AdvancedFeaturesState {
   resolveEmergency: (id: string, notes: string) => Promise<void>;
   runCleanup: (dataType?: string) => Promise<{ deleted: number; entries: DeletionLogEntry[] }>;
   requestDataDeletion: (dataTypes: string[]) => Promise<{ requestId: string; status: string }>;
+  erasePatient: (patientId: number, reason: string) => Promise<{ ok: boolean; removed?: Record<string, number>; error?: string }>;
 }
 
 export const useAdvancedStore = create<AdvancedFeaturesState>((set, get) => ({
@@ -521,6 +523,26 @@ export const useAdvancedStore = create<AdvancedFeaturesState>((set, get) => ({
   runCleanup: async (dataType) => {
     const policies = get().policies;
     const targets = dataType ? policies.filter((p) => p.data_type === dataType) : policies;
+
+    // Prefer the real FastAPI retention runner; fall back to local simulation.
+    try {
+      const res = await advancedApi.retentionRun({ dry_run: false });
+      const rows = res.data?.retention?.rows_deleted ?? 0;
+      const actions = res.data?.retention?.actions?.length ?? 0;
+      const entry: DeletionLogEntry = {
+        id: guid(),
+        data_type: dataType || 'all',
+        deletion_reason: `${actions} policy job`,
+        deletion_method: 'hard',
+        deleted_at: new Date().toISOString(),
+      };
+      const entries = [entry, ...get().deletionLogs];
+      set({ deletionLogs: entries });
+      return { deleted: rows, entries };
+    } catch {
+      /* backend offline — simulate locally */
+    }
+
     let deleted = 0;
     targets.forEach((p) => {
       if (p.auto_delete_enabled) deleted += 1;
@@ -546,6 +568,18 @@ export const useAdvancedStore = create<AdvancedFeaturesState>((set, get) => ({
 
   requestDataDeletion: async (dataTypes) => {
     const requestId = `DEL-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+    try {
+      const sessionResp = await supabase.auth.getUser();
+      const pid = sessionResp.data.user?.id;
+      await advancedApi.requestErasure({
+        patient_id: Number(pid ?? 0) || 0,
+        data_types: dataTypes,
+        requested_by: 'patient-app',
+      });
+      return { requestId, status: 'pending_approval' };
+    } catch {
+      /* backend offline — record in Supabase */
+    }
     if (isLive) {
       await supabase.from('data_deletion_logs').insert({
         data_type: dataTypes.join(','),
@@ -554,5 +588,20 @@ export const useAdvancedStore = create<AdvancedFeaturesState>((set, get) => ({
       });
     }
     return { requestId, status: 'pending_approval' };
+  },
+
+  erasePatient: async (patientId, reason) => {
+    try {
+      const res = await advancedApi.erasePatient({
+        patient_id: patientId,
+        reason,
+        performed_by: 'hospital-doctor',
+        approval: true,
+      });
+      return { ok: Boolean(res.data?.patient_id), removed: res.data?.removed ?? {} };
+    } catch (err) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Erase failed';
+      return { ok: false, error: msg };
+    }
   },
 }));
