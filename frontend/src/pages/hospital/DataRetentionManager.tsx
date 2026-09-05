@@ -1,25 +1,28 @@
 import { useEffect, useState } from 'react';
-import { ShieldAlert, Trash2, History, Play, CheckCircle2, FileClock, XCircle } from 'lucide-react';
+import { ShieldAlert, Trash2, History, Play, CheckCircle2, FileClock, XCircle, Loader2 } from 'lucide-react';
 import { useAdvancedStore, type RetentionPolicy, type DeletionLogEntry } from '../../stores/advancedFeaturesStore';
 
 interface DeletionRequest {
   id: string;
+  patientId: number;
   patientName: string;
   dataTypes: string[];
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
   requestedBy?: string;
+  result?: string;
 }
 
 const mockRequests: DeletionRequest[] = [
-  { id: 'req-1', patientName: 'Demo Patient', dataTypes: ['voice_recording', 'session_temp'], requestedAt: new Date().toISOString(), status: 'pending', requestedBy: 'patient-app' },
-  { id: 'req-2', patientName: 'Sunita Devi', dataTypes: ['voice_recording'], requestedAt: new Date(Date.now() - 86400_000).toISOString(), status: 'approved', requestedBy: 'patient-app' },
+  { id: 'req-1', patientId: 1, patientName: 'Demo Patient', dataTypes: ['voice_recording', 'session_temp'], requestedAt: new Date().toISOString(), status: 'pending', requestedBy: 'patient-app' },
+  { id: 'req-2', patientId: 2, patientName: 'Sunita Devi', dataTypes: ['voice_recording'], requestedAt: new Date(Date.now() - 86400_000).toISOString(), status: 'approved', requestedBy: 'patient-app' },
 ];
 
 export default function DataRetentionManager() {
-  const { policies, deletionLogs, runCleanup, loadAll } = useAdvancedStore();
+  const { policies, deletionLogs, runCleanup, erasePatient, loadAll } = useAdvancedStore();
   const [requests, setRequests] = useState<DeletionRequest[]>(mockRequests);
   const [running, setRunning] = useState(false);
+  const [erasingId, setErasingId] = useState<string | null>(null);
   const [lastRun, setLastRun] = useState<string | null>(null);
   const [deletedCount, setDeletedCount] = useState(0);
 
@@ -45,9 +48,30 @@ export default function DataRetentionManager() {
     setRunning(false);
   };
 
-  const decideRequest = (id: string, status: 'approved' | 'rejected') => {
+  const decideRequest = async (id: string, status: 'approved' | 'rejected') => {
+  if (status === 'rejected') {
     setRequests((r) => r.map((x) => (x.id === id ? { ...x, status } : x)));
-  };
+    return;
+  }
+  const req = requests.find((x) => x.id === id);
+  if (!req) return;
+  setErasingId(id);
+  const res = await erasePatient(req.patientId, 'dpdpa_right_to_erasure');
+  setErasingId(null);
+  setRequests((r) =>
+    r.map((x) =>
+      x.id === id
+        ? {
+            ...x,
+            status: res.ok ? 'approved' : 'pending',
+            result: res.ok
+              ? `Erased: ${Object.entries(res.removed ?? {}).map(([k, v]) => `${k} ${v}`).join(', ')}`
+              : `Failed: ${res.error}`,
+          }
+        : x
+    )
+  );
+};
 
   const activePolicies = policies.filter((p) => p.auto_delete_enabled);
 
@@ -155,13 +179,28 @@ export default function DataRetentionManager() {
                 </div>
                 {r.status === 'pending' && (
                   <div className="flex gap-3">
-                    <button onClick={() => decideRequest(r.id, 'approved')} className="touch-target flex-1 bg-success-600 hover:bg-success-700 text-white font-bold rounded-xl py-2.5 flex items-center justify-center gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4" /> Approve & Delete
+                    <button
+                      onClick={() => decideRequest(r.id, 'approved')}
+                      disabled={erasingId === r.id}
+                      className="touch-target flex-1 bg-success-600 hover:bg-success-700 text-white font-bold rounded-xl py-2.5 flex items-center justify-center gap-2 text-sm disabled:opacity-60"
+                    >
+                      {erasingId === r.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Erasing…
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" /> Approve & Delete
+                        </>
+                      )}
                     </button>
                     <button onClick={() => decideRequest(r.id, 'rejected')} className="touch-target flex-1 bg-surface-200 hover:bg-surface-300 text-surface-700 font-bold rounded-xl py-2.5 flex items-center justify-center gap-2 text-sm">
                       <XCircle className="w-4 h-4" /> Reject
                     </button>
                   </div>
+                )}
+                {r.result && (
+                  <p className={`mt-3 text-xs font-semibold ${r.status === 'approved' ? 'text-success-700' : 'text-danger-600'}`}>{r.result}</p>
                 )}
               </div>
             ))}
