@@ -18,7 +18,7 @@ async def verify_abha(
 ):
     """
     Verify ABHA address via ABDM Sandbox.
-    Mock implementation for the hackathon.
+    Mock implementation for the pilot.
     """
     if not abha_address or "@" not in abha_address:
         raise HTTPException(status_code=400, detail="Invalid ABHA address format.")
