@@ -37,7 +37,7 @@ const STEPS = [
 
 export default function HowItWorks() {
   return (
-    <Section id="how" bg="#1A1A2E" className="py-[120px] overflow-hidden">
+    <Section id="how" bg="#1A1A2E" className="py-20 md:py-28 overflow-hidden">
       <div className="absolute inset-0 circuit-lines opacity-[0.08] pointer-events-none" />
       <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-16">
