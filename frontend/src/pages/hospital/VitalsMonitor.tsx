@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Activity, HeartPulse, BellRing, ShieldCheck } from 'lucide-react';
-import { useAdvancedStore } from '../../stores/advancedFeaturesStore';
+import Logo from '../../components/brand/Logo';
 import VitalsPanel, { type AbnormalVital } from '../../components/advanced/VitalsPanel';
 import EarlyWarningAlarm from '../../components/advanced/EarlyWarningAlarm';
+import { useAdvancedStore } from '../../stores/advancedFeaturesStore';
 
 export default function VitalsMonitor() {
   const { vitals, emergencyAlerts, acknowledgeEmergency, resolveEmergency, loadAll } = useAdvancedStore();
@@ -59,9 +60,7 @@ export default function VitalsMonitor() {
       <header className="bg-white border-b border-surface-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-primary-600 flex items-center justify-center">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
+            <Logo size={44} variant="gradient" showWordmark={false} />
             <div>
               <h1 className="text-xl font-black tracking-tight">Vitals & Early Warning Station</h1>
               <p className="text-sm text-surface-400 font-medium">Feature 4 + 5 · live triage monitor</p>
