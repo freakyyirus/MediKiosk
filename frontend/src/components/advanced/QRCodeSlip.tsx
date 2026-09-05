@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import QRCode from 'qrcode';
 import { useSessionStore } from '../../stores';
+import Logo from '../brand/Logo';
 import { useAdvancedStore } from '../../stores/advancedFeaturesStore';
 
 export interface QrSlipData {
@@ -60,9 +61,7 @@ export default function QRCodeSlip({ data }: { data: QrSlipData }) {
         {/* Brand strip */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white font-black text-lg">
-              M
-            </div>
+            <Logo size={40} variant="gradient" showWordmark={false} />
             <div>
               <p className="font-black text-surface-900 leading-none">MediKiosk</p>
               <p className="text-xs text-surface-400 font-semibold uppercase tracking-wider mt-1">OPD Smart Slip</p>
