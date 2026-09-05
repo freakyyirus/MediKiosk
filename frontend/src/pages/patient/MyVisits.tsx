@@ -9,12 +9,14 @@ import { supabase } from '../../lib/supabase';
 import { useAuthStore } from '../../stores';
 import { Sidebar, Header, Card, Button, LoadingSpinner, EmptyState, Badge } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
+import { useT } from '../../lib/i18n';
 
 interface VisitRecord {
   id: number;
   hospital_name: string;
   department_name: string;
   doctor_name: string;
+  doctor_id: number | null;
   visit_date: string;
   visit_time: string;
   token_number: string;
@@ -37,7 +39,7 @@ const NAV_ITEMS = [
   { icon: <ClipboardList size={20} />, label: 'Dashboard', path: '/patient/dashboard' },
   { icon: <CalendarClock size={20} />, label: 'Book OPD', path: '/patient/book-opd' },
   { icon: <ClipboardList size={20} />, label: 'My Visits', path: '/patient/visits' },
-  { icon: <CalendarCheck size={20} />, label: 'Health Timeline', path: '/patient/timeline' },
+  { icon: <CalendarCheck size={20} />, label: 'Health Timeline', path: '/patient/health-timeline' },
   { icon: <FileText size={20} />, label: 'Documents', path: '/patient/documents' },
   { icon: <CalendarClock size={20} />, label: 'Profile', path: '/patient/profile' },
 ];
@@ -62,6 +64,7 @@ const fadeUp = {
 export default function MyVisits() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const t = useT();
   const addToast = useToastStore(s => s.addToast);
 
   const [visits, setVisits] = useState<VisitRecord[]>([]);
@@ -105,9 +108,9 @@ export default function MyVisits() {
   const cancelledVisits = visits.filter(v => v.status === 'cancelled');
 
   const tabs: { key: TabType; label: string; count: number }[] = [
-    { key: 'upcoming', label: 'Upcoming', count: upcomingVisits.length },
-    { key: 'past', label: 'Past', count: pastVisits.length },
-    { key: 'cancelled', label: 'Cancelled', count: cancelledVisits.length },
+    { key: 'upcoming', label: t('upcoming'), count: upcomingVisits.length },
+    { key: 'past', label: t('past'), count: pastVisits.length },
+    { key: 'cancelled', label: t('cancelled'), count: cancelledVisits.length },
   ];
 
   const activeVisits = activeTab === 'upcoming' ? upcomingVisits : activeTab === 'past' ? pastVisits : cancelledVisits;
@@ -115,8 +118,30 @@ export default function MyVisits() {
   const handleCancel = async (visitId: number) => {
     setCancellingId(visitId);
     try {
+      const visit = visits.find(v => v.id === visitId);
       const { error } = await supabase.from('visits').update({ status: 'cancelled' }).eq('id', visitId);
       if (error) throw error;
+
+      if (visit?.doctor_id && visit.visit_date && visit.visit_time) {
+        try {
+          const { data: slot } = await supabase
+            .from('opd_slots')
+            .select('id, current_tokens')
+            .eq('doctor_id', visit.doctor_id)
+            .eq('slot_date', visit.visit_date)
+            .eq('slot_time', visit.visit_time)
+            .single();
+          if (slot) {
+            await supabase
+              .from('opd_slots')
+              .update({ current_tokens: Math.max(0, (slot.current_tokens || 0) - 1) })
+              .eq('id', slot.id);
+          }
+        } catch (slotErr) {
+          console.error('Failed to release slot token:', slotErr);
+        }
+      }
+
       setVisits(prev => prev.map(v => v.id === visitId ? { ...v, status: 'cancelled' } : v));
       addToast('success', 'Visit cancelled successfully');
     } catch {
@@ -270,7 +295,7 @@ export default function MyVisits() {
                         onClick={(e) => { e.stopPropagation(); handleCancel(visit.id); }}
                         icon={<X size={14} />}
                       >
-                        Cancel Visit
+                        {t('cancelVisit')}
                       </Button>
                     </div>
                   )}
@@ -294,7 +319,7 @@ export default function MyVisits() {
       />
       <div className="lg:ml-64 min-h-screen flex flex-col">
         <Header
-          title="My Visits"
+          title={t('myVisitsTitle')}
           subtitle="View and manage your appointments"
           onMenuToggle={() => {}}
           user={{ name: 'Patient', role: 'Patient' }}
@@ -326,15 +351,8 @@ export default function MyVisits() {
           ) : activeVisits.length === 0 ? (
             <EmptyState
               icon={activeTab === 'upcoming' ? <CalendarClock size={24} /> : activeTab === 'past' ? <CalendarCheck size={24} /> : <CalendarX size={24} />}
-              title={`No ${activeTab} visits`}
-              description={
-                activeTab === 'upcoming'
-                  ? "You don't have any upcoming appointments. Book one now!"
-                  : activeTab === 'past'
-                  ? "Your past visits will appear here."
-                  : "No cancelled visits."
-              }
-              action={activeTab === 'upcoming' ? { label: 'Book OPD', onClick: () => navigate('/patient/book-opd') } : undefined}
+              title={activeTab === 'upcoming' ? t('noUpcoming') : activeTab === 'past' ? t('noPast') : t('noCancelled')}
+              action={activeTab === 'upcoming' ? { label: t('bookOpd'), onClick: () => navigate('/patient/book-opd') } : undefined}
             />
           ) : (
             <div className="space-y-4">
