@@ -6,13 +6,13 @@ export function useSafeReducedMotion() {
   return useReducedMotion();
 }
 
-/* Standard section entrance: fade in + translateY(30px) with staggered siblings */
+/* Standard section entrance: fade in + translateY(20px) with staggered siblings */
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 20 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] },
+    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
   },
 };
 
@@ -22,7 +22,7 @@ export const staggerParent = (delay = 0.1): Variants => ({
 });
 
 /** Small uppercase section label */
-export function SectionLabel({ children, color = '#6B4EE6', className = '' }: { children: ReactNode; color?: string; className?: string }) {
+export function SectionLabel({ children, color = '#4F46E5', className = '' }: { children: ReactNode; color?: string; className?: string }) {
   return (
     <motion.div
       variants={fadeUp}
