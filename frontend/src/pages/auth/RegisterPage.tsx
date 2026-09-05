@@ -7,12 +7,13 @@ import {
 } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import type { UserRole } from '../../stores/authStore';
-import { isClerkConfigured, waitForClerk } from '../../lib/clerk';
+import { isClerkConfigured } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
 import Select from '../../components/shared/Select';
 import Logo from '../../components/brand/Logo';
+import { useSignUp } from '@clerk/clerk-react';
 
 const steps = ['Account', 'Profile', 'Confirm'];
 
@@ -29,8 +30,27 @@ interface ClerkSignUpLike {
   attemptEmailAddressVerification: (p: { code: string }) => Promise<{ status: string; createdSessionId?: string | null }>;
 }
 
-const getClerkAuth = () =>
-  window.Clerk as unknown as { signUp?: ClerkSignUpLike; setActive?: (p: { session?: string | null }) => Promise<unknown> } | undefined;
+interface ClerkSetActive {
+  (p: { session: string | null }): Promise<unknown>;
+}
+
+/**
+ * Bridges the React provider's `useSignUp()` hook into a mutable ref so the
+ * form (which is also used in the no-Clerk fallback mode) can read the ready
+ * instance without polling `window.Clerk`. Only mounted when Clerk is on.
+ */
+const clerkCtxRef: { current: { signUp?: ClerkSignUpLike; setActive?: ClerkSetActive } } = {
+  current: {},
+};
+
+function ClerkSignUpForwarder() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  useEffect(() => {
+    clerkCtxRef.current.signUp = isLoaded && signUp ? (signUp as unknown as ClerkSignUpLike) : undefined;
+    clerkCtxRef.current.setActive = isLoaded && setActive ? (setActive as unknown as ClerkSetActive) : undefined;
+  }, [isLoaded, signUp, setActive]);
+  return null;
+}
 
 const roleOptions: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
   { value: 'patient', label: 'Patient', icon: <User size={24} />, desc: 'Access health records & appointments' },
@@ -135,13 +155,13 @@ export default function RegisterPage() {
   const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
   const completeAuth = async (sessionId?: string | null) => {
-    const clerk = getClerkAuth();
-    if (clerk?.setActive && sessionId) {
-      await clerk.setActive({ session: sessionId });
+    const clerkSetActive = clerkCtxRef.current.setActive;
+    if (clerkSetActive && sessionId) {
+      await clerkSetActive({ session: sessionId });
     }
     await useAuthStore.getState().fetchUser();
     const { user } = useAuthStore.getState() as unknown as { user?: { role?: string } | null };
-    if (user?.role) navigate(getRoleRedirect(user.role as UserRole));
+    if (user?.role) navigate(getRoleRedirect(user.role as UserRole), { replace: true });
   };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
@@ -149,13 +169,12 @@ export default function RegisterPage() {
     if (!code.trim()) return;
     setVerifyingCode(true);
     try {
-      if (!(await waitForClerk())) {
+      const signUp = clerkCtxRef.current.signUp;
+      if (!signUp) {
         addToast('error', 'Clerk is still loading — please wait a moment and try again.');
         return;
       }
-      const clerk = getClerkAuth();
-      if (!clerk?.signUp) throw new Error('Clerk sign-up unavailable');
-      const res = await clerk.signUp.attemptEmailAddressVerification({ code: code.trim() });
+      const res = await signUp.attemptEmailAddressVerification({ code: code.trim() });
       if (res.status === 'complete') {
         addToast('success', 'Account verified successfully!');
         await completeAuth(res.createdSessionId);
@@ -176,13 +195,12 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       if (clerkEnabled) {
-        if (!(await waitForClerk())) {
+        const signUp = clerkCtxRef.current.signUp;
+        if (!signUp) {
           addToast('error', 'Clerk is still loading — please wait a moment and try again.');
           return;
         }
-        const clerk = getClerkAuth();
-        if (!clerk?.signUp) throw new Error('Clerk sign-up is not loaded yet — refresh and retry.');
-        const result = await clerk.signUp.create({
+        const result = await signUp.create({
           emailAddress: form.email,
           password: form.password,
           firstName: form.full_name || form.email,
@@ -193,7 +211,7 @@ export default function RegisterPage() {
           addToast('success', 'Account created successfully!');
           await completeAuth(result.createdSessionId);
         } else {
-          await clerk.signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+          await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
           setAwaitingCode(true);
           addToast('info', 'We emailed you a 6-digit verification code.');
         }
@@ -231,7 +249,7 @@ export default function RegisterPage() {
       addToast('success', 'Account created successfully!');
       const { user } = useAuthStore.getState();
       if (user?.role) {
-        navigate(getRoleRedirect(user.role));
+        navigate(getRoleRedirect(user.role), { replace: true });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
@@ -241,6 +259,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-surface-50 flex items-center justify-center p-4 sm:p-6">
+      {clerkEnabled && <ClerkSignUpForwarder />}
       <div className="w-full max-w-2xl">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
