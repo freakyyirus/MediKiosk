@@ -34,13 +34,14 @@ function RadarChart() {
       {/* axes + labels */}
       {axes.map((a) => {
         const [x, y] = pt(a.deg, 1);
-        const [lx, ly] = pt(a.deg, 1.18);
-        const [sx, sy] = pt(a.deg, 1.3);
+        const [lx, ly] = pt(a.deg, 1.22);
         return (
           <g key={a.deg}>
             <line x1={cx} y1={cy} x2={x} y2={y} stroke="#6B4EE6" strokeOpacity="0.25" />
-            <text x={lx} y={ly} textAnchor="middle" fontSize="14" fontWeight="700" fill="#1A1A2E">{a.label}</text>
-            <text x={sx} y={sy} textAnchor="middle" fontSize="11" fill="#9CA3AF">{a.sans}</text>
+            <text x={lx} y={ly} textAnchor="middle" fill="#1A1A2E">
+              <tspan x={lx} fontSize="14" fontWeight="700">{a.label}</tspan>
+              <tspan x={lx} dy="1.2em" fontSize="12" fill="#9CA3AF" fontWeight="500">{a.sans}</tspan>
+            </text>
           </g>
         );
       })}
