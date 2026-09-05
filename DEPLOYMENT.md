@@ -49,7 +49,7 @@ Everything below is currently **uncommitted** working-tree state, so commit and 
 creating any deployment:
 
 ```bash
-cd /Users/yuvraj/Study/DEV/SIH/Medikiosk
+cd <path-to-repo>          # e.g. ~/MediKiosk
 git add -A
 git status            # eyeball: no .env, no dist/, no node_modules
 git commit -m "Deploy: VITE_API_URL support, SPA rewrites, hero polish"
