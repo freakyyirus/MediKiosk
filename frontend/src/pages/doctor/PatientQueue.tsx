@@ -30,7 +30,7 @@ interface QueueEntry {
 
 const sidebarItems = [
   { label: 'Dashboard', path: '/doctor/dashboard' },
-  { label: 'My Patients', path: '/doctor/patients' },
+  { label: 'My Patients', path: '/doctor/queue' },
   { label: 'Schedule', path: '/doctor/schedule' },
   { label: 'Profile', path: '/doctor/profile' },
 ];
@@ -188,7 +188,7 @@ export default function PatientQueue() {
             <User size={20} />,
           badge: item.label === 'My Patients' ? waitingCount : undefined,
         }))}
-        currentPath="/doctor/patients"
+        currentPath="/doctor/queue"
         onNavigate={navigate}
         onLogout={handleLogout}
         user={userForSidebar}
