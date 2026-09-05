@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Sparkles, Menu, X } from 'lucide-react';
 import Logo from '../../components/brand/Logo';
 import { LANGS, useLangStore, useLandingT } from './i18n';
+import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 
 const LINKS = [
   { href: '#product', key: 'product' },
@@ -76,7 +77,7 @@ export default function Nav() {
         }`}
         style={{ height: 72 }}
       >
-        <div className="h-full max-w-[1400px] mx-auto px-6 flex items-center justify-between">
+        <div className="h-full w-full mx-auto px-4 sm:px-6 flex items-center justify-between">
           <a href="#top" className="flex items-center" onClick={(e) => { e.preventDefault(); go('#top'); }}>
             <Logo size={34} variant="gradient" />
           </a>
@@ -136,21 +137,35 @@ export default function Nav() {
               </AnimatePresence>
             </div>
 
-            {/* Sign In */}
-            <button
-              onClick={() => navigate('/login')}
-              className={`hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-surface-200 bg-white hover:border-primary-400 text-[#374151] hover:text-indigo-600 font-semibold transition-colors text-[15px] ${FOCUS}`}
-            >
-              {t.signin}
-            </button>
-
-            {/* Sign Up */}
-            <button
-              onClick={() => navigate('/register')}
-              className={`hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-all text-[15px] hover:brightness-110 ${FOCUS}`}
-            >
-              {t.signup}
-            </button>
+            {/* Auth Buttons */}
+            {!useAuthStore.getState().isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className={`hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-surface-200 bg-white hover:border-primary-400 text-[#374151] hover:text-indigo-600 font-semibold transition-colors text-[15px] ${FOCUS}`}
+                >
+                  {t.signin}
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className={`hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-all text-[15px] hover:brightness-110 ${FOCUS}`}
+                >
+                  {t.signup}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  const role = useAuthStore.getState().user?.role;
+                  if (role) {
+                    navigate(getRoleRedirect(role));
+                  }
+                }}
+                className={`hidden md:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold transition-all text-[15px] hover:brightness-110 ${FOCUS}`}
+              >
+                Dashboard
+              </button>
+            )}
 
             {/* Mobile menu trigger */}
             <button
