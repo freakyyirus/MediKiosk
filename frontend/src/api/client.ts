@@ -31,11 +31,29 @@ api.interceptors.request.use(
 // Response interceptor — handle errors globally
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const config = error?.config as { method?: string; _retried?: boolean } | undefined;
+
+    // Idempotent GET requests are safe to retry once on network failure / 5xx.
+    if (config && !config._retried && (config.method || '').toLowerCase() === 'get') {
+      const status = error.response?.status as number | undefined;
+      if (status === undefined || (status >= 500 && status <= 599)) {
+        config._retried = true;
+        return api(error.config);
+      }
+    }
+
     if (error.response) {
       const { status, data } = error.response;
       if (status === 401) {
         sessionStorage.removeItem('access_token');
+        // Invalidate the auth store so route guards redirect to /login.
+        try {
+          const { useAuthStore } = await import('../stores/authStore');
+          useAuthStore.setState({ user: null, profile: null, isAuthenticated: false });
+        } catch {
+          // Store unavailable; token is cleared, guard will flush on next check.
+        }
       }
       console.error(`API Error [${status}]:`, data?.error?.message || 'Unknown error');
     } else if (error.request) {
@@ -44,6 +62,20 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Friendly, consistent error message extraction for UI toast/alert surfaces.
+export function getErrorMessage(
+  err: unknown,
+  fallback = 'Something went wrong. Please try again.'
+): string {
+  if (axios.isAxiosError(err)) {
+    if (!err.response) return 'Network error. Check your connection and try again.';
+    const data = err.response.data as { error?: { message?: string }; message?: string } | undefined;
+    return data?.error?.message || data?.message || `Request failed (${err.response.status})`;
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
 
 export default api;
 
