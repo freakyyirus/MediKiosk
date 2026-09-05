@@ -18,7 +18,9 @@ import FinalCta from './FinalCta';
 import Footer from './Footer';
 
 export default function LandingPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    return !sessionStorage.getItem('hasSeenPreloader');
+  });
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -31,9 +33,14 @@ export default function LandingPage() {
     if (reducedMotion) setLoading(false);
   }, [reducedMotion]);
 
+  const handlePreloaderDone = () => {
+    sessionStorage.setItem('hasSeenPreloader', 'true');
+    setLoading(false);
+  };
+
   return (
     <MotionConfig reducedMotion="user">
-      {loading && <Preloader onDone={() => setLoading(false)} />}
+      {loading && <Preloader onDone={handlePreloaderDone} />}
       <Nav />
       <main>
         <Hero />
