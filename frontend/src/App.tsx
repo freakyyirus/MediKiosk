@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoadingSpinner from './components/shared/LoadingSpinner';
-import { useAuthStore } from './stores/authStore';
+import { useAuthStore, getRoleRedirect } from './stores/authStore';
 import Toast from './components/shared/Toast';
 
 // Kiosk Pages (eager)
@@ -16,8 +16,6 @@ import KioskDocumentUpload from './pages/kiosk/DocumentUpload';
 import KioskSummary from './pages/kiosk/Summary';
 import KioskAyush from './pages/kiosk/AyushAssessment';
 import KioskEmergency from './pages/kiosk/EmergencyDemo';
-import PhysicianDashboard from './pages/physician/Dashboard';
-import AdminDashboard from './pages/admin/Dashboard';
 
 // Lazy Auth Pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
@@ -31,6 +29,7 @@ const MyVisits = React.lazy(() => import('./pages/patient/MyVisits'));
 const HealthTimeline = React.lazy(() => import('./pages/patient/HealthTimeline'));
 const DocumentsVault = React.lazy(() => import('./pages/patient/DocumentsVault'));
 const PatientProfile = React.lazy(() => import('./pages/patient/Profile'));
+const PatientKiosk = React.lazy(() => import('./pages/patient/KioskMode'));
 
 // Lazy Hospital Admin Portal
 const HospitalDashboard = React.lazy(() => import('./pages/hospital/Dashboard'));
@@ -49,6 +48,10 @@ const PatientCard = React.lazy(() => import('./pages/doctor/PatientCard'));
 const DoctorSchedule = React.lazy(() => import('./pages/doctor/Schedule'));
 const DoctorQrScan = React.lazy(() => import('./pages/doctor/QrScan'));
 const DoctorOcrReview = React.lazy(() => import('./pages/doctor/OcrReview'));
+
+// Lazy Legacy Dashboards (orphaned from the RBAC system; guarded below)
+const PhysicianDashboard = React.lazy(() => import('./pages/physician/Dashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
 
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>}>
@@ -78,6 +81,26 @@ function ProtectedRoute({ allowedRoles, children }: { allowedRoles?: string[]; c
   return <>{children}</>;
 }
 
+// "/" redirects authenticated users straight to their role dashboard
+// instead of the landing/marketing page (and its Preloader).
+function HomeRedirect() {
+  const { user, isAuthenticated, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-50">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated && user) {
+    return <Navigate to={getRoleRedirect(user.role)} replace />;
+  }
+
+  return <LandingPage />;
+}
+
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
 
@@ -89,8 +112,8 @@ export default function App() {
     <div className="min-h-screen bg-surface-50 text-surface-900 font-sans">
       <Toast />
       <Routes>
-        {/* Landing */}
-        <Route path="/" element={<LandingPage />} />
+        {/* Landing / home; authenticated users go straight to their dashboard */}
+        <Route path="/" element={<HomeRedirect />} />
 
         {/* Auth Routes */}
         <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
@@ -144,6 +167,12 @@ export default function App() {
         <Route path="/patient/profile" element={
           <ProtectedRoute allowedRoles={['patient']}>
             <SuspenseWrapper><PatientProfile /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
+        {/* Authenticated patient kiosk (voice-first, auto-timeout) */}
+        <Route path="/patient/kiosk" element={
+          <ProtectedRoute allowedRoles={['patient']}>
+            <SuspenseWrapper><PatientKiosk /></SuspenseWrapper>
           </ProtectedRoute>
         } />
 
@@ -231,11 +260,19 @@ export default function App() {
           </ProtectedRoute>
         } />
 
-        {/* Physician Dashboard (legacy) */}
-        <Route path="/physician/*" element={<PhysicianDashboard />} />
+        {/* Legacy /physician/* — no such role exists in the auth system; block everyone */}
+        <Route path="/physician/*" element={
+          <ProtectedRoute allowedRoles={['physician']}>
+            <SuspenseWrapper><PhysicianDashboard /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
 
-        {/* Admin Dashboard (legacy) */}
-        <Route path="/admin/*" element={<AdminDashboard />} />
+        {/* Legacy /admin/* — no such role exists in the auth system; block everyone */}
+        <Route path="/admin/*" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <SuspenseWrapper><AdminDashboard /></SuspenseWrapper>
+          </ProtectedRoute>
+        } />
 
         {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
