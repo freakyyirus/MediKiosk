@@ -105,7 +105,7 @@ function HeroSection() {
         ))}
       </div>
 
-      <div className="relative z-10 max-w-[1200px] mx-auto w-full px-4 sm:px-6 lg:px-10 pt-24 sm:pt-28 pb-12 sm:pb-16 grid md:grid-cols-[1.2fr_1fr] items-center gap-8 md:gap-12">
+      <div className="relative z-10 w-full mx-auto px-4 sm:px-8 lg:px-12 pt-24 sm:pt-28 pb-12 sm:pb-16 grid md:grid-cols-[1.2fr_1fr] items-center gap-8 md:gap-12">
         {/* LEFT */}
         <div className="order-2 md:order-1 text-center md:text-left">
           <motion.h1
