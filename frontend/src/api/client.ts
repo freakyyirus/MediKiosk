@@ -4,8 +4,12 @@
 
 import axios from 'axios';
 
+// In production (Vercel) point /api at the Railway backend via VITE_API_URL.
+// In dev, keep the relative path so the Vite proxy (localhost:8000) handles it.
+const API_URL = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/+$/, '');
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_URL,
   timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
@@ -172,7 +176,7 @@ export const advancedApi = {
     has_breathlessness?: boolean;
     department_id?: string | null;
   }) =>
-    api.post<{ priority_score: number; priority_class: 'critical' | 'high' | 'normal' | 'low'; top_factors: string[] }>(
+    api.post<{ priority_score: number; priority_class: 'critical' | 'high' | 'normal' | 'low'; confidence: number; top_factors: string[] }>(
       '/advanced/ml/predict-priority',
       data
     ),
@@ -205,16 +209,69 @@ export const advancedApi = {
       data
     ),
 
-  // F3: Generate QR slip payload
-  qrCreate: (data: { visitId?: string; patientId?: string; payload: string }) =>
-    api.post<{ qr_code_data: string; qr_code_image_url: string; slip_id: string; expires_in: string; is_active: boolean }>(
-      '/advanced/qr/create',
-      data
-    ),
+  // F3: Generate QR slip payload (signed server-side)
+  qrCreate: (data: {
+    token_number: string;
+    patient_name?: string;
+    department?: string;
+    chief_complaint?: string;
+    priority?: number;
+  }) =>
+    api.post<{
+      qr_code_data: string;
+      qr_code_image_url: string | null;
+      slip_id: string;
+      expires_at: string;
+      is_active: boolean;
+    }>('/advanced/qr/create', data),
 
   // F6: Retention policy catalogue from the backend
   retentionPolicies: () =>
     api.get<{ policies: { data_type: string; retention_days: number; auto_delete_enabled: boolean; description?: string }[] }>(
       '/advanced/retention/policies'
     ),
+
+  // F6: Run the DPDPA retention cleanup (real delete, audited)
+  retentionRun: (opts: { dry_run?: boolean } = {}) =>
+    api.post<{ dry_run: boolean; retention: { actions: unknown[]; rows_deleted: number; files_removed: number }; audited: boolean }>(
+      '/advanced/retention/run',
+      opts
+    ),
+
+  // F6: True hard-delete (DPDPA right-to-erasure, doctor-approved)
+  erasePatient: (data: { patient_id: number; reason: string; performed_by?: string; approval?: boolean }) =>
+    api.delete<{ status: string; patient_id: number; removed: Record<string, number>; audited: boolean }>(
+      '/advanced/retention/erase-patient',
+      { data: { ...data, approval: data.approval ?? true } }
+    ),
+
+  // F6: Patient-initiated erasure request (needs approval)
+  requestErasure: (data: { patient_id: number; data_types?: string[]; requested_by?: string }) =>
+    api.post<{ request_id: string; patient_id: number; status: string }>(
+      '/advanced/retention/request-erasure',
+      data
+    ),
+
+  // F6: List pending erasure requests
+  retentionRequests: () =>
+    api.get<{ requests: { patient_id: number; requested_by: string; data_types: string[]; requested_at: string; status: string }[] }>(
+      '/advanced/retention/requests'
+    ),
+
+  // ML: training-store + retrain-on-real-data endpoints
+  mlDataset: () =>
+    api.get<{ real_samples: number; real_csv: string; model_traits: unknown; note: string }>(
+      '/advanced/ml/dataset'
+    ),
+  mlAddSamples: (samples: Record<string, unknown>[]) =>
+    api.post<{ accepted: number; rejected: number; total: number }>(
+      '/advanced/ml/samples',
+      { samples }
+    ),
+  mlTrain: (opts: { min_real?: number; backfill_synthetic?: number; holdout?: number } = {}) =>
+    api.post<{
+      trained_on: { real: number; synthetic: number };
+      holdout_metrics: { accuracy: number; confusion_matrix: number[][]; per_class: Record<string, Record<string, number>> };
+      artifact: string;
+    }>('/advanced/ml/train', opts),
 };
