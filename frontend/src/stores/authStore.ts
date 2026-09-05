@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { isClerkConfigured } from '../lib/clerk';
+import { isClerkConfigured, getClerkApi } from '../lib/clerk';
 import { mockCurrentUser, mockHospitalAdmin, mockDoctor } from '../lib/mockData';
 import type { User } from '@supabase/supabase-js';
 
@@ -117,7 +117,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email: string, password: string) => {
     if (isClerkConfigured()) {
-      const clerk = window.Clerk as unknown as { signIn?: { create?: (p: { identifier: string; password: string }) => Promise<{ status?: string }> } } | undefined;
+      const clerk = getClerkApi() as unknown as { signIn?: { create?: (p: { identifier: string; password: string }) => Promise<{ status?: string }> } } | undefined;
       const signIn = clerk?.signIn;
       if (signIn?.create) {
         try {
