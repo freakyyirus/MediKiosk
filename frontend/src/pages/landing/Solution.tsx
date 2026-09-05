@@ -5,7 +5,7 @@ import { Section, SectionLabel, fadeUp } from './motion';
 const FEATURES = [
   {
     icon: Mic,
-    gradient: 'linear-gradient(135deg,#6B4EE6,#9B87F5)',
+    gradient: 'linear-gradient(135deg,#6366F1,#4F46E5)',
     title: 'Speak Naturally',
     body: 'Patients describe symptoms in Hindi, Tamil, Bengali, or any of 12 languages. Our AI asks gentle follow-ups using the SOCRATES framework — just like a trained nurse.',
     tag: 'Bhashini ASR Powered',
@@ -13,7 +13,7 @@ const FEATURES = [
   },
   {
     icon: Camera,
-    gradient: 'linear-gradient(135deg,#FF8C69,#FFB4A2)',
+    gradient: 'linear-gradient(135deg,#F97316,#FB923C)',
     title: 'Scan Everything',
     body: 'Old prescriptions, lab reports, discharge summaries — just hold them up to the camera. Auto-crop, perspective correction, and medical-grade OCR extract medications and diagnoses instantly.',
     tag: 'Tesseract + EasyOCR',
@@ -21,7 +21,7 @@ const FEATURES = [
   },
   {
     icon: ClipboardList,
-    gradient: 'linear-gradient(135deg,#2DD4BF,#5EEAD4)',
+    gradient: 'linear-gradient(135deg,#14B8A6,#2DD4BF)',
     title: 'Instant Summary',
     body: 'Before the patient enters the room, the doctor sees a structured bilingual summary. Chief complaint, history, allergies, medications, red flags — all organized and ready.',
     tag: 'Gemini 1.5 Pro + FHIR R4',
@@ -31,29 +31,27 @@ const FEATURES = [
 
 export default function Solution() {
   return (
-    <Section id="product" bg="#F8F7FF" className="py-[120px]">
+    <Section id="product" bg="#F8F7FF" className="py-20 md:py-28">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-16">
-          <SectionLabel className="mb-4" color="#6B4EE6">The Solution</SectionLabel>
+          <SectionLabel className="mb-4" color="#4F46E5">The Solution</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#1A1A2E] max-w-[680px] mx-auto"
+            className="text-[clamp(28px,4vw,40px)] leading-tight font-semibold text-[#111827] max-w-[680px] mx-auto"
             style={{ fontFamily: 'Inter' }}
           >
             A compassionate digital nurse at every kiosk.
           </motion.h2>
         </div>
 
-        {/* feature cards with 3D tilt */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {/* feature cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {FEATURES.map((f, i) => (
-            <motion.div
+            <motion.article
               key={i}
               variants={fadeUp}
-              whileHover={{ rotateX: 4, rotateY: -6, translateY: -6 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-              className="bg-white rounded-2xl shadow-lg shadow-surface-900/5 hover:shadow-2xl overflow-hidden will-change-transform"
-              style={{ perspective: 900, transformStyle: 'preserve-3d' }}
+              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white rounded-2xl shadow-lg shadow-surface-900/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden will-change-transform flex flex-col"
             >
               {/* gradient header */}
               <div className="h-24 flex items-center justify-center" style={{ background: f.gradient }}>
@@ -70,15 +68,15 @@ export default function Solution() {
                 </div>
               </div>
 
-              <div className="p-6">
-                <h3 className="text-2xl font-semibold text-[#1A1A2E] mb-3" style={{ fontFamily: 'Inter' }}>{f.title}</h3>
-                <p className="text-[16px] text-[#6B7280] leading-relaxed mb-5">{f.body}</p>
+              <div className="p-6 flex flex-col gap-4">
+                <h3 className="text-2xl font-semibold text-[#111827] mb-0" style={{ fontFamily: 'Inter' }}>{f.title}</h3>
+                <p className="text-[16px] text-[#6B7280] leading-relaxed m-0">{f.body}</p>
                 <MiniMockup type={f.mock} />
-                <div className="mt-5 inline-flex items-center gap-2 text-[13px] font-semibold text-surface-500 bg-surface-50 px-3 py-1.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-600" /> {f.tag}
+                <div className="mt-auto">
+                  <span className="inline-flex items-center bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium border border-indigo-100">{f.tag}</span>
                 </div>
               </div>
-            </motion.div>
+            </motion.article>
           ))}
         </div>
 
@@ -91,7 +89,7 @@ export default function Solution() {
             <span className="w-12 h-12 rounded-xl bg-primary-600/15 flex items-center justify-center">
               <Timer className="w-6 h-6 text-primary-700" />
             </span>
-            <span className="text-2xl font-semibold text-[#1A1A2E]" style={{ fontFamily: 'Inter' }}>Ready in under 90 seconds</span>
+            <span className="text-2xl font-semibold text-[#111827]" style={{ fontFamily: 'Inter' }}>Ready in under 90 seconds</span>
           </div>
           <div className="flex items-center gap-2">
             {['Speak', 'Scan', 'Done'].map((s, i) => (
@@ -166,9 +164,9 @@ function MiniMockup({ type }: { type: 'voice' | 'camera' | 'summary' }) {
     );
   }
   return (
-    <div className="rounded-xl bg-surface-50 border border-surface-100 p-4 space-y-2.5">
+    <div className="rounded-xl bg-surface-50 border border-surface-100 border-l-4 border-l-red-500 p-4 space-y-2.5">
       <div className="flex items-center gap-2">
-        <span className="px-2 py-0.5 text-[10px] font-bold bg-coral-500/15 text-coral-600 rounded-full">Chest Pain</span>
+        <span className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-600 rounded-full">Chest Pain</span>
         <span className="px-2 py-0.5 text-[10px] font-bold bg-surface-200 text-surface-600 rounded-full">62M · Wait 4m</span>
       </div>
       <div className="space-y-1.5">
