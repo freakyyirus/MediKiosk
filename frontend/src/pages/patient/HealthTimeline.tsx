@@ -39,7 +39,7 @@ const NAV_ITEMS = [
   { icon: <Heart size={20} />, label: 'Dashboard', path: '/patient/dashboard' },
   { icon: <Calendar size={20} />, label: 'Book OPD', path: '/patient/book-opd' },
   { icon: <Heart size={20} />, label: 'My Visits', path: '/patient/visits' },
-  { icon: <Heart size={20} />, label: 'Health Timeline', path: '/patient/timeline' },
+  { icon: <Heart size={20} />, label: 'Health Timeline', path: '/patient/health-timeline' },
   { icon: <Heart size={20} />, label: 'Documents', path: '/patient/documents' },
   { icon: <Heart size={20} />, label: 'Profile', path: '/patient/profile' },
 ];
@@ -148,7 +148,7 @@ export default function HealthTimeline() {
     }
     setSaving(true);
     try {
-      const { error } = await supabase.from('visits').insert({
+      const { data: inserted, error } = await supabase.from('visits').insert({
         patient_id: user.id,
         hospital_name: addForm.hospital_name,
         department_name: addForm.department_name,
@@ -161,8 +161,38 @@ export default function HealthTimeline() {
         status: 'completed',
         is_manual_entry: true,
         token_number: 'MANUAL',
-      });
+      }).select('id').single();
       if (error) throw error;
+
+      if (addFiles.length > 0) {
+        const visitId = (inserted as { id: number } | null)?.id;
+        try {
+          await Promise.all(addFiles.map(async (file) => {
+            const filePath = `documents/${user.id}/${Date.now()}-${file.name}`;
+            const { error: upErr } = await supabase.storage
+              .from('patient-documents')
+              .upload(filePath, file);
+            if (upErr) throw upErr;
+            const { error: insErr } = await supabase.from('documents').insert({
+              patient_id: user.id,
+              session_id: visitId ?? null,
+              file_name: file.name,
+              file_size_bytes: file.size,
+              mime_type: file.type,
+              document_type: 'other',
+              document_date: addForm.visit_date,
+              hospital_name: addForm.hospital_name || null,
+              doctor_name: addForm.doctor_name ? `Dr. ${addForm.doctor_name}` : null,
+              processing_status: 'pending',
+            });
+            if (insErr) throw insErr;
+          }));
+        } catch (fileErr) {
+          console.error('Past-visit document upload failed:', fileErr);
+          addToast('warning', 'Visit saved, but some documents could not be uploaded.');
+        }
+      }
+
       addToast('success', 'Past visit added successfully');
       setShowAddModal(false);
       setAddForm({ hospital_name: '', department_name: '', doctor_name: '', visit_date: '', chief_complaint: '', diagnosis: '', medications: '', notes: '' });
@@ -181,7 +211,7 @@ export default function HealthTimeline() {
     <div className="min-h-screen bg-surface-50">
       <Sidebar
         items={NAV_ITEMS}
-        currentPath="/patient/timeline"
+        currentPath="/patient/health-timeline"
         onNavigate={handleNavigate}
         onLogout={handleLogout}
         user={{ name: 'Patient', role: 'Patient' }}
