@@ -113,6 +113,17 @@ const DURATION_OPTIONS = [
   { value: 'ongoing', label: 'Ongoing' },
 ];
 
+const DEFAULT_REFER_DEPARTMENTS = [
+  { value: 'Cardiology', label: 'Cardiology' },
+  { value: 'Neurology', label: 'Neurology' },
+  { value: 'Orthopedics', label: 'Orthopedics' },
+  { value: 'Dermatology', label: 'Dermatology' },
+  { value: 'ENT', label: 'ENT' },
+  { value: 'Ophthalmology', label: 'Ophthalmology' },
+  { value: 'Psychiatry', label: 'Psychiatry' },
+  { value: 'General Surgery', label: 'General Surgery' },
+];
+
 const COMMON_LAB_TESTS = [
   'CBC', 'Lipid Profile', 'Blood Sugar', 'Thyroid', 'Liver Function',
   'Kidney Function', 'Urine Routine', 'ECG', 'Chest X-Ray', 'Echocardiography',
@@ -203,6 +214,7 @@ export default function PatientCard() {
   const [saving, setSaving] = useState(false);
   const [referModalOpen, setReferModalOpen] = useState(false);
   const [referDepartment, setReferDepartment] = useState('');
+  const [referDepartments, setReferDepartments] = useState(DEFAULT_REFER_DEPARTMENTS);
   const [prescriptionHistory, setPrescriptionHistory] = useState<any[]>([]);
 
   // ─── Data Fetching ───────────────────────────────────────────────
@@ -276,6 +288,19 @@ export default function PatientCard() {
           .eq('user_id', user.id)
           .single();
         if (doc) setDoctor(doc as DoctorProfile);
+      }
+
+      // Fetch referral departments for this hospital (fall back to defaults)
+      const hospitalId = (visitData as any).hospital_id;
+      if (hospitalId) {
+        const { data: depts } = await supabase
+          .from('departments')
+          .select('id, name')
+          .eq('hospital_id', hospitalId)
+          .order('name', { ascending: true });
+        if (depts && depts.length > 0) {
+          setReferDepartments(depts.map((d: any) => ({ value: d.name, label: d.name })));
+        }
       }
 
       // Fetch past visits for this patient
@@ -486,7 +511,7 @@ export default function PatientCard() {
         .eq('visit_id', visit.id);
 
       addToast('success', 'Consultation completed successfully');
-      navigate('/doctor/patients');
+      navigate('/doctor/queue');
     } catch (err: any) {
       addToast('error', err.message || 'Failed to save consultation');
     } finally {
@@ -532,7 +557,7 @@ export default function PatientCard() {
           icon={<User size={40} />}
           title="Patient not found"
           description="The requested visit could not be loaded."
-          action={{ label: 'Back to Queue', onClick: () => navigate('/doctor/patients') }}
+          action={{ label: 'Back to Queue', onClick: () => navigate('/doctor/queue') }}
         />
       </div>
     );
@@ -546,7 +571,7 @@ export default function PatientCard() {
       <div className="bg-white border-b border-surface-200 sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-4">
           <button
-            onClick={() => navigate('/doctor/patients')}
+            onClick={() => navigate('/doctor/queue')}
             className="p-2 rounded-lg hover:bg-surface-100 text-surface-500 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -556,7 +581,7 @@ export default function PatientCard() {
             <p className="text-xs text-surface-500">Visit #{visit.id} — {visit.visit_date}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/doctor/patients')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/doctor/queue')}>
               <LogOut size={16} /> Queue
             </Button>
           </div>
@@ -1146,7 +1171,7 @@ export default function PatientCard() {
                 size="lg"
                 onClick={() => {
                   addToast('info', 'Patient sent home');
-                  navigate('/doctor/patients');
+                  navigate('/doctor/queue');
                 }}
                 icon={<LogOut size={18} />}
               >
@@ -1162,16 +1187,7 @@ export default function PatientCard() {
         <div className="space-y-4">
           <Select
             label="Department"
-            options={[
-              { value: 'cardiology', label: 'Cardiology' },
-              { value: 'neurology', label: 'Neurology' },
-              { value: 'orthopedics', label: 'Orthopedics' },
-              { value: 'dermatology', label: 'Dermatology' },
-              { value: 'ent', label: 'ENT' },
-              { value: 'ophthalmology', label: 'Ophthalmology' },
-              { value: 'psychiatry', label: 'Psychiatry' },
-              { value: 'general_surgery', label: 'General Surgery' },
-            ]}
+            options={referDepartments}
             value={referDepartment}
             onChange={setReferDepartment}
             placeholder="Select department"
@@ -1180,7 +1196,7 @@ export default function PatientCard() {
             <Button variant="primary" onClick={() => {
               addToast('success', `Referred to ${referDepartment || 'specialist'}`);
               setReferModalOpen(false);
-              navigate('/doctor/patients');
+              navigate('/doctor/queue');
             }}>
               Confirm Referral
             </Button>
