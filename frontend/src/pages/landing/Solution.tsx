@@ -68,12 +68,14 @@ export default function Solution() {
                 </div>
               </div>
 
-              <div className="p-6 flex flex-col gap-4">
-                <h3 className="text-2xl font-semibold text-[#111827] mb-0" style={{ fontFamily: 'Inter' }}>{f.title}</h3>
-                <p className="text-[16px] text-[#6B7280] leading-relaxed m-0">{f.body}</p>
-                <MiniMockup type={f.mock} />
-                <div className="mt-auto">
-                  <span className="inline-flex items-center bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium border border-indigo-100">{f.tag}</span>
+              <div className="p-8 flex flex-col gap-4 flex-1 bg-white">
+                <h3 className="text-[22px] font-bold text-[#111827] mb-1 tracking-tight" style={{ fontFamily: 'Inter' }}>{f.title}</h3>
+                <p className="text-[15px] text-[#4B5563] leading-relaxed m-0">{f.body}</p>
+                <div className="mt-auto flex flex-col gap-5 pt-4">
+                  <MiniMockup type={f.mock} />
+                  <div className="flex justify-center">
+                    <span className="inline-flex items-center bg-surface-50 text-surface-600 px-4 py-1.5 rounded-full text-[12px] font-semibold tracking-wide uppercase border border-surface-200 shadow-sm">{f.tag}</span>
+                  </div>
                 </div>
               </div>
             </motion.article>
@@ -83,21 +85,21 @@ export default function Solution() {
         {/* glass banner */}
         <motion.div
           variants={fadeUp}
-          className="glass-banner rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
+          className="glass-banner rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 border border-surface-100 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)]"
         >
-          <div className="flex items-center gap-4">
-            <span className="w-12 h-12 rounded-xl bg-primary-600/15 flex items-center justify-center">
-              <Timer className="w-6 h-6 text-primary-700" />
+          <div className="flex items-center gap-5">
+            <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center border border-primary-200 shadow-sm">
+              <Timer className="w-7 h-7 text-primary-600" />
             </span>
-            <span className="text-2xl font-semibold text-[#111827]" style={{ fontFamily: 'Inter' }}>Ready in under 90 seconds</span>
+            <span className="text-[22px] font-bold text-[#111827] tracking-tight" style={{ fontFamily: 'Inter' }}>Ready in under 90 seconds</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {['Speak', 'Scan', 'Done'].map((s, i) => (
-              <div key={s} className="flex items-center gap-2">
-                {i > 0 && <span className="w-8 h-px bg-primary-300" />}
-                <span className="flex items-center gap-2 px-3 py-2 rounded-full bg-white shadow-sm border border-surface-100 text-[14px] font-semibold text-surface-700">
-                  <span className={`w-5 h-5 rounded-full ${i === 2 ? 'bg-teal-500 text-white' : 'bg-primary-600 text-white'} flex items-center justify-center`}>
-                    {i === 2 ? <Check className="w-3 h-3" /> : i + 1}
+              <div key={s} className="flex items-center gap-3">
+                {i > 0 && <span className="w-10 h-px bg-surface-300" />}
+                <span className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white shadow-sm border border-surface-200 text-[14px] font-semibold text-surface-700">
+                  <span className={`w-6 h-6 rounded-full ${i === 2 ? 'bg-teal-500 text-white shadow-inner' : 'bg-primary-600 text-white shadow-inner'} flex items-center justify-center`}>
+                    {i === 2 ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : i + 1}
                   </span>
                   {s}
                 </span>
@@ -113,66 +115,67 @@ export default function Solution() {
 function MiniMockup({ type }: { type: 'voice' | 'camera' | 'summary' }) {
   if (type === 'voice') {
     return (
-      <div className="rounded-xl bg-surface-50 border border-surface-100 p-4 flex flex-col items-center gap-3">
-        <div className="relative w-12 h-12 flex items-center justify-center">
-          <motion.span className="absolute inset-0 rounded-full bg-primary-500/30" animate={{ scale: [1, 1.8], opacity: [0.6, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut' }} />
-          <motion.span className="absolute inset-0 rounded-full bg-primary-400/40" animate={{ scale: [1, 1.4], opacity: [0.5, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeOut', delay: 0.3 }} />
-          <div className="relative w-11 h-11 rounded-full bg-primary-600 flex items-center justify-center"><Mic className="w-5 h-5 text-white" /></div>
+      <div className="rounded-2xl bg-surface-50/50 border border-surface-200/60 p-4 flex flex-col items-center justify-center gap-4 h-[180px] shadow-inner relative overflow-hidden">
+        <div className="relative w-12 h-12 flex items-center justify-center mt-2">
+          <motion.span className="absolute inset-0 rounded-full bg-primary-500/20" animate={{ scale: [1, 2], opacity: [0.8, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }} />
+          <motion.span className="absolute inset-0 rounded-full bg-primary-400/30" animate={{ scale: [1, 1.5], opacity: [0.6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut', delay: 0.4 }} />
+          <div className="relative w-11 h-11 rounded-full bg-gradient-to-b from-primary-500 to-primary-600 shadow-sm flex items-center justify-center"><Mic className="w-5 h-5 text-white" /></div>
         </div>
-        <p className="text-[13px] text-surface-500 text-center leading-snug">"मेरे सीने में दर्द है..."</p>
-        <div className="flex items-center gap-1 h-4">
-          {[0.7, 0.9, 0.6, 1, 0.8, 1, 0.6].map((v, i) => (
-            <span key={i} className="w-1 rounded-full bg-primary-500" style={{ height: `${v * 100}%`, animation: 'waveform 0.8s ease-in-out infinite' }} />
+        <p className="text-[13px] font-medium text-surface-600 text-center leading-snug">"मेरे सीने में दर्द है..."</p>
+        <div className="flex items-center gap-1.5 h-4 mb-2">
+          {[0.6, 1, 0.5, 0.9, 0.7, 1, 0.4].map((v, i) => (
+            <span key={i} className="w-1 rounded-full bg-primary-400" style={{ height: `${v * 100}%`, animation: 'waveform 1s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />
           ))}
-        </div>
-        <div className="flex gap-1.5 w-full justify-center">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" title="high" />
-          <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="w-2 h-2 rounded-full bg-surface-300" />
         </div>
       </div>
     );
   }
   if (type === 'camera') {
     return (
-      <div className="relative h-28 rounded-xl bg-surface-50 border border-surface-100 overflow-hidden">
-        <div className="absolute inset-4 bg-[#E8E4F3] rounded-lg relative overflow-hidden">
-          {/* fake prescription lines */}
-          <div className="absolute top-4 left-4 space-y-1.5">
-            <div className="w-16 h-1.5 bg-primary-300/70 rounded" />
-            <div className="w-20 h-1.5 bg-surface-300 rounded" />
-            <div className="w-14 h-1.5 bg-surface-200 rounded" />
-            <div className="w-18 h-1.5 bg-surface-300 rounded" />
+      <div className="rounded-2xl bg-surface-50/50 border border-surface-200/60 p-4 flex flex-col items-center justify-center gap-4 h-[180px] shadow-inner relative overflow-hidden">
+        <div className="relative w-12 h-12 flex items-center justify-center mt-2">
+          <motion.span className="absolute inset-0 rounded-xl bg-coral-500/20" animate={{ scale: [1, 1.5], opacity: [0.8, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut' }} />
+          <motion.span className="absolute inset-0 rounded-xl bg-coral-400/30" animate={{ scale: [1, 1.25], opacity: [0.6, 0] }} transition={{ duration: 1.5, repeat: Infinity, ease: 'easeOut', delay: 0.4 }} />
+          <div className="relative w-11 h-11 rounded-xl bg-gradient-to-b from-coral-400 to-coral-500 shadow-sm flex items-center justify-center"><Camera className="w-5 h-5 text-white" /></div>
+        </div>
+        <p className="text-[13px] font-medium text-surface-600 text-center leading-snug">"Rx: Tab Paracetamol 500mg..."</p>
+        
+        <div className="relative h-12 w-[85%] bg-[#FDFBF7] rounded-lg border border-surface-200 overflow-hidden flex-shrink-0 shadow-sm mb-2 p-2">
+          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(transparent 90%, #94a3b8 10%)', backgroundSize: '100% 12px' }} />
+          <div className="relative z-10 flex flex-col -rotate-3 mt-1 ml-1 opacity-80">
+            <span className="text-[12px] font-bold text-blue-900 leading-none" style={{ fontFamily: 'cursive', transform: 'skewX(-15deg)' }}>Rx: Tab Paracetamol 500mg</span>
+            <span className="text-[11px] font-bold text-blue-900 leading-none ml-4 mt-1" style={{ fontFamily: 'cursive', transform: 'skewX(-15deg)' }}>1 tab BD x 5 days</span>
           </div>
-          {/* corner brackets locking */}
-          {[
-            'top-1 left-1 border-t-2 border-l-2',
-            'top-1 right-1 border-t-2 border-r-2',
-            'bottom-1 left-1 border-b-2 border-l-2',
-            'bottom-1 right-1 border-b-2 border-r-2',
-          ].map((pos, i) => (
-            <motion.span
-              key={i}
-              className={`absolute w-5 h-5 ${pos} border-coral-500 rounded`}
-              animate={{ scale: [1, 0.9, 1], borderColor: ['#FF8C69', '#2DD4BF', '#FF8C69'] }}
-              transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.15 }}
-            />
-          ))}
-          <span className="absolute inset-x-0 top-1/2 h-px bg-white/60 shimmer-line" />
+          <motion.span 
+             className="absolute inset-x-0 h-5 bg-gradient-to-b from-transparent to-coral-400/10 border-b border-coral-400 pointer-events-none" 
+             animate={{ top: ['-50%', '150%'] }} 
+             transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
+          />
         </div>
       </div>
     );
   }
   return (
-    <div className="rounded-xl bg-surface-50 border border-surface-100 border-l-4 border-l-red-500 p-4 space-y-2.5">
-      <div className="flex items-center gap-2">
-        <span className="px-2 py-0.5 text-[10px] font-bold bg-red-50 text-red-600 rounded-full">Chest Pain</span>
-        <span className="px-2 py-0.5 text-[10px] font-bold bg-surface-200 text-surface-600 rounded-full">62M · Wait 4m</span>
-      </div>
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-primary-600" /><div className="h-1.5 flex-1 bg-surface-200 rounded" /></div>
-        <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-teal-500" /><div className="h-1.5 flex-1 bg-surface-200 rounded" /></div>
-        <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-danger-500" /><div className="h-1.5 flex-1 bg-surface-200 rounded w-2/3" /></div>
+    <div className="rounded-2xl bg-surface-50/50 border border-surface-200/60 p-6 flex flex-col justify-center h-[180px] shadow-inner relative overflow-hidden">
+      <div className="border-l-[3px] border-l-red-500 pl-4 space-y-4 py-1">
+        <div className="flex items-center gap-2.5">
+          <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase bg-red-100 text-red-700 rounded-full shadow-sm">Chest Pain</span>
+          <span className="px-2.5 py-1 text-[10px] font-bold tracking-wide uppercase bg-white border border-surface-200 text-surface-500 rounded-full shadow-sm">62M · Wait 4m</span>
+        </div>
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-danger-500 shrink-0" />
+            <span className="text-[12px] font-semibold text-surface-700 leading-none">Artery swelling indicated</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <span className="text-[12px] font-medium text-surface-600 leading-none">BP: 150/94 (Elevated)</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-teal-500 shrink-0" />
+            <span className="text-[12px] font-medium text-surface-600 leading-none">No known allergies</span>
+          </div>
+        </div>
       </div>
     </div>
   );
