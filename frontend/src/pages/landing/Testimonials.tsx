@@ -21,10 +21,10 @@ export default function Testimonials() {
     <Section id="testimonials" bg="#ffffff" className="py-[100px]">
       <div className="max-w-[1200px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-14">
-          <SectionLabel className="mb-4" color="#6B4EE6">Voices from the field</SectionLabel>
+          <SectionLabel className="mb-4" color="#4F46E5">Voices from the field</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[40px] leading-tight font-semibold text-[#1A1A2E]"
+            className="text-[40px] leading-tight font-semibold text-[#111827]"
             style={{ fontFamily: 'Inter' }}
           >
             Trusted by the people who care.
@@ -39,13 +39,13 @@ export default function Testimonials() {
               className="min-w-[85%] sm:min-w-[70%] lg:min-w-0 snap-center relative bg-[#F0EBFF] rounded-2xl p-8 shadow-lg shadow-surface-900/5 flex flex-col"
             >
               <span className="absolute top-2 left-5 text-[96px] leading-none font-bold text-primary-200 select-none" aria-hidden="true">"</span>
-              <p className="relative text-[20px] italic text-[#1A1A2E] leading-relaxed flex-1 pt-8">"{t.q}"</p>
+              <p className="relative text-[20px] italic text-[#111827] leading-relaxed flex-1 pt-8">"{t.q}"</p>
               <div className="mt-6 flex items-center gap-3">
                 <span className="w-16 h-16 rounded-full bg-primary-600 text-white flex items-center justify-center text-lg font-bold">
                   {t.initials}
                 </span>
                 <div>
-                  <div className="font-semibold text-[#1A1A2E]">{t.name}</div>
+                  <div className="font-semibold text-[#111827]">{t.name}</div>
                   <div className="text-[14px] text-[#6B7280]">{t.role}</div>
                 </div>
                 <span className="ml-auto px-3 py-1 rounded-full bg-white shadow text-[12px] font-semibold text-primary-700">{t.badge}</span>
