@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { HeartPulse } from 'lucide-react';
+import Logo from '../../components/brand/Logo';
 
 const PHRASES = [
   'Initializing compassion...',
@@ -52,16 +52,16 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
           exit={{ opacity: 0, filter: 'blur(12px)', scale: 1.05 }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
         >
-          {/* pulsing heart */}
-          <div className="relative w-24 h-24 flex items-center justify-center">
+          {/* MediKiosk Logo with pulse */}
+          <div className="relative w-28 h-28 flex items-center justify-center">
             <motion.span
-              className="absolute inset-0 rounded-full bg-primary-500/20"
-              animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0, 0.6] }}
+              className="absolute inset-0 rounded-full bg-primary-500/15"
+              animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
             />
-            <span className="absolute inset-0 rounded-full bg-primary-400/20" />
-            <div className="w-16 h-16 rounded-2xl bg-white shadow-xl shadow-primary-600/20 flex items-center justify-center relative z-10">
-              <HeartPulse className="w-9 h-9 text-primary-600" />
+            <span className="absolute inset-0 rounded-full bg-primary-400/10" />
+            <div className="w-20 h-20 rounded-2xl bg-white shadow-xl shadow-primary-600/20 flex items-center justify-center relative z-10">
+              <Logo size={52} showWordmark={false} variant="gradient" />
             </div>
           </div>
 
