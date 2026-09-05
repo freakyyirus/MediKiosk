@@ -20,10 +20,10 @@ export default function Faq() {
     <Section id="faq" bg="#ffffff" className="py-[100px]">
       <div className="max-w-[820px] mx-auto px-6 lg:px-10">
         <div className="text-center mb-12">
-          <SectionLabel className="mb-4" color="#6B4EE6">Questions answered</SectionLabel>
+          <SectionLabel className="mb-4" color="#4F46E5">Questions answered</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[40px] leading-tight font-semibold text-[#1A1A2E]"
+            className="text-[40px] leading-tight font-semibold text-[#111827]"
             style={{ fontFamily: 'Inter' }}
           >
             Common questions.
@@ -38,7 +38,7 @@ export default function Faq() {
                   onClick={() => setOpen(isOpen ? null : i)}
                   className="w-full flex items-center justify-between gap-4 p-5 text-left"
                 >
-                  <span className="text-[18px] font-semibold text-[#1A1A2E]">{f.q}</span>
+                  <span className="text-[18px] font-semibold text-[#111827]">{f.q}</span>
                   <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
                     <ChevronDown className="w-5 h-5 text-surface-400" />
                   </motion.span>
