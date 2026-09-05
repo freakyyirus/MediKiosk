@@ -18,7 +18,7 @@ settings = get_settings()
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     OAuth2 compatible token login, get an access token for future requests.
-    Mock implementation for hackathon: any validly formatted user works.
+    Mock implementation for the pilot: any validly formatted user works.
     admin/admin -> role: admin
     dr_mehta/password -> role: physician
     """
