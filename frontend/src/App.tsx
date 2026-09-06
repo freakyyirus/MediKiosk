@@ -1,8 +1,10 @@
 import React, { Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import { useAuthStore, getRoleRedirect } from './stores/authStore';
 import Toast from './components/shared/Toast';
+import PageViewTracker from './components/shared/PageViewTracker';
+import { ROUTE_META, applyPageMeta, type PageMeta } from './hooks/usePageMeta';
 
 // Kiosk Pages (eager)
 import LandingPage from './pages/LandingPage';
@@ -21,6 +23,10 @@ import KioskEmergency from './pages/kiosk/EmergencyDemo';
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
 const RegisterPage = React.lazy(() => import('./pages/auth/RegisterPage'));
 const UnauthorizedPage = React.lazy(() => import('./pages/auth/UnauthorizedPage'));
+
+// Lazy Legal / Marketing Pages
+const PrivacyPolicy = React.lazy(() => import('./pages/landing/PrivacyPolicy'));
+const TermsPage = React.lazy(() => import('./pages/landing/Terms'));
 
 // Lazy Patient Portal
 const PatientDashboard = React.lazy(() => import('./pages/patient/Dashboard'));
@@ -101,6 +107,33 @@ function HomeRedirect() {
   return <LandingPage />;
 }
 
+// Applies the unique document <title> + meta description for the active route.
+function RouteMetaManager() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const exact = ROUTE_META[pathname];
+    if (exact) {
+      applyPageMeta(exact);
+      return;
+    }
+    // Dynamic segments — match the longest static prefix (e.g. /doctor/patient/123).
+    const segments = pathname.split('/');
+    let meta: PageMeta | undefined;
+    for (let i = segments.length; i >= 1; i--) {
+      const candidate = segments.slice(0, i).join('/') || '/';
+      const hit = ROUTE_META[candidate];
+      if (hit) {
+        meta = hit;
+        break;
+      }
+    }
+    applyPageMeta(meta ?? { title: 'MediKiosk — AI-Powered Patient Intake' });
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
 
@@ -110,6 +143,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface-50 text-surface-900 font-sans">
+      <RouteMetaManager />
+      <PageViewTracker />
       <Toast />
       <Routes>
         {/* Landing / home; authenticated users go straight to their dashboard */}
@@ -119,6 +154,10 @@ export default function App() {
         <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />
         <Route path="/register" element={<SuspenseWrapper><RegisterPage /></SuspenseWrapper>} />
         <Route path="/unauthorized" element={<SuspenseWrapper><UnauthorizedPage /></SuspenseWrapper>} />
+
+        {/* Legal / Marketing Pages */}
+        <Route path="/privacy-policy" element={<SuspenseWrapper><PrivacyPolicy /></SuspenseWrapper>} />
+        <Route path="/terms" element={<SuspenseWrapper><TermsPage /></SuspenseWrapper>} />
 
         {/* Kiosk Patient Flow */}
         <Route path="/kiosk" element={<Navigate to="/kiosk/home" replace />} />

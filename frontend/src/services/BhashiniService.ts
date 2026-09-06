@@ -8,7 +8,7 @@
  * when the backend is offline.
  */
 
-type LangCode = 'en' | 'hi' | 'ta' | 'bn' | 'mr';
+type LangCode = 'en' | 'hi' | 'ta' | 'bn' | 'mr' | 'te' | 'kn' | 'ml' | 'gu' | 'pa';
 
 export interface Transcription {
   transcript: string;
@@ -37,7 +37,7 @@ export interface OcrResult {
   source: 'backend' | 'fallback';
 }
 
-const DEFAULT_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+const DEFAULT_BASE = (import.meta.env.VITE_API_URL || '/api/v1').replace(/\/+$/, '');
 const MIN_CALL_INTERVAL_MS = 350;
 const RETRY_STATUSES = new Set([500, 502, 503, 504]);
 
@@ -105,7 +105,7 @@ class BhashiniService {
       fd.append('session_id', String(sessionId));
       fd.append('language', language);
       fd.append('audio_file', audioBlob, 'recording.webm');
-      const res = await this.request('/api/v1/voice/transcribe', { method: 'POST', body: fd }, 30000);
+      const res = await this.request('/voice/transcribe', { method: 'POST', body: fd }, 30000);
       if (!res.ok) throw new Error(`backend ${res.status}`);
       const data = await res.json();
       return {
@@ -160,7 +160,7 @@ class BhashiniService {
   // ── Gated by backend /voice/tts ─────────────────────────────────
   async textToSpeech(text: string, language: string, gender = 'female'): Promise<TtsResult> {
     try {
-      const res = await this.request('/api/v1/voice/tts', {
+      const res = await this.request('/voice/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, language, gender }),
@@ -198,7 +198,7 @@ class BhashiniService {
     try {
       const fd = new FormData();
       fd.append('file', file);
-      const res = await this.request('/api/v1/advanced/ocr/process', { method: 'POST', body: fd }, 30000);
+      const res = await this.request('/advanced/ocr/process', { method: 'POST', body: fd }, 30000);
       if (!res.ok) throw new Error(`backend ${res.status}`);
       const d = await res.json();
       return {
@@ -244,16 +244,20 @@ class BhashiniService {
   detectLanguage(text: string): LangCode {
     const s = text.trim();
     if (!s) return 'en';
-    const scripts = {
-      hi: /[\u0900-\u097F]/,
-      ta: /[\u0B80-\u0BFF]/,
-      bn: /[\u0980-\u09FF]/,
-      mr: /[\u0900-\u097F]/,
-    };
-    if (scripts.ta.test(s)) return 'ta';
-    if (scripts.bn.test(s)) return 'bn';
-    if (/\u0960|ॲ|ळ/.test(s)) return 'mr';
-    if (scripts.hi.test(s)) return 'hi';
+    const scripts: [LangCode, RegExp][] = [
+      ['ta', /[\u0B80-\u0BFF]/], // Tamil
+      ['te', /[\u0C00-\u0C7F]/], // Telugu
+      ['kn', /[\u0C80-\u0CFF]/], // Kannada
+      ['ml', /[\u0D00-\u0D7F]/], // Malayalam
+      ['bn', /[\u0980-\u09FF]/], // Bengali
+      ['gu', /[\u0A80-\u0AFF]/], // Gujarati
+      ['pa', /[\u0A00-\u0A7F]/], // Punjabi (Gurmukhi)
+      ['mr', /\u0960|ॲ|ळ/], // Marathi markers within Devanagari
+      ['hi', /[\u0900-\u097F]/], // Devanagari
+    ];
+    for (const [lang, re] of scripts) {
+      if (re.test(s)) return lang;
+    }
     return 'en';
   }
 

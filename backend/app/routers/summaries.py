@@ -88,11 +88,6 @@ async def get_session_summary(
     db: AsyncSession = Depends(get_db),
 ):
     """Get the latest summary for a session."""
-    result = await db.execute(
-        select(Summary)
-        .where(Summary.session_id == session_id)
-        .order_by(Summary.created_at.desc())
-        .limit(1)
-    )
+    result = await db.execute(select(Summary).where(Summary.session_id == session_id).order_by(Summary.created_at.desc()).limit(1))
     summary = result.scalar_one_or_none()
     return summary

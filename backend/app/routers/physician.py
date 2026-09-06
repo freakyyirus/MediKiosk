@@ -31,12 +31,7 @@ async def get_physician_dashboard(
 ):
     """Get physician's patient queue with pending summaries."""
     # Get sessions with pending summaries
-    query = (
-        select(Session)
-        .where(Session.status.in_(["completed", "under_review"]))
-        .order_by(Session.completed_at.desc())
-        .limit(limit)
-    )
+    query = select(Session).where(Session.status.in_(["completed", "under_review"])).order_by(Session.completed_at.desc()).limit(limit)
     result = await db.execute(query)
     sessions = result.scalars().all()
 
@@ -99,9 +94,7 @@ async def confirm_session(
 ):
     """Physician confirms, amends, or rejects a summary."""
     # Get the summary for this session
-    result = await db.execute(
-        select(Summary).where(Summary.session_id == session_id).order_by(Summary.created_at.desc())
-    )
+    result = await db.execute(select(Summary).where(Summary.session_id == session_id).order_by(Summary.created_at.desc()))
     summary = result.scalar_one_or_none()
     if not summary:
         raise NotFoundError("Summary", f"for session {session_id}")

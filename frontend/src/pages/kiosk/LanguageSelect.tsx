@@ -76,7 +76,7 @@ export default function LanguageSelect() {
         </div>
 
         {/* 3-column grid of 12 languages */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-10">
           {LANGUAGES.map((lang, i) => {
             const active = selectedLang.code === lang.code;
             return (

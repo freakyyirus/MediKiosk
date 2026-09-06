@@ -17,6 +17,7 @@ from app.middleware.logging_mw import LoggingMiddleware
 from app.routers import (
     abdm,
     advanced,
+    ai,
     auth,
     consent,
     documents,
@@ -67,10 +68,7 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="MediKiosk API",
-    description=(
-        "AI-Powered Clinical History & Document Digitization Platform for "
-        "self-service healthcare kiosks."
-    ),
+    description=("AI-Powered Clinical History & Document Digitization Platform for self-service healthcare kiosks."),
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -102,6 +100,7 @@ app.include_router(health.router)
 
 # API v1 routes
 app.include_router(auth.router)
+app.include_router(ai.router)
 app.include_router(patients.router)
 app.include_router(sessions.router)
 app.include_router(physician.router)

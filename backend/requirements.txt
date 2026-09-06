@@ -22,7 +22,7 @@ argon2-cffi-bindings==26.1.0
     # via argon2-cffi
 asyncpg==0.31.0
     # via medikiosk-backend (pyproject.toml)
-bcrypt==5.0.0
+bcrypt==4.0.1
     # via passlib
 casbin==1.43.0
     # via medikiosk-backend (pyproject.toml)

@@ -19,13 +19,9 @@ class Session(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     patient_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
     kiosk_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
-    department: Mapped[str] = mapped_column(
-        String(50), default="allopathy"
-    )  # allopathy, ayurveda, unani, siddha, homeopathy
+    department: Mapped[str] = mapped_column(String(50), default="allopathy")  # allopathy, ayurveda, unani, siddha, homeopathy
     language: Mapped[str] = mapped_column(String(10), default="hi")
-    status: Mapped[str] = mapped_column(
-        String(20), default="in_progress", index=True
-    )  # in_progress, completed, under_review, reviewed, cancelled
+    status: Mapped[str] = mapped_column(String(20), default="in_progress", index=True)  # in_progress, completed, under_review, reviewed, cancelled
 
     # ---- Clinical Data (JSONB for flexibility) ----
     chief_complaint: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -37,9 +33,7 @@ class Session(Base):
     family_history: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     personal_history: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     review_of_systems: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    ayush_assessment: Mapped[dict | None] = mapped_column(
-        JSONB, nullable=True
-    )  # Dashavidha Pariksha
+    ayush_assessment: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # Dashavidha Pariksha
 
     # ---- AI Metadata ----
     asr_transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -69,7 +63,12 @@ class Session(Base):
         primaryjoin="Session.patient_id == Patient.id",
     )
     messages = relationship(
-        "SessionMessage", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+        "SessionMessage",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="SessionMessage.session_id",
+        primaryjoin="Session.id == SessionMessage.session_id",
     )
     documents = relationship(
         "Document",
@@ -77,15 +76,31 @@ class Session(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
         foreign_keys="Document.session_id",
+        primaryjoin="Session.id == Document.session_id",
     )
     summaries = relationship(
-        "Summary", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+        "Summary",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="Summary.session_id",
+        primaryjoin="Session.id == Summary.session_id",
     )
     consent_records = relationship(
-        "ConsentRecord", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+        "ConsentRecord",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="ConsentRecord.session_id",
+        primaryjoin="Session.id == ConsentRecord.session_id",
     )
     red_flag_alerts = relationship(
-        "RedFlagAlert", back_populates="session", lazy="selectin", cascade="all, delete-orphan"
+        "RedFlagAlert",
+        back_populates="session",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        foreign_keys="RedFlagAlert.session_id",
+        primaryjoin="Session.id == RedFlagAlert.session_id",
     )
     ayush_assessment_record = relationship(
         "AyushAssessment",
@@ -93,6 +108,8 @@ class Session(Base):
         lazy="selectin",
         cascade="all, delete-orphan",
         uselist=False,
+        foreign_keys="AyushAssessment.session_id",
+        primaryjoin="Session.id == AyushAssessment.session_id",
     )
 
     def __repr__(self) -> str:
@@ -106,9 +123,7 @@ class SessionMessage(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     session_id: Mapped[int] = mapped_column(BigInteger, index=True)
-    message_type: Mapped[str] = mapped_column(
-        String(20)
-    )  # ai_question, patient_voice, patient_touch, system
+    message_type: Mapped[str] = mapped_column(String(20))  # ai_question, patient_voice, patient_touch, system
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     confidence: Mapped[float | None] = mapped_column(Numeric(4, 3), nullable=True)

@@ -215,7 +215,7 @@ export default function BodyMapPage() {
                     disabled={selected.symptoms.length === 0 || confirming}
                     className="touch-target-lg w-full bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-xl font-bold rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary-600/25 transition-colors"
                   >
-                    {confirming ? 'Saving...' : language === 'hi' ? 'सही है — आगे बढ़ें' : 'Looks good — continue'}
+                    {confirming ? 'Saving your selection…' : language === 'hi' ? 'सही है — आगे बढ़ें' : 'Looks good — continue'}
                     {!confirming && <ArrowRight className="w-6 h-6" />}
                   </button>
                 </div>

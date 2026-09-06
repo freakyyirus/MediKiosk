@@ -16,6 +16,7 @@ import Partners from './Partners';
 import Faq from './Faq';
 import FinalCta from './FinalCta';
 import Footer from './Footer';
+import StickyMobileCta from '../../components/shared/StickyMobileCta';
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(() => {
@@ -58,6 +59,7 @@ export default function LandingPage() {
         <FinalCta />
       </main>
       <Footer />
+      <StickyMobileCta label="Start Patient Assessment →" onClick={() => document.getElementById('kiosk')?.scrollIntoView() || window.location.assign('/kiosk/home')} dismissible />
     </MotionConfig>
   );
 }

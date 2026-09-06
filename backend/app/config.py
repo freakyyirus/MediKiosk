@@ -37,17 +37,11 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     @property
     def database_url_sync(self) -> str:
-        return (
-            f"postgresql://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     # ---- Redis ----
     redis_host: str = "localhost"
@@ -77,9 +71,7 @@ class Settings(BaseSettings):
     bhashini_api_key: str = ""
     bhashini_user_id: str = ""
     bhashini_ulca_api_key: str = ""
-    bhashini_pipeline_url: str = (
-        "https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline"
-    )
+    bhashini_pipeline_url: str = "https://meity-auth.ulcacontrib.org/ulca/apis/v0/model/getModelsPipeline"
 
     # ---- Google Gemini ----
     gemini_api_key: str = ""

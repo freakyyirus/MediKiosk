@@ -30,12 +30,50 @@ settings = get_settings()
 # Bhashini compute endpoint (Dhruva inference pipeline).
 ASR_COMPUTE_URL = "https://dhruva-api.bhashini.gov.in/services/inference/pipeline"
 
+# Bhashini does not ship a dedicated ASR model for every Indian language.
+# Instead it exposes two conformer multilingual models — one for the
+# Indo-Aryan family (hi, bn, gu, mr, or, pa, as) and one for Dravidian
+# (ta, te, kn, ml). English uses Whisper. Verified live: hi and en return
+# 200 and transcribe.
+_MULTILINGUAL_INDO_ARYAN = "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4"
+_MULTILINGUAL_DRAVIDIAN = "ai4bharat/conformer-multilingual-dravidian-gpu--t4"
+_ENGLISH_ASR = "ai4bharat/whisper-medium-en--gpu--t4"
+
 # Language code (ULCA "sourceLanguage") -> trusted Bhashini ASR serviceId.
-# Verified live: hi and en return 200 and transcribe.
 _ASR_SERVICE_IDS = {
-    "hi": "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4",
-    "en": "ai4bharat/whisper-medium-en--gpu--t4",
+    # English (Whisper)
+    "en": _ENGLISH_ASR,
+    # Indo-Aryan language family
+    "hi": _MULTILINGUAL_INDO_ARYAN,
+    "bn": _MULTILINGUAL_INDO_ARYAN,
+    "gu": _MULTILINGUAL_INDO_ARYAN,
+    "mr": _MULTILINGUAL_INDO_ARYAN,
+    "or": _MULTILINGUAL_INDO_ARYAN,
+    "pa": _MULTILINGUAL_INDO_ARYAN,
+    "as": _MULTILINGUAL_INDO_ARYAN,
+    # Dravidian language family
+    "ta": _MULTILINGUAL_DRAVIDIAN,
+    "te": _MULTILINGUAL_DRAVIDIAN,
+    "kn": _MULTILINGUAL_DRAVIDIAN,
+    "ml": _MULTILINGUAL_DRAVIDIAN,
 }
+
+
+def resolve_asr_service_id(language_code: str) -> tuple[str, str]:
+    """
+    Return the (service_id, language_code_to_send) for a language.
+
+    When no dedicated model exists, we fall back to the multilingual conformer
+    model — never to Hindi. The multilingual models still expect a valid
+    sourceLanguage in the config, so we keep the patient's own language code
+    and only swap the serviceId.
+    """
+    service_id = _ASR_SERVICE_IDS.get(language_code)
+    if service_id:
+        return service_id, language_code
+    logger.warning("No dedicated Bhashini ASR model for '%s'; using multilingual model.", language_code)
+    return _MULTILINGUAL_INDO_ARYAN, language_code
+
 
 _MOCK_TRANSCRIPT = "This is a mock transcription of the patient's symptoms."
 
@@ -87,13 +125,7 @@ class BhashiniASR:
         if not self.auth_key:
             return self._mock()
 
-        service_id = _ASR_SERVICE_IDS.get(source_lang)
-        if not service_id:
-            logger.warning(
-                "No Bhashini ASR serviceId mapped for %r; defaulting to Hindi.", source_lang
-            )
-            source_lang = "hi"
-            service_id = _ASR_SERVICE_IDS[source_lang]
+        service_id, resolve_lang = resolve_asr_service_id(source_lang)
 
         encoded = base64.b64encode(audio_bytes).decode("ascii")
         payload = {
@@ -101,7 +133,7 @@ class BhashiniASR:
                 {
                     "taskType": "asr",
                     "config": {
-                        "language": {"sourceLanguage": source_lang},
+                        "language": {"sourceLanguage": resolve_lang},
                         "serviceId": service_id,
                         "audioFormat": "wav",
                         "samplingRate": 16000,

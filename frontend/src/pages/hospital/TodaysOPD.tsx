@@ -444,7 +444,7 @@ export default function TodaysOPD() {
                   <h2 className="text-lg font-semibold text-surface-900">Patient Details</h2>
                   <p className="text-sm text-surface-500">Token #{selectedVisit.token}</p>
                 </div>
-                <button onClick={closePanel} className="p-2 rounded-lg hover:bg-surface-100 text-surface-500">
+                <button onClick={closePanel} aria-label="Close" className="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-surface-100 text-surface-500">
                   <X size={20} />
                 </button>
               </div>

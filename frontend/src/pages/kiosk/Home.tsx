@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Globe, Accessibility, HelpCircle, Shield, Heart, Sparkles, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import EmergencyFab from '../../components/EmergencyFab';
+import StickyMobileCta from '../../components/shared/StickyMobileCta';
 import { useUIStore } from '../../stores';
 import Logo from '../../components/brand/Logo';
 
@@ -103,6 +104,8 @@ export default function Home() {
       <footer className="w-full px-10 pb-6 text-center text-surface-400 text-sm">
         Digital health assistance · Audio guided
       </footer>
+
+      <StickyMobileCta label="Begin Patient Check-in →" onClick={() => navigate('/kiosk/language')} dismissible />
 
       <EmergencyFab />
     </div>

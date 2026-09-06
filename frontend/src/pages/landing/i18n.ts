@@ -25,6 +25,7 @@ export type Dict = {
   h1b: string;
   h1c: string;
   sub: string;
+  start: string;
   seehow: string;
   demo: string;
   trusted: string;
@@ -44,9 +45,10 @@ const EN: Dict = {
   h1b: 'Heard',
   h1c: 'in Every Language',
   sub: 'An intelligent assistant that listens to patients in their native language, digitizes past records, and prepares a complete clinical summary for doctors instantly.',
+  start: 'Begin Patient Check-in',
   seehow: 'See How It Works',
   demo: 'Watch 2-Min Demo',
-  trusted: 'Trusted by 50+ public hospitals across 8 states',
+  trusted: 'Built for hospital OPDs across India',
 };
 
 const HI: Dict = {
@@ -63,9 +65,10 @@ const HI: Dict = {
   h1b: 'सुनी जाती है',
   h1c: 'हर भाषा में',
   sub: 'एक स्मार्ट असिस्टेंट जो मरीजों को उनकी भाषा में सुनता है, पुराने रिकॉर्ड को डिजिटल करता है, और डॉक्टरों के लिए तुरंत एक स्पष्ट क्लिनिकल सारांश तैयार करता है।',
+  start: 'मरीज चेक-इन शुरू करें',
   seehow: 'यह कैसे काम करता है, देखें',
   demo: '2 मिनट की डेमो देखें',
-  trusted: '8 राज्यों के 50+ सरकारी अस्पतालों का भरोसा',
+  trusted: 'भारतातील रुग्णालयांच्या OPD साठी बनवलेलं',
 };
 
 const TA: Dict = {
@@ -82,9 +85,10 @@ const TA: Dict = {
   h1b: 'கேட்கப்படுகிறது',
   h1c: 'எல்லா மொழிகளிலும்',
   sub: 'நோயாளிகளை அவர்களின் தாய்மொழியில் கேட்கும், பழைய பதிவுகளை டிஜிட்டலாக்கும், மற்றும் மருத்துவர்களுக்கு உடனடியாக தெளிவான மருத்துவச் சுருக்கத்தை தயாரிக்கும் ஒரு ஸ்மார்ட் உதவியாளர்.',
+  start: 'நோயாளி செக்-இன் தொடங்கவும்',
   seehow: 'இது எப்படி வேலை செய்கிறது',
   demo: '2 நிமிட டெமோவைப் பார்க்கவும்',
-  trusted: '8 மாநிலங்களில் 50+ அரசு மருத்துவமனைகளின் நம்பிக்கை',
+  trusted: 'இந்திய மருத்துவமனை OPD-களுக்காக உருவாக்கப்பட்டது',
 };
 
 const BN: Dict = {
@@ -101,9 +105,10 @@ const BN: Dict = {
   h1b: 'শোনা হয়',
   h1c: 'প্রত্যেক ভাষায়',
   sub: 'একটি স্মার্ট অ্যাসিস্ট্যান্ট যা রোগীদের মাতৃভাষায় শোনে, পুরনো রেকর্ড ডিজিটাল করে এবং ডাক্তারদের জন্য তাৎক্ষণিকভাবে একটি স্পষ্ট ক্লিনিকাল সারাংশ তৈরি করে।',
+  start: 'রোগীর চেক-ইন শুরু করুন',
   seehow: 'কীভাবে কাজ করে দেখুন',
   demo: '২ মিনিটের ডেমো দেখুন',
-  trusted: '৮টি রাজ্যের ৫০+ সরকারি হাসপাতালের আস্থা',
+  trusted: 'ভারতীয় হাসপাতালের OPD-গুলির জন্য তৈরি',
 };
 
 const MR: Dict = {
@@ -120,9 +125,10 @@ const MR: Dict = {
   h1b: 'ऐकली जाते',
   h1c: 'प्रत्येक भाषेत',
   sub: 'एक स्मार्ट असिस्टंट जे रुग्णांना त्यांच्या मातृभाषेत ऐकते, जुने रेकॉर्ड डिजिटल करते आणि डॉक्टरांसाठी त्वरित एक स्पष्ट क्लिनिकल सारांश तयार करते.',
+  start: 'रुग्ण चेक-इन सुरू करा',
   seehow: 'हे कसे कार्य करते ते पहा',
   demo: '२ मिनिटांचा डेमो पहा',
-  trusted: '८ राज्यांतील ५०+ सरकारी रुग्णालयांचा विश्वास',
+  trusted: 'भारतीय रुग्णालय OPD साठी बनवलेले',
 };
 
 export const DICTS: Record<LangCode, Dict> = { en: EN, hi: HI, ta: TA, bn: BN, mr: MR };

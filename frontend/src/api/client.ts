@@ -235,8 +235,16 @@ export const advancedApi = {
     }>('/advanced/vitals/analyze', data),
 
   // F1: Body-map tap → dept suggestion
-  bodyMapTap: (data: { body_part: string; selected_symptoms?: string[] }) =>
-    api.post<{ recorded: boolean; tapped_at: string; suggested_department: string; risk_weight: number }>(
+  bodyMapTap: (data: { body_part: string; selected_symptoms?: string[]; session_id?: number }) =>
+    api.post<{
+      recorded: boolean;
+      tapped_at: string;
+      body_part: string;
+      suggested_department: string;
+      risk_weight: number;
+      follow_up_questions: string[];
+      possible_specializations: string[];
+    }>(
       '/advanced/body-map/tap',
       data
     ),
@@ -306,4 +314,44 @@ export const advancedApi = {
       holdout_metrics: { accuracy: number; confusion_matrix: number[][]; per_class: Record<string, Record<string, number>> };
       artifact: string;
     }>('/advanced/ml/train', opts),
+};
+
+// ---- Gemini Talking-AI (F0: live conversation with the patient) ----
+export interface AIChatTurn {
+  speech: string;
+  transcribed: string;
+  interview_complete: boolean;
+  topic: string;
+  red_flags: string[];
+  clinical: {
+    chief_complaint?: string;
+    hpi?: Record<string, unknown>;
+    past_medical_history?: unknown[];
+    current_medications?: unknown[];
+    allergies?: unknown[];
+    review_of_systems?: unknown;
+  } | null;
+  session_id: number | null;
+  provider: 'gemini' | 'fallback';
+}
+
+export const aiApi = {
+  chat: (data: {
+    session_id?: number | null;
+    patient_id?: number | null;
+    language: string;
+    patient_message?: string;
+    touched_body_part?: string | null;
+    vitals?: Record<string, number | null> | null;
+    history?: { role: string; content: string }[];
+  }) =>
+    api.post<AIChatTurn>('/ai/chat', {
+      session_id: data.session_id,
+      patient_id: data.patient_id,
+      language: data.language,
+      patient_message: data.patient_message,
+      touched_body_part: data.touched_body_part,
+      vitals: data.vitals,
+      history: data.history,
+    }),
 };

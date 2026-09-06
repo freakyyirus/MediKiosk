@@ -1,0 +1,9 @@
+# Root requirements.txt — forward to the backend lockfile.
+#
+# Render (and other PaaS build systems) run `pip install -r requirements.txt`
+# from the repository root by default. The real pins live in backend/, so this
+# file simply includes them, keeping a single source of truth for dependencies.
+#
+#   pip install -r requirements.txt   (from repo root)
+#
+-r backend/requirements.txt

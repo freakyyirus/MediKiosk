@@ -5,14 +5,14 @@ Usage: cd backend && python -m scripts.seed_db
 
 import asyncio
 import random
-from datetime import date, datetime, timezone, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy import text
 
-from app.database import async_session_factory, Base, engine
+from app.database import Base, async_session_factory, engine
+from app.models.clinical import ConsentRecord, Summary
 from app.models.patient import Patient
 from app.models.session import Session, SessionMessage
-from app.models.clinical import Summary, ConsentRecord
 
 SAMPLE_PATIENTS = [
     {
@@ -132,8 +132,8 @@ async def seed():
                 allergy_history=sess_data.get("allergy_history"),
                 red_flags=sess_data.get("red_flags"),
                 confidence_score=round(random.uniform(0.78, 0.98), 2),
-                started_at=datetime.now(timezone.utc) - timedelta(hours=random.randint(1, 8)),
-                completed_at=datetime.now(timezone.utc) - timedelta(minutes=random.randint(5, 60)),
+                started_at=datetime.now(UTC) - timedelta(hours=random.randint(1, 8)),
+                completed_at=datetime.now(UTC) - timedelta(minutes=random.randint(5, 60)),
                 duration_seconds=random.randint(120, 480),
             )
             session.add(sess)
@@ -152,7 +152,7 @@ async def seed():
                 patient_id=patient.id,
                 consent_type="data_collection",
                 granted=True,
-                granted_at=datetime.now(timezone.utc),
+                granted_at=datetime.now(UTC),
             )
             session.add(consent)
 

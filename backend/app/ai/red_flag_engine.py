@@ -369,9 +369,7 @@ class RedFlagEngine:
                         "type": pattern["type"],
                         "severity": pattern["severity"],
                         "confidence": 0.90,
-                        "triggered_by": [
-                            kw for kw in pattern["keywords"] if kw.lower() in text.lower()
-                        ],
+                        "triggered_by": [kw for kw in pattern["keywords"] if kw.lower() in text.lower()],
                     }
                 )
                 seen_types.add(pattern["type"])

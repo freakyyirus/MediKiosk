@@ -210,13 +210,14 @@ export default function DocumentsVault() {
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-100">
           <button
             onClick={() => handleDownload(doc)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-surface-50 hover:bg-surface-100 text-xs font-medium text-surface-600 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 min-h-[44px] rounded-lg bg-surface-50 hover:bg-surface-100 text-xs font-medium text-surface-600 transition-colors"
           >
             <Download size={14} /> Download
           </button>
           <button
             onClick={() => setDeleteTarget(doc)}
-            className="p-1.5 rounded-lg text-surface-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+            aria-label={`Delete ${doc.file_name || 'document'}`}
+            className="w-11 h-11 flex items-center justify-center rounded-lg text-surface-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
           >
             <Trash2 size={14} />
           </button>
@@ -250,13 +251,15 @@ export default function DocumentsVault() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => handleDownload(doc)}
-              className="p-1.5 rounded-lg text-surface-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
+              aria-label={`Download ${doc.file_name || 'document'}`}
+              className="w-11 h-11 flex items-center justify-center rounded-lg text-surface-400 hover:text-primary-600 hover:bg-primary-50 transition-colors"
             >
               <Download size={14} />
             </button>
             <button
               onClick={() => setDeleteTarget(doc)}
-              className="p-1.5 rounded-lg text-surface-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
+              aria-label={`Delete ${doc.file_name || 'document'}`}
+              className="w-11 h-11 flex items-center justify-center rounded-lg text-surface-400 hover:text-danger-600 hover:bg-danger-50 transition-colors"
             >
               <Trash2 size={14} />
             </button>
@@ -303,13 +306,15 @@ export default function DocumentsVault() {
             <div className="flex items-center gap-1 bg-white border border-surface-200 rounded-lg p-0.5">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-surface-400 hover:text-surface-600'}`}
+                aria-label="Grid view"
+                className={`w-11 h-11 flex items-center justify-center rounded-md transition-colors ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-surface-400 hover:text-surface-600'}`}
               >
                 <Grid3X3 size={18} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-surface-400 hover:text-surface-600'}`}
+                aria-label="List view"
+                className={`w-11 h-11 flex items-center justify-center rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-surface-400 hover:text-surface-600'}`}
               >
                 <List size={18} />
               </button>
@@ -347,20 +352,22 @@ export default function DocumentsVault() {
             </div>
           ) : (
             <div className="card overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-surface-200">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Visit</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-surface-500 uppercase tracking-wide">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-100">
-                  {filteredDocs.map(d => renderListRow(d))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-surface-200">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Name</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Type</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wide">Visit</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-surface-500 uppercase tracking-wide">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-100">
+                    {filteredDocs.map(d => renderListRow(d))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </main>

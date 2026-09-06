@@ -2,12 +2,15 @@
 Session management API endpoints.
 """
 
+import logging
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.llm_client import GeminiClient
 from app.database import get_db
 from app.middleware.error_handler import MediKioskError, NotFoundError
 from app.models.session import Session, SessionMessage
@@ -21,7 +24,10 @@ from app.schemas.schemas import (
     VoiceInputResponse,
 )
 
+logger = logging.getLogger("medikiosk.routers.sessions")
 router = APIRouter(prefix="/api/v1/sessions", tags=["Sessions"])
+
+_llm = GeminiClient()
 
 # Valid state transitions
 VALID_TRANSITIONS = {
@@ -31,6 +37,35 @@ VALID_TRANSITIONS = {
     "reviewed": [],
     "cancelled": [],
 }
+
+
+def is_valid_transition(current: str, new: str) -> bool:
+    """Return True if moving from ``current`` to ``new`` is a legal status change."""
+    return new in VALID_TRANSITIONS.get(current, [])
+
+
+def _apply_clinical(session: Session, clinical: dict[str, Any]) -> None:
+    """Persist structured clinical output onto the session row."""
+    if not clinical:
+        return
+    chief = clinical.get("chief_complaint")
+    if chief:
+        session.chief_complaint = str(chief).strip() or None
+    hpi = clinical.get("hpi")
+    if hpi:
+        session.history_hpi = hpi if isinstance(hpi, dict) else {"raw": str(hpi)}
+    for field, key in (
+        ("symptoms", "review_of_systems"),
+        ("past_medical_history", "past_medical_history"),
+        ("current_medications", "drug_history"),
+        ("allergies", "allergy_history"),
+    ):
+        value = clinical.get(field)
+        if value:
+            setattr(session, key, value)
+    session.llm_raw_response = str(clinical)
+    if clinical.get("confidence") is not None:
+        session.confidence_score = float(clinical["confidence"])
 
 
 @router.post("", response_model=SessionResponse, status_code=201)
@@ -76,12 +111,10 @@ async def update_session(
     # Validate state transitions
     if "status" in update_data:
         new_status = update_data["status"]
-        allowed = VALID_TRANSITIONS.get(session.status, [])
-        if new_status not in allowed:
+        if not is_valid_transition(session.status, new_status):
             raise MediKioskError(
                 code="MK_INVALID_TRANSITION",
-                message=f"Cannot transition from '{session.status}' to '{new_status}'. "
-                f"Allowed transitions: {allowed}",
+                message=f"Cannot transition from '{session.status}' to '{new_status}'. Allowed transitions: {VALID_TRANSITIONS.get(session.status, [])}",
                 status_code=422,
             )
         if new_status == "completed":
@@ -128,19 +161,29 @@ async def submit_touch_input(
         raise NotFoundError("Session", session_id)
 
     # Store the touch response as a message
+    answer_text = str(touch_data.answer) if not isinstance(touch_data.answer, str) else touch_data.answer
     message = SessionMessage(
         session_id=session_id,
         message_type="patient_touch",
-        content=str(touch_data.answer),
+        content=answer_text,
     )
     db.add(message)
     await db.flush()
 
-    # TODO: Process through LLM for clinical structuring
+    # Process through LLM for clinical structuring (best effort — never blocks the kiosk)
+    structured: dict[str, Any] | None = None
+    try:
+        structured = await _llm.structure_clinical_history(answer_text)
+        if structured and "error" not in structured:
+            _apply_clinical(session, structured)
+            await db.flush()
+    except Exception as exc:  # pragma: no cover - LLM should never break the touch flow
+        logger.warning("Clinical structuring failed for session %s: %s", session_id, exc)
+
     return VoiceInputResponse(
-        transcription=str(touch_data.answer),
+        transcription=answer_text,
         confidence=1.0,
-        structured=None,
+        structured=structured,
         next_question="What other symptoms are you experiencing?",
         red_flags=[],
         follow_up_required=True,
@@ -159,11 +202,7 @@ async def get_conversation_history(
 ):
     """Get the complete conversation history for a session."""
     result = await db.execute(
-        select(SessionMessage)
-        .where(SessionMessage.session_id == session_id)
-        .order_by(SessionMessage.created_at.asc())
-        .offset(offset)
-        .limit(limit)
+        select(SessionMessage).where(SessionMessage.session_id == session_id).order_by(SessionMessage.created_at.asc()).offset(offset).limit(limit)
     )
     return result.scalars().all()
 

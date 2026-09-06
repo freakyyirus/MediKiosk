@@ -66,9 +66,7 @@ def _preprocess(bgr: np.ndarray) -> np.ndarray:
     gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
     denoised = cv2.fastNlMeansDenoising(gray, h=30)
     # Light adaptive-threshold sharpening
-    thresh = cv2.adaptiveThreshold(
-        denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 11
-    )
+    thresh = cv2.adaptiveThreshold(denoised, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 11)
     return thresh
 
 
@@ -118,9 +116,7 @@ def _handwriting_heuristic(words: list[OcrWord]) -> float:
     y_var = float(np.std(ys)) / (float(np.mean(hs)) + 1e-6)
     h_var = float(np.std(hs)) / (float(np.mean(hs)) + 1e-6)
     text = " ".join(wd.text for wd in words).lower()
-    shorthand = sum(
-        1 for tok in ("tab", "cap", "syp", "inj", "bd", "tds", "od", "sos", "tsf") if tok in text
-    )
+    shorthand = sum(1 for tok in ("tab", "cap", "syp", "inj", "bd", "tds", "od", "sos", "tsf") if tok in text)
     heuristic = min(1.0, 0.35 * y_var + 0.25 * h_var + 0.08 * shorthand)
     return round(heuristic, 3)
 
@@ -218,9 +214,7 @@ def _run_easyocr(image_bytes: bytes) -> OcrDocument | None:
 class OCRPipeline:
     """Async wrapper around the OCR engines with NER helper."""
 
-    async def process_image(
-        self, image_bytes: bytes, language: str = "en", prefer: str = "auto"
-    ) -> OcrDocument:
+    async def process_image(self, image_bytes: bytes, language: str = "en", prefer: str = "auto") -> OcrDocument:
         """Run OCR, preferring EasyOCR when handwriting heuristic is expected high."""
 
         def block() -> OcrDocument:
@@ -260,12 +254,8 @@ class OCRPipeline:
             "thrice daily": "TDS",
         }
         dose_re = re.compile(r"(\d+\.?\d*\s*(mg|mcg|g|ml|iu|tsf|tab|caps?|unit))", re.IGNORECASE)
-        freq_re = re.compile(
-            r"\b(od|bd|tds|qid|sos|hs|once daily|twice daily|thrice daily)\b", re.IGNORECASE
-        )
-        dur_re = re.compile(
-            r"([x×]\s*\d+\s*days?|\d+\s*days|\d+\s*weeks?|\d+\s*months?)", re.IGNORECASE
-        )
+        freq_re = re.compile(r"\b(od|bd|tds|qid|sos|hs|once daily|twice daily|thrice daily)\b", re.IGNORECASE)
+        dur_re = re.compile(r"([x×]\s*\d+\s*days?|\d+\s*days|\d+\s*weeks?|\d+\s*months?)", re.IGNORECASE)
         diag_re = re.compile(
             r"\b(diabetes|hypertension|gastritis|fever|infection|thyroid|asthma|malaria|typhoid|cough|cold|gastric)\b",
             re.IGNORECASE,
@@ -292,13 +282,7 @@ class OCRPipeline:
             ):
                 text = re.sub(r"^\s*[a-z.]+\s*", "", line)
                 name_match = re.match(r"^\s*([A-Za-z][A-Za-z0-9 .-]{1,24}?)(?=\s+(\d|$))", line)
-                name = (
-                    name_match.group(1).strip()
-                    if name_match
-                    else text.split(maxsplit=1)[0].strip()
-                    if text
-                    else ""
-                )
+                name = name_match.group(1).strip() if name_match else text.split(maxsplit=1)[0].strip() if text else ""
                 dose_m = dose_re.search(line)
                 freq_m = freq_re.search(line)
                 dur_m = dur_re.search(line)
@@ -307,9 +291,7 @@ class OCRPipeline:
                         "name": name.title() if name else None,
                         "brand_name": None,
                         "dosage": dose_m.group(1).strip() if dose_m else None,
-                        "frequency": freq_map.get(freq_m.group(1).lower(), freq_m.group(1).upper())
-                        if freq_m
-                        else None,
+                        "frequency": freq_map.get(freq_m.group(1).lower(), freq_m.group(1).upper()) if freq_m else None,
                         "duration": dur_m.group(0).strip() if dur_m else None,
                         "instructions": None,
                         "confidence": 0.5,

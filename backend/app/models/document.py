@@ -46,9 +46,7 @@ class Document(Base):
     extracted_vitals: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Processing status
-    processing_status: Mapped[str] = mapped_column(
-        String(20), default="pending"
-    )  # pending, processing, completed, failed
+    processing_status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, processing, completed, failed
 
     created_at: Mapped[datetime] = mapped_column(default=func.now())
 
@@ -67,6 +65,4 @@ class Document(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<Document(id={self.id}, type={self.document_type}, status={self.processing_status})>"
-        )
+        return f"<Document(id={self.id}, type={self.document_type}, status={self.processing_status})>"

@@ -287,9 +287,7 @@ class PriorityQueueModel:
             return None
         return np.array(x_list, dtype=float), np.array(y_list, dtype=int)
 
-    async def retrain_on_real(
-        self, min_real: int = 20, backfill_synthetic: int = 1500, holdout: float = 0.2
-    ) -> dict:
+    async def retrain_on_real(self, min_real: int = 20, backfill_synthetic: int = 1500, holdout: float = 0.2) -> dict:
         """
         Retrain the production model on ingested real data (plus a synthetic
         backfill so rare classes stay populated). Reports hold-out metrics on
@@ -301,9 +299,7 @@ class PriorityQueueModel:
         async with self._train_lock:
             real_pair = await asyncio.to_thread(self._load_real_samples)
             if real_pair is None:
-                raise ValueError(
-                    "No real training samples found — POST /api/v1/advanced/ml/samples first."
-                )
+                raise ValueError("No real training samples found — POST /api/v1/advanced/ml/samples first.")
             x_real, y_real = real_pair
             if len(x_real) < min_real:
                 raise ValueError(f"Need at least {min_real} real samples (have {len(x_real)}).")
@@ -325,9 +321,7 @@ class PriorityQueueModel:
             # Honest metrics on a real-data hold-out only
             metrics: dict = {}
             if len(x_real) >= 10 and 0 < holdout < 1:
-                x_tr, x_te, y_tr, y_te = train_test_split(
-                    x_real, y_real, test_size=holdout, stratify=y_real, random_state=_SEED
-                )
+                x_tr, x_te, y_tr, y_te = train_test_split(x_real, y_real, test_size=holdout, stratify=y_real, random_state=_SEED)
                 clf_hold = RandomForestClassifier(
                     n_estimators=150,
                     max_depth=10,
@@ -348,9 +342,7 @@ class PriorityQueueModel:
                 )
                 metrics = {
                     "accuracy": round(float(accuracy_score(y_te, pred)), 4),
-                    "confusion_matrix": confusion_matrix(
-                        y_te, pred, labels=list(range(len(CLASSES)))
-                    ).tolist(),
+                    "confusion_matrix": confusion_matrix(y_te, pred, labels=list(range(len(CLASSES)))).tolist(),
                     "per_class": {
                         c: {
                             "precision": round(float(report[c]["precision"]), 3),
@@ -396,10 +388,7 @@ class PriorityQueueModel:
             "real_samples": real,
             "real_csv": str(_REAL_SAMPLES_PATH),
             "model_traits": {"features": list(FEATURES), "classes": CLASSES},
-            "note": (
-                "Real labels come from POST /api/v1/advanced/ml/samples "
-                "(patient vitals + physician priority)."
-            ),
+            "note": ("Real labels come from POST /api/v1/advanced/ml/samples (patient vitals + physician priority)."),
         }
 
     @staticmethod
@@ -446,11 +435,7 @@ class PriorityQueueModel:
         # Top factors via feature importances for this prediction
         importances = self._model.feature_importances_
         rang = sorted(zip(self._features_, importances), key=lambda t: -t[1])[:4]
-        top_factors = [
-            name.replace("_", " ")
-            for name, _ in rang
-            if name in fields and fields.get(name) not in (None, 0, "", False)
-        ]
+        top_factors = [name.replace("_", " ") for name, _ in rang if name in fields and fields.get(name) not in (None, 0, "", False)]
 
         return {
             "priority_score": score,
@@ -462,9 +447,7 @@ class PriorityQueueModel:
                 "low": "Can wait",
             }[class_name],
             "top_factors": top_factors or [name.replace("_", " ") for name, _ in rang[:2]],
-            "confidence": round(float(probs[cls_idx]), 3)
-            if not math.isnan(probs[cls_idx])
-            else 0.0,
+            "confidence": round(float(probs[cls_idx]), 3) if not math.isnan(probs[cls_idx]) else 0.0,
             "model": "ml/sklearn-rf",
         }
 
@@ -525,13 +508,9 @@ async def ingest_real_samples(samples: list[dict]) -> dict:
     return await _priority_model.ingest_real_samples(samples)
 
 
-async def retrain_on_real(
-    min_real: int = 20, backfill_synthetic: int = 1500, holdout: float = 0.2
-) -> dict:
+async def retrain_on_real(min_real: int = 20, backfill_synthetic: int = 1500, holdout: float = 0.2) -> dict:
     """Rebuild + hot-swap the production model on real data, return metrics."""
-    return await _priority_model.retrain_on_real(
-        min_real=min_real, backfill_synthetic=backfill_synthetic, holdout=holdout
-    )
+    return await _priority_model.retrain_on_real(min_real=min_real, backfill_synthetic=backfill_synthetic, holdout=holdout)
 
 
 async def dataset_summary() -> dict:

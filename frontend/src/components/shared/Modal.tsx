@@ -62,7 +62,8 @@ export default function Modal({
               <h2 className="text-lg font-semibold text-surface-900">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
+                aria-label="Close"
+                className="touch-target w-11 h-11 flex items-center justify-center rounded-lg text-surface-400 hover:text-surface-600 hover:bg-surface-100 transition-colors"
               >
                 <X size={20} />
               </button>

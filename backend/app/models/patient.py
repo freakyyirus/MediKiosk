@@ -20,9 +20,7 @@ class Patient(Base):
     aadhaar_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)  # SHA-256
     name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     date_of_birth: Mapped[date | None] = mapped_column(Date, nullable=True)
-    gender: Mapped[str | None] = mapped_column(
-        String(10), nullable=True
-    )  # male, female, other, unknown
+    gender: Mapped[str | None] = mapped_column(String(10), nullable=True)  # male, female, other, unknown
     phone: Mapped[str | None] = mapped_column(String(15), nullable=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -32,9 +30,27 @@ class Patient(Base):
     updated_at: Mapped[datetime] = mapped_column(default=func.now(), onupdate=func.now())
 
     # Relationships
-    sessions = relationship("Session", back_populates="patient", lazy="selectin")
-    documents = relationship("Document", back_populates="patient", lazy="selectin")
-    consent_records = relationship("ConsentRecord", back_populates="patient", lazy="selectin")
+    sessions = relationship(
+        "Session",
+        back_populates="patient",
+        lazy="selectin",
+        foreign_keys="Session.patient_id",
+        primaryjoin="Patient.id == Session.patient_id",
+    )
+    documents = relationship(
+        "Document",
+        back_populates="patient",
+        lazy="selectin",
+        foreign_keys="Document.patient_id",
+        primaryjoin="Patient.id == Document.patient_id",
+    )
+    consent_records = relationship(
+        "ConsentRecord",
+        back_populates="patient",
+        lazy="selectin",
+        foreign_keys="ConsentRecord.patient_id",
+        primaryjoin="Patient.id == ConsentRecord.patient_id",
+    )
 
     def __repr__(self) -> str:
         return f"<Patient(id={self.id}, name={self.name}, abha_id={self.abha_id})>"

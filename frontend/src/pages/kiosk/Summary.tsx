@@ -14,6 +14,21 @@ export default function Summary() {
   const [summaryText, setSummaryText] = useState('');
   const [playingSection, setPlayingSection] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [progressStage, setProgressStage] = useState(0);
+
+  const progressStages = [
+    'Reading your information…',
+    'Extracting details…',
+    'Preparing your clinical summary…',
+  ];
+
+  useEffect(() => {
+    if (!generating) return;
+    const interval = setInterval(() => {
+      setProgressStage((s) => Math.min(s + 1, progressStages.length - 1));
+    }, 1400);
+    return () => clearInterval(interval);
+  }, [generating, progressStages.length]);
 
   useEffect(() => {
     const generate = async () => {
@@ -82,8 +97,11 @@ export default function Summary() {
             <Loader2 className="w-12 h-12 text-white animate-spin" />
           </div>
           <h1 className="text-4xl font-bold text-surface-900 mb-4">Preparing Your Summary</h1>
-          <p className="text-xl text-surface-500 max-w-sm mx-auto">
-            Analyzing your responses and documents to create a clinical summary for your doctor.
+          <p className="text-xl text-surface-500 max-w-sm mx-auto mb-2">
+            {progressStages[progressStage]}
+          </p>
+          <p className="text-base text-surface-400 max-w-sm mx-auto">
+            Analyzing your responses and documents for your doctor.
           </p>
           <div className="mt-8 w-64 mx-auto">
             <div className="h-2 bg-surface-200 rounded-full overflow-hidden">

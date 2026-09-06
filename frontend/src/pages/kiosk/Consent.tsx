@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Check, ArrowRight, ArrowLeft, UserCheck } from 'lucide-react';
 import { useSessionStore } from '../../stores';
 import { consentApi } from '../../api/client';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
+import { useToastStore } from '../../components/shared/Toast';
 
 const CONSENT_ITEMS = [
   {
@@ -33,7 +34,10 @@ const CONSENT_ITEMS = [
 export default function Consent() {
   const navigate = useNavigate();
   const { session, setConsentGiven } = useSessionStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [consents, setConsents] = useState<Record<string, boolean>>({});
+  const [saving, setSaving] = useState(false);
+  const submittingRef = useRef(false);
 
   const allRequired = CONSENT_ITEMS.filter((i) => i.required).every((i) => consents[i.id]);
 
@@ -42,7 +46,9 @@ export default function Consent() {
   };
 
   const handleNext = async () => {
-    if (!allRequired) return;
+    if (!allRequired || submittingRef.current) return;
+    submittingRef.current = true;
+    setSaving(true);
 
     if (session?.id) {
       try {
@@ -55,7 +61,10 @@ export default function Consent() {
           })),
         });
       } catch {
-        /* best-effort */
+        addToast('error', 'We couldn\u2019t save your consent. Please try again.');
+        submittingRef.current = false;
+        setSaving(false);
+        return;
       }
     }
 
@@ -81,7 +90,7 @@ export default function Consent() {
           </p>
         </div>
 
-        <div className="w-full space-y-3 mb-8">
+        <div className="w-full space-y-3 mb-6">
           {CONSENT_ITEMS.map((item) => {
             const checked = !!consents[item.id];
             return (
@@ -118,6 +127,17 @@ export default function Consent() {
           })}
         </div>
 
+        {/* Plain-language data disclosure */}
+        <div className="w-full rounded-2xl border border-surface-200 bg-surface-50 p-4 mb-6 text-sm text-surface-600 leading-relaxed">
+          <p className="font-semibold text-surface-800 mb-1">How your information is used</p>
+          <p>
+            The details you provide — including your symptoms, voice notes, uploaded documents and
+            measurements — are shared only with the treating physician and stored securely to
+            complete this check-in. AI is used only to organise the information you give; it never
+            decides a diagnosis or treatment on its own. Nothing is sold to third parties.
+          </p>
+        </div>
+
         <div className="w-full flex gap-2">
           <button
             onClick={() => navigate('/kiosk/identify')}
@@ -128,10 +148,20 @@ export default function Consent() {
           </button>
           <button
             onClick={handleNext}
-            disabled={!allRequired}
+            disabled={!allRequired || saving}
             className="touch-target flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-lg font-semibold rounded-2xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-primary-600/25"
           >
-            Continue <ArrowRight className="w-5 h-5" />
+            {saving ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Saving consent…
+              </>
+            ) : (
+              <>Continue <ArrowRight className="w-5 h-5" /></>
+            )}
           </button>
         </div>
       </div>

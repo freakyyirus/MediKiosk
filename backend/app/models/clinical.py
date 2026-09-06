@@ -27,9 +27,7 @@ class Summary(Base):
     # Physician review
     physician_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     physician_edits: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
-    review_status: Mapped[str] = mapped_column(
-        String(20), default="pending", index=True
-    )  # pending, confirmed, amended, rejected
+    review_status: Mapped[str] = mapped_column(String(20), default="pending", index=True)  # pending, confirmed, amended, rejected
     reviewed_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # ABDM
@@ -61,9 +59,7 @@ class ConsentRecord(Base):
     session_id: Mapped[int] = mapped_column(BigInteger, index=True)
     patient_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
-    consent_type: Mapped[str | None] = mapped_column(
-        String(50), nullable=True
-    )  # data_capture, his_share, abdm_link, referral_share, research
+    consent_type: Mapped[str | None] = mapped_column(String(50), nullable=True)  # data_capture, his_share, abdm_link, referral_share, research
     granted: Mapped[bool] = mapped_column(Boolean, default=False)
     granted_at: Mapped[datetime | None] = mapped_column(nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(nullable=True)
@@ -102,12 +98,8 @@ class RedFlagAlert(Base):
     session_id: Mapped[int] = mapped_column(BigInteger, index=True)
     patient_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
-    alert_type: Mapped[str | None] = mapped_column(
-        String(100), nullable=True
-    )  # chest_pain_mi, stroke, gi_bleed, etc.
-    severity: Mapped[str | None] = mapped_column(
-        String(20), nullable=True, index=True
-    )  # critical, high, medium
+    alert_type: Mapped[str | None] = mapped_column(String(100), nullable=True)  # chest_pain_mi, stroke, gi_bleed, etc.
+    severity: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)  # critical, high, medium
     symptoms_triggered: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     transcript_snippet: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -138,9 +130,7 @@ class AuditLog(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     table_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
     record_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    action: Mapped[str | None] = mapped_column(
-        String(20), nullable=True
-    )  # CREATE, READ, UPDATE, DELETE
+    action: Mapped[str | None] = mapped_column(String(20), nullable=True)  # CREATE, READ, UPDATE, DELETE
     performed_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     performed_by_role: Mapped[str | None] = mapped_column(String(50), nullable=True)
     old_values: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
@@ -174,12 +164,8 @@ class AyushAssessment(Base):
     vikriti_dominant: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     # 10 Dashavidha Pariksha parameters
-    agni_type: Mapped[str | None] = mapped_column(
-        String(20), nullable=True
-    )  # tikshna, vishama, manda, sama
-    koshtha_type: Mapped[str | None] = mapped_column(
-        String(20), nullable=True
-    )  # mrudu, madhya, krura
+    agni_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # tikshna, vishama, manda, sama
+    koshtha_type: Mapped[str | None] = mapped_column(String(20), nullable=True)  # mrudu, madhya, krura
     sara: Mapped[str | None] = mapped_column(String(20), nullable=True)
     samhanana: Mapped[str | None] = mapped_column(String(20), nullable=True)
     pramana: Mapped[str | None] = mapped_column(String(20), nullable=True)

@@ -35,7 +35,7 @@ class GeminiClient:
     def available(self) -> bool:
         return self._client is not None
 
-    async def _generate(self, prompt: str, temperature: float = 0.2) -> str:
+    async def _generate(self, prompt: str, temperature: float = 0.2, system_instruction: str | None = None) -> str:
         """Run a content generation in a thread to avoid blocking the loop."""
         if not self._client:
             raise RuntimeError("Gemini client not configured")
@@ -45,6 +45,10 @@ class GeminiClient:
             temperature=temperature,
             automatic_function_calling=genai.types.AutomaticFunctionCallingConfig(disable=True),
         )
+        if system_instruction:
+            # system_instruction is treated as the model's hard directive; the
+            # prompt string carries the actual conversation contents.
+            config.system_instruction = system_instruction
         return await asyncio.to_thread(
             self._client.models.generate_content,
             model=self.model_name,
@@ -52,8 +56,8 @@ class GeminiClient:
             config=config,
         )
 
-    async def _generate_json(self, prompt: str, temperature: float = 0.1) -> dict:
-        resp = await self._generate(prompt, temperature)
+    async def _generate_json(self, prompt: str, temperature: float = 0.1, system_instruction: str | None = None) -> dict:
+        resp = await self._generate(prompt, temperature, system_instruction)
         text = resp.text.replace("```json", "").replace("```", "").strip()
         # Strip any leading/trailing non-JSON noise
         start = text.find("{")

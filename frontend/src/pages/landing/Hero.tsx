@@ -1,4 +1,5 @@
 import { ArrowRight, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import HeroIllustration from './HeroIllustration';
 import { useLandingT } from './i18n';
 import { motion, useReducedMotion } from 'framer-motion';
@@ -138,16 +139,16 @@ function HeroSection() {
             transition={{ duration: 0.6, delay: 0.24, ease: [0.16, 1, 0.3, 1] }}
             className="mt-6 sm:mt-9 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3 sm:gap-4"
           >
+            <Link
+              to="/kiosk/home"
+              className="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-[18px] transition-all hover:shadow-xl hover:shadow-primary-600/30 hover:-translate-y-0.5"
+            >
+              {t.start}
+              <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
             <FocusableAnchor
               href="#how"
-              className="group inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-[17px] transition-all hover:shadow-xl hover:shadow-primary-600/30 hover:-translate-y-0.5"
-            >
-              {t.seehow}
-              <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-            </FocusableAnchor>
-            <FocusableAnchor
-              href="#product"
-              className="inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-semibold text-[17px] transition-colors"
+              className="hidden sm:inline-flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50 font-semibold text-[17px] transition-colors"
             >
               <span className="relative w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center">
                 <span aria-hidden className="absolute inset-0 rounded-full bg-indigo-600/40" style={{ animation: 'pulse-ring 1.8s ease-out infinite' }} />
@@ -155,6 +156,9 @@ function HeroSection() {
               </span>
               {t.demo}
             </FocusableAnchor>
+            <a href="#how" className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 underline underline-offset-4 sm:hidden" tabIndex={0}>
+              {t.seehow}
+            </a>
           </motion.div>
 
           <TrustRow trusted={t.trusted} />

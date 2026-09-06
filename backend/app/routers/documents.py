@@ -78,9 +78,5 @@ async def list_session_documents(
     db: AsyncSession = Depends(get_db),
 ):
     """List all documents for a session."""
-    result = await db.execute(
-        select(Document)
-        .where(Document.session_id == session_id)
-        .order_by(Document.created_at.asc())
-    )
+    result = await db.execute(select(Document).where(Document.session_id == session_id).order_by(Document.created_at.asc()))
     return result.scalars().all()

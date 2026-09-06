@@ -17,15 +17,23 @@ TTS_COMPUTE_URL = "https://dhruva-api.bhashini.gov.in/services/inference/pipelin
 
 _TTS_SERVICE_IDS = {
     "hi": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "gu": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "bn": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "mr": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "pa": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "or": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "as": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "ta": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
     "te": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
     "kn": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
     "ml": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
-    "bn": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
-    "mr": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
-    "gu": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "en": "ai4bharat/indic-tts-coqui-misc-gpu--t4",
 }
+
+
+def resolve_tts_service_id(target_lang: str) -> str:
+    """Return the TTS serviceId for a language, falling back to Indo-Aryan Coqui."""
+    return _TTS_SERVICE_IDS.get(target_lang, "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4")
 
 
 class BhashiniTTS:
@@ -41,9 +49,7 @@ class BhashiniTTS:
             logger.warning("Bhashini TTS credentials missing.")
             return ""
 
-        service_id = _TTS_SERVICE_IDS.get(
-            target_lang, "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4"
-        )
+        service_id = resolve_tts_service_id(target_lang)
 
         payload = {
             "pipelineTasks": [

@@ -83,6 +83,7 @@ export default function RegisterPage() {
   const [awaitingCode, setAwaitingCode] = useState(false);
   const [code, setCode] = useState('');
   const [verifyingCode, setVerifyingCode] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     email: '',
@@ -193,11 +194,14 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
     try {
       if (clerkEnabled) {
         const signUp = clerkCtxRef.current.signUp;
         if (!signUp) {
           addToast('error', 'Clerk is still loading — please wait a moment and try again.');
+          setSubmitting(false);
           return;
         }
         const result = await signUp.create({
@@ -212,6 +216,7 @@ export default function RegisterPage() {
           await completeAuth(result.createdSessionId);
         } else {
           await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+          setSubmitting(false);
           setAwaitingCode(true);
           addToast('info', 'We emailed you a 6-digit verification code.');
         }
@@ -254,6 +259,8 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
       addToast('error', message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -612,6 +619,10 @@ export default function RegisterPage() {
                   )}
                 </div>
 
+                <p className="text-sm text-surface-500">
+                  Your responses help hospital staff understand your symptoms and prepare for your consultation. We collect only what's needed for your care, protect it with encryption and access controls, and never sell it.
+                </p>
+
                 <div className="bg-primary-50 rounded-lg p-4">
                   <p className="text-sm text-primary-700">
                     By clicking "Create Account", you agree to MediKiosk's Terms of Service and Privacy Policy.
@@ -634,7 +645,7 @@ export default function RegisterPage() {
                   Next
                 </Button>
               ) : (
-                <Button type="submit" loading={isLoading} icon={<Check size={16} />}>
+                <Button type="submit" loading={submitting || isLoading} disabled={submitting || isLoading} icon={<Check size={16} />}>
                   Create Account
                 </Button>
               )}

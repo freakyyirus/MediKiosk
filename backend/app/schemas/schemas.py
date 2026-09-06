@@ -96,9 +96,7 @@ class SessionUpdate(BaseModel):
     personal_history: dict[str, Any] | None = None
     review_of_systems: dict[str, Any] | None = None
     ayush_assessment: dict[str, Any] | None = None
-    status: str | None = Field(
-        None, pattern="^(in_progress|completed|under_review|reviewed|cancelled)$"
-    )
+    status: str | None = Field(None, pattern="^(in_progress|completed|under_review|reviewed|cancelled)$")
 
 
 class SessionResponse(BaseModel):

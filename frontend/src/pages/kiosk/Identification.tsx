@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { QrCode, UserPlus, ArrowLeft } from 'lucide-react';
+import { QrCode, UserPlus, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useSessionStore } from '../../stores';
 import { patientApi, sessionApi } from '../../api/client';
 import { useUIStore } from '../../stores';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
+
+const ABHA_REGEX = /^\d{10}$/;
+const PHONE_REGEX = /^\d{10}$/;
 
 export default function Identification() {
   const navigate = useNavigate();
@@ -16,11 +19,36 @@ export default function Identification() {
   const [walkInData, setWalkInData] = useState({ name: '', age: '', gender: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const submittingRef = useRef(false);
+
+  const validateAbha = (): string => {
+    const value = abhaId.trim();
+    if (!value) return 'Please enter your ABHA ID.';
+    if (!ABHA_REGEX.test(value)) return 'ABHA ID must be a 10-digit number.';
+    return '';
+  };
+
+  const validateWalkIn = (): string => {
+    if (!walkInData.name.trim()) return 'Full name is required.';
+    if (walkInData.phone.trim() && !PHONE_REGEX.test(walkInData.phone.trim())) return 'Phone number must be a 10-digit number.';
+    if (walkInData.age.trim()) {
+      const age = Number(walkInData.age);
+      if (Number.isNaN(age) || age < 0 || age > 120) return 'Age must be between 0 and 120.';
+    }
+    if (!walkInData.gender) return 'Please select a gender.';
+    return '';
+  };
 
   const handleAbhaSubmit = async () => {
-    if (!abhaId.trim()) return;
-    setLoading(true);
+    if (submittingRef.current) return;
+    const validationError = validateAbha();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError('');
+    submittingRef.current = true;
+    setLoading(true);
     try {
       const { data: patients } = await patientApi.search({ abha_id: abhaId });
       let patientId: number;
@@ -75,13 +103,20 @@ export default function Identification() {
       navigate('/kiosk/consent');
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
   const handleWalkInSubmit = async () => {
-    if (!walkInData.name.trim()) return;
-    setLoading(true);
+    if (submittingRef.current) return;
+    const validationError = validateWalkIn();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setError('');
+    submittingRef.current = true;
+    setLoading(true);
     try {
       const { data: patient } = await patientApi.create({
         name: walkInData.name,
@@ -130,6 +165,7 @@ export default function Identification() {
       navigate('/kiosk/consent');
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -199,8 +235,21 @@ export default function Identification() {
                 className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-xl font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
                 autoFocus
               />
-              {error && <p className="text-danger-600 text-sm font-medium">{error}</p>}
+              {error && (
+                <p className="flex items-center gap-2 text-danger-600 text-sm font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+                </p>
+              )}
             </div>
+            {loading && (
+              <p className="flex items-center gap-2 text-surface-500 text-sm mt-4">
+                <svg className="animate-spin h-4 w-4 text-primary-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Verifying your ABHA ID…
+              </p>
+            )}
             <div className="flex gap-4 mt-10">
               <button
                 onClick={() => setMode(null)}
@@ -217,6 +266,9 @@ export default function Identification() {
                 {loading ? 'Verifying...' : 'Continue'}
               </button>
             </div>
+            <p className="text-center text-sm text-surface-400 mt-4">
+              Processing your information… This usually takes a few seconds.
+            </p>
           </div>
         )}
 
@@ -277,7 +329,20 @@ export default function Identification() {
                 />
               </div>
             </div>
-            {error && <p className="text-danger-600 text-sm font-medium mt-4">{error}</p>}
+            {error && (
+              <p className="flex items-center gap-2 text-danger-600 text-sm font-medium mt-4">
+                <AlertCircle className="w-4 h-4 shrink-0" /> {error}
+              </p>
+            )}
+            {loading && (
+              <p className="flex items-center gap-2 text-surface-500 text-sm mt-4">
+                <svg className="animate-spin h-4 w-4 text-primary-600" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Registering your visit…
+              </p>
+            )}
             <div className="flex gap-4 mt-10">
               <button
                 onClick={() => setMode(null)}
@@ -288,12 +353,15 @@ export default function Identification() {
               </button>
               <button
                 onClick={handleWalkInSubmit}
-                disabled={loading || !walkInData.name.trim()}
+                disabled={loading}
                 className="flex-[2] touch-target bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-lg font-bold rounded-2xl px-6 py-5 transition-colors shadow-lg shadow-primary-600/25"
               >
                 {loading ? 'Registering...' : 'Continue'}
               </button>
             </div>
+            <p className="text-center text-sm text-surface-400 mt-4">
+              Processing your information… This usually takes a few seconds.
+            </p>
           </div>
         )}
 

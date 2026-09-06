@@ -1,0 +1,70 @@
+# Render blueprint — reproducible deploy of the MediKiosk FastAPI backend.
+#
+# Apply via: Render Dashboard → Blueprints → New Blueprint Instance → this repo.
+# Or use the same build/start commands when creating a manual Web Service.
+#
+# The deployment failure "Could not open requirements file: 'requirements.txt'"
+# happens when the build runs from the repo root but the deps live in backend/.
+# This blueprint pins the root directory and start command so it works cleanly.
+
+services:
+  - type: web
+    name: medikiosk-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.0
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: APP_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://medikiosk-frontend.onrender.com,http://localhost:5173,http://localhost:3000
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        sync: false
+      - key: POSTGRES_DB
+        sync: false
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: BHASHINI_API_KEY
+        sync: false
+      - key: BHASHINI_ULCA_API_KEY
+        sync: false
+      - key: BHASHINI_USER_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.1-flash-lite
+      - key: ABDM_CLIENT_ID
+        sync: false
+      - key: ABDM_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CLOUD_VISION_API_KEY
+        sync: false
+      - key: TESSERACT_CMD
+        value: /usr/bin/tesseract
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FORMAT
+        value: json

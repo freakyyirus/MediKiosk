@@ -175,9 +175,7 @@ async def ocr_validate(payload: dict):
     return {
         "suggestions": result,
         "confidence": result.get("overall_confidence", 0.7),
-        "validation_status": (
-            "verified" if not result.get("low_confidence_fields") else "needs_review"
-        ),
+        "validation_status": ("verified" if not result.get("low_confidence_fields") else "needs_review"),
     }
 
 
@@ -271,9 +269,7 @@ async def ml_samples(payload: dict = Body(...)):
     """
     samples = payload.get("samples")
     if not isinstance(samples, list) or not samples:
-        raise HTTPException(
-            422, "samples: non-empty list of labeled vitals/symptom records required"
-        )
+        raise HTTPException(422, "samples: non-empty list of labeled vitals/symptom records required")
     return await ingest_real_samples(samples)
 
 
@@ -289,9 +285,7 @@ async def ml_train(payload: dict = Body(...)):
     backfill = int(payload.get("backfill_synthetic", 1500))
     holdout = float(payload.get("holdout", 0.2))
     try:
-        return await retrain_on_real(
-            min_real=min_real, backfill_synthetic=backfill, holdout=holdout
-        )
+        return await retrain_on_real(min_real=min_real, backfill_synthetic=backfill, holdout=holdout)
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
 
@@ -335,11 +329,7 @@ async def vitals_analyze(payload: dict):
         elif temp <= 35:
             flag("Temperature", f"{temp}°C", "Hypothermia risk", "critical")
 
-    severity = (
-        "critical"
-        if any(f["severity"] == "critical" for f in flags)
-        else ("warning" if flags else "normal")
-    )
+    severity = "critical" if any(f["severity"] == "critical" for f in flags) else ("warning" if flags else "normal")
     return {"is_abnormal": bool(flags), "flags": flags, "severity": severity}
 
 
@@ -398,38 +388,122 @@ async def emergency_verify(payload: dict):
 
 # ─── F1: Body Map ────────────────────────────────────────────────
 
+_BODY_PART_SEVERITY_WEIGHTS = {
+    "head": 1,
+    "chest": 2,
+    "stomach": 1,
+    "nose_throat": 1,
+    "eyes": 1,
+}
+
+_BODY_PART_DEPARTMENTS = {
+    "head": "neurology",
+    "chest": "cardiology",
+    "stomach": "gastroenterology",
+    "nose_throat": "ent",
+    "eyes": "ophthalmology",
+    "skin": "dermatology",
+    "back": "orthopedics",
+    "legs_feet": "orthopedics",
+    "arms_hands": "orthopedics",
+    "joints": "rheumatology",
+    "private": "general_medicine",
+}
+
+_BODY_PART_FOLLOW_UP = {
+    "head": [
+        "How long have you had this symptom?",
+        "Is it a pain, dizziness or something else?",
+        "Are you having any blurred vision or numbness?",
+    ],
+    "chest": [
+        "Is the pain crushing/pressure-like or sharp?",
+        "Does it spread to your arm, jaw or back?",
+        "Are you feeling breathless along with it?",
+    ],
+    "stomach": [
+        "Where exactly in the stomach is the pain?",
+        "Is it burning, cramping or a sharp pain?",
+        "Have you vomited or had loose stools?",
+    ],
+    "nose_throat": [
+        "Do you have a fever along with it?",
+        "Is it a sore throat, cough or nasal block?",
+        "How long has it been going on?",
+    ],
+    "eyes": [
+        "Is it redness, pain, or reduced vision?",
+        "Is it one eye or both eyes?",
+        "Are you sensitive to bright light?",
+    ],
+}
+
+_BODY_PART_SPECIALIZATIONS = {
+    "head": ["Neurology", "ENT", "Ophthalmology"],
+    "chest": ["Cardiology", "Pulmonology"],
+    "stomach": ["Gastroenterology"],
+    "nose_throat": ["ENT", "Pulmonology"],
+    "eyes": ["Ophthalmology"],
+    "skin": ["Dermatology"],
+    "back": ["Orthopedics", "Physiotherapy"],
+    "legs_feet": ["Orthopedics"],
+    "arms_hands": ["Orthopedics", "Neurology"],
+    "joints": ["Rheumatology", "Orthopedics"],
+    "private": ["General Medicine"],
+}
+
+
+def body_map_analysis(body_part: str) -> dict:
+    """
+    Pure body-map triage lookup used by the API (and tested directly).
+
+    Returns the suggested department, risk weight, and clinician-facing
+    follow-up questions + possible specializations for the tapped body part.
+    """
+    if body_part not in _BODY_PART_DEPARTMENTS:
+        raise HTTPException(422, f"Unknown body_part '{body_part}'")
+    return {
+        "body_part": body_part,
+        "suggested_department": _BODY_PART_DEPARTMENTS[body_part],
+        "risk_weight": _BODY_PART_SEVERITY_WEIGHTS.get(body_part, 0),
+        "follow_up_questions": _BODY_PART_FOLLOW_UP.get(body_part, []),
+        "possible_specializations": _BODY_PART_SPECIALIZATIONS.get(body_part, ["General Medicine"]),
+    }
+
 
 @router.post("/body-map/tap")
-async def body_map_tap(payload: dict):
-    """Record a body-map tap for analytics/triage priority."""
+async def body_map_tap(payload: dict, db=Depends(get_db)):
+    """
+    Record a body-map tap for analytics/triage priority.
+
+    Returns the suggested department, risk weight, follow-up questions and
+    possible specializations for the tapped body part. When a ``session_id``
+    is provided the tap is also stored as a ``patient_touch`` message.
+    """
     body_part = payload.get("body_part")
     if not body_part:
         raise HTTPException(422, "body_part required")
-    severity_weights = {
-        "head": 1,
-        "chest": 2,
-        "stomach": 1,
-        "nose_throat": 1,
-        "eyes": 1,
-    }
-    suggested_department = {
-        "head": "neurology",
-        "chest": "cardiology",
-        "stomach": "gastroenterology",
-        "nose_throat": "ent",
-        "eyes": "ophthalmology",
-        "skin": "dermatology",
-        "back": "orthopedics",
-        "legs_feet": "orthopedics",
-        "arms_hands": "orthopedics",
-        "joints": "rheumatology",
-    }.get(body_part, "general_medicine")
+
+    analysis = body_map_analysis(body_part)
+
+    session_id = payload.get("session_id")
+    if session_id is not None:
+        session_exists = await db.execute(select(Session.id).where(Session.id == int(session_id)))
+        if session_exists.scalar_one_or_none():
+            symptoms = payload.get("selected_symptoms") or []
+            db.add(
+                SessionMessage(
+                    session_id=int(session_id),
+                    message_type="patient_touch",
+                    content=str({"body_part": body_part, "selected_symptoms": symptoms}),
+                )
+            )
+            await db.flush()
 
     return {
         "recorded": True,
         "tapped_at": datetime.now(UTC).isoformat(),
-        "suggested_department": suggested_department,
-        "risk_weight": severity_weights.get(body_part, 0),
+        **analysis,
     }
 
 
@@ -495,9 +569,7 @@ async def _purge_sessions(db, session_ids: list[int]) -> dict:
         }
 
     sid = session_ids
-    msg_rows = (
-        await db.execute(select(SessionMessage).where(SessionMessage.session_id.in_(sid)))
-    ).all()
+    msg_rows = (await db.execute(select(SessionMessage).where(SessionMessage.session_id.in_(sid)))).all()
     for m in msg_rows:
         _safe_unlink(m[0].audio_url)
     audio_paths = [m[0].audio_url for m in msg_rows if m[0].audio_url]
@@ -650,27 +722,19 @@ async def erase_patient(payload: dict = Body(...), db=Depends(get_db)):
     if not reason:
         raise HTTPException(422, "reason required (DPDPA grounds, e.g. right_to_erasure)")
 
-    patient = (
-        await db.execute(select(Patient).where(Patient.id == int(patient_id)))
-    ).scalar_one_or_none()
+    patient = (await db.execute(select(Patient).where(Patient.id == int(patient_id)))).scalar_one_or_none()
     if patient is None:
         raise HTTPException(404, "patient not found")
 
     session_ids = await _all_session_ids(db, int(patient_id))
 
     # Files before rows
-    doc_rows = (
-        await db.execute(select(Document).where(Document.patient_id == int(patient_id)))
-    ).all()
+    doc_rows = (await db.execute(select(Document).where(Document.patient_id == int(patient_id)))).all()
     for d in doc_rows:
         _safe_unlink(d[0].file_path)
 
     if session_ids:
-        msg_rows = (
-            await db.execute(
-                select(SessionMessage).where(SessionMessage.session_id.in_(session_ids))
-            )
-        ).all()
+        msg_rows = (await db.execute(select(SessionMessage).where(SessionMessage.session_id.in_(session_ids)))).all()
     else:
         msg_rows = []
     for m in msg_rows:
@@ -751,13 +815,7 @@ async def request_erasure(payload: dict = Body(...), db=Depends(get_db)):
 async def retention_requests(db=Depends(get_db)):
     """List erasure requests recorded on the backend (approval workflow)."""
     rows = (
-        (
-            await db.execute(
-                select(AuditLog)
-                .where(AuditLog.table_name == "erasure_requests", AuditLog.action == "CREATE")
-                .order_by(AuditLog.created_at.desc())
-            )
-        )
+        (await db.execute(select(AuditLog).where(AuditLog.table_name == "erasure_requests", AuditLog.action == "CREATE").order_by(AuditLog.created_at.desc())))
         .scalars()
         .all()
     )

@@ -1,10 +1,11 @@
-import { Globe, AtSign, Share2, Mail, Sparkles } from 'lucide-react';
+import { Globe, AtSign, Share2, Mail } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Logo from '../../components/brand/Logo';
 
-const COLS = [
-  { title: 'Product', links: ['Features', 'How It Works', 'AYUSH Mode', 'Security', 'Pricing'] },
-  { title: 'Resources', links: ['Documentation', 'API Reference', 'FHIR Mapping', 'Case Studies', 'Blog'] },
-  { title: 'Company', links: ['About', 'Team', 'Careers', 'Contact', 'Privacy Policy'] },
+const COLS: { title: string; links: { label: string; href: string }[] }[] = [
+  { title: 'Product', links: [{ label: 'Features', href: '#how' }, { label: 'How It Works', href: '#how' }, { label: 'AYUSH Mode', href: '#ayush' }, { label: 'Security', href: '#security' }, { label: 'Pricing', href: '#pricing' }] },
+  { title: 'Resources', links: [{ label: 'Documentation', href: '#how' }, { label: 'API Reference', href: '/docs' }, { label: 'FHIR Mapping', href: '#how' }, { label: 'Case Studies', href: '#testimonials' }, { label: 'Blog', href: '#top' }] },
+  { title: 'Company', links: [{ label: 'About', href: '#top' }, { label: 'Team', href: '#top' }, { label: 'Careers', href: '#top' }, { label: 'Contact', href: 'mailto:support@medikiosk.ai' }, { label: 'Privacy Policy', href: '/privacy-policy' }, { label: 'Terms', href: '/terms' }] },
 ];
 
 export default function Footer() {
@@ -20,7 +21,7 @@ export default function Footer() {
             <p className="mt-4 text-white/60 max-w-[260px]">Built with compassion for every Indian patient.</p>
             <div className="flex gap-3 mt-6">
               {[Globe, AtSign, Share2, Mail].map((Icon, i) => (
-                <a key={i} href="#top" className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary-600 flex items-center justify-center transition-colors">
+                <a key={i} href={i === 3 ? 'mailto:support@medikiosk.ai' : '#top'} aria-label={i === 3 ? 'Email MediKiosk' : `Social link ${i + 1}`} className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary-600 flex items-center justify-center transition-colors">
                   <Icon className="w-5 h-5" />
                 </a>
               ))}
@@ -31,7 +32,7 @@ export default function Footer() {
               <div className="font-semibold mb-4 text-[15px]">{col.title}</div>
               <ul className="space-y-2.5">
                 {col.links.map((lk) => (
-                  <li key={lk}><a href="#top" className="text-white/55 hover:text-white transition-colors text-[14px]">{lk}</a></li>
+                  <li key={lk.label}><a href={lk.href} className="text-white/55 hover:text-white transition-colors text-[14px]">{lk.label}</a></li>
                 ))}
               </ul>
             </div>
@@ -43,6 +44,8 @@ export default function Footer() {
           <div>© 2026 MediKiosk. All rights reserved.</div>
           <div className="flex items-center gap-4">
             <span>Made in India 🇮🇳</span>
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
             <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">DPDP Compliant</span>
           </div>
         </div>
