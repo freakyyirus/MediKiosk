@@ -1,11 +1,18 @@
 # Render blueprint — reproducible deploy of the MediKiosk FastAPI backend.
 #
 # Apply via: Render Dashboard → Blueprints → New Blueprint Instance → this repo.
-# Or use the same build/start commands when creating a manual Web Service.
+# Or create a manual Web Service and use these same build/start commands.
 #
-# The deployment failure "Could not open requirements file: 'requirements.txt'"
-# happens when the build runs from the repo root but the deps live in backend/.
-# This blueprint pins the root directory and start command so it works cleanly.
+# The failure "Could not read package.json: ENOENT ... /opt/render/project/src/package.json"
+# happens when Render is told to run a NODE service from the repo ROOT. This is a
+# Python/FastAPI backend (there is deliberately no root package.json). Create the
+# service with:
+#   * Runtime: Python 3 (or apply this Blueprint — render.yaml sets the runtime)
+#   * Root Directory: backend
+#   * Build Command: pip install -r requirements.txt
+#   * Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+#   * Health Check Path: /health
+# The frontend is deployed separately (Vercel) and points /api at this backend.
 
 services:
   - type: web
@@ -29,9 +36,17 @@ services:
       - key: APP_SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://medikiosk-frontend.onrender.com,http://localhost:5173,http://localhost:3000
+        value: http://localhost:5173,http://localhost:3000
       - key: JWT_SECRET_KEY
         generateValue: true
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: medikiosk-documents
       - key: DATABASE_URL
         sync: false
       - key: POSTGRES_HOST

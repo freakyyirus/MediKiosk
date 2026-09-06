@@ -7,50 +7,13 @@ import {
 } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import type { UserRole } from '../../stores/authStore';
-import { isClerkConfigured } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
 import Select from '../../components/shared/Select';
 import Logo from '../../components/brand/Logo';
-import { useSignUp } from '@clerk/clerk-react';
 
 const steps = ['Account', 'Profile', 'Confirm'];
-
-const clerkEnabled = isClerkConfigured();
-
-interface ClerkSignUpLike {
-  create: (p: {
-    emailAddress: string;
-    password: string;
-    firstName: string;
-    publicMetadata: Record<string, unknown>;
-  }) => Promise<{ status: string; createdSessionId?: string | null }>;
-  prepareEmailAddressVerification: (p: { strategy: 'email_code' }) => Promise<unknown>;
-  attemptEmailAddressVerification: (p: { code: string }) => Promise<{ status: string; createdSessionId?: string | null }>;
-}
-
-interface ClerkSetActive {
-  (p: { session: string | null }): Promise<unknown>;
-}
-
-/**
- * Bridges the React provider's `useSignUp()` hook into a mutable ref so the
- * form (which is also used in the no-Clerk fallback mode) can read the ready
- * instance without polling `window.Clerk`. Only mounted when Clerk is on.
- */
-const clerkCtxRef: { current: { signUp?: ClerkSignUpLike; setActive?: ClerkSetActive } } = {
-  current: {},
-};
-
-function ClerkSignUpForwarder() {
-  const { isLoaded, signUp, setActive } = useSignUp();
-  useEffect(() => {
-    clerkCtxRef.current.signUp = isLoaded && signUp ? (signUp as unknown as ClerkSignUpLike) : undefined;
-    clerkCtxRef.current.setActive = isLoaded && setActive ? (setActive as unknown as ClerkSetActive) : undefined;
-  }, [isLoaded, signUp, setActive]);
-  return null;
-}
 
 const roleOptions: { value: UserRole; label: string; icon: React.ReactNode; desc: string }[] = [
   { value: 'patient', label: 'Patient', icon: <User size={24} />, desc: 'Access health records & appointments' },
@@ -80,9 +43,6 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [awaitingCode, setAwaitingCode] = useState(false);
-  const [code, setCode] = useState('');
-  const [verifyingCode, setVerifyingCode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
@@ -153,76 +113,13 @@ export default function RegisterPage() {
     setStep((s) => Math.min(s + 1, 3));
   };
 
-  const handleBack = () => setStep((s) => Math.max(s - 1, 1));
-
-  const completeAuth = async (sessionId?: string | null) => {
-    const clerkSetActive = clerkCtxRef.current.setActive;
-    if (clerkSetActive && sessionId) {
-      await clerkSetActive({ session: sessionId });
-    }
-    await useAuthStore.getState().fetchUser();
-    const { user } = useAuthStore.getState() as unknown as { user?: { role?: string } | null };
-    if (user?.role) navigate(getRoleRedirect(user.role as UserRole), { replace: true });
-  };
-
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code.trim()) return;
-    setVerifyingCode(true);
-    try {
-      const signUp = clerkCtxRef.current.signUp;
-      if (!signUp) {
-        addToast('error', 'Clerk is still loading — please wait a moment and try again.');
-        return;
-      }
-      const res = await signUp.attemptEmailAddressVerification({ code: code.trim() });
-      if (res.status === 'complete') {
-        addToast('success', 'Account verified successfully!');
-        await completeAuth(res.createdSessionId);
-      } else {
-        addToast('error', 'Verification incomplete. Check the code and try again.');
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error
-        ? err.message
-        : 'Verification failed. Please try again.';
-      addToast('error', message);
-    } finally {
-      setVerifyingCode(false);
-    }
-  };
+const handleBack = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting) return;
     setSubmitting(true);
     try {
-      if (clerkEnabled) {
-        const signUp = clerkCtxRef.current.signUp;
-        if (!signUp) {
-          addToast('error', 'Clerk is still loading — please wait a moment and try again.');
-          setSubmitting(false);
-          return;
-        }
-        const result = await signUp.create({
-          emailAddress: form.email,
-          password: form.password,
-          firstName: form.full_name || form.email,
-          publicMetadata: { role: form.role },
-        });
-
-        if (result.status === 'complete') {
-          addToast('success', 'Account created successfully!');
-          await completeAuth(result.createdSessionId);
-        } else {
-          await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
-          setSubmitting(false);
-          setAwaitingCode(true);
-          addToast('info', 'We emailed you a 6-digit verification code.');
-        }
-        return;
-      }
-
       await register({
         email: form.email,
         password: form.password,
@@ -266,7 +163,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-surface-50 flex items-center justify-center p-4 sm:p-6">
-      {clerkEnabled && <ClerkSignUpForwarder />}
       <div className="w-full max-w-2xl">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -304,36 +200,6 @@ export default function RegisterPage() {
 
         {/* Card */}
         <div className="card p-6 sm:p-8">
-          {awaitingCode ? (
-            <div className="space-y-6 animate-fade-in">
-              <div>
-                <h2 className="text-xl font-bold text-surface-900">Verify your email</h2>
-                <p className="text-surface-500 text-sm mt-1">
-                  Enter the 6-digit code we emailed to <span className="font-semibold text-surface-700">{form.email}</span>
-                </p>
-              </div>
-              <form onSubmit={handleVerifyCode} className="space-y-5">
-                <Input
-                  label="Verification Code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="000000"
-                  icon={<Mail size={18} />}
-                  required
-                />
-                <Button type="submit" className="w-full" size="lg" loading={verifyingCode} icon={<Check size={16} />}>
-                  Verify & Create Account
-                </Button>
-              </form>
-              <button
-                type="button"
-                onClick={() => setAwaitingCode(false)}
-                className="text-sm text-surface-500 hover:text-surface-700 font-medium"
-              >
-                Back to form
-              </button>
-            </div>
-          ) : (
           <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
             {/* Step 1: Account */}
             {step === 1 && (
@@ -651,7 +517,6 @@ export default function RegisterPage() {
               )}
             </div>
           </form>
-          )}
         </div>
 
         <p className="mt-6 text-center text-sm text-surface-500">

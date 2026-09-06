@@ -3,42 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Activity, ShieldCheck, Heart, User, Building2, Stethoscope } from 'lucide-react';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
 import { isSupabaseConfigured } from '../../lib/mockData';
-import { isClerkConfigured } from '../../lib/clerk';
 import { useToastStore } from '../../components/shared/Toast';
 import Button from '../../components/shared/Button';
 import Input from '../../components/shared/Input';
 import Logo from '../../components/brand/Logo';
-import { useSignIn } from '@clerk/clerk-react';
 
 const isConfigured = isSupabaseConfigured();
-const clerkEnabled = isClerkConfigured();
-const demoMode = !isConfigured && !clerkEnabled;
-
-interface ClerkSignInLike {
-  create: (p: { identifier: string; password: string }) => Promise<{ status?: string; createdSessionId?: string | null }>;
-}
-
-interface ClerkSetActive {
-  (p: { session: string | null }): Promise<unknown>;
-}
-
-/**
- * Bridges the React provider's `useSignIn()` hook into a mutable ref so the
- * form (also used in the no-Clerk fallback mode) can read the ready instance
- * without polling `window.Clerk`. Only mounted when Clerk is on.
- */
-const clerkCtxRef: { current: { signIn?: ClerkSignInLike; setActive?: ClerkSetActive } } = {
-  current: {},
-};
-
-function ClerkSignInForwarder() {
-  const { isLoaded, signIn, setActive } = useSignIn();
-  useEffect(() => {
-    clerkCtxRef.current.signIn = isLoaded && signIn ? (signIn as unknown as ClerkSignInLike) : undefined;
-    clerkCtxRef.current.setActive = isLoaded && setActive ? (setActive as unknown as ClerkSetActive) : undefined;
-  }, [isLoaded, signIn, setActive]);
-  return null;
-}
+const demoMode = !isConfigured;
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -77,25 +48,6 @@ export default function LoginPage() {
     if (!validate()) return;
 
     try {
-      if (clerkEnabled) {
-        const signIn = clerkCtxRef.current.signIn;
-        const setActive = clerkCtxRef.current.setActive;
-        if (!signIn) {
-          addToast('error', 'Clerk is still loading — please wait a moment and try again.');
-          return;
-        }
-        const result = await signIn.create({ identifier: email, password });
-        if (result.status === 'complete' && result.createdSessionId) {
-          await setActive?.({ session: result.createdSessionId });
-          await useAuthStore.getState().fetchUser();
-          const { user } = useAuthStore.getState();
-          if (user?.role) navigate(getRoleRedirect(user.role), { replace: true });
-          return;
-        }
-        addToast('warning', 'Verification required — please open the email we sent you.');
-        return;
-      }
-
       await login(email, password);
       const { user } = useAuthStore.getState();
       if (user?.role) {
@@ -109,7 +61,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex">
-      {clerkEnabled && <ClerkSignInForwarder />}
       {/* Left Branding Panel */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800">
         <div className="absolute inset-0 opacity-10">

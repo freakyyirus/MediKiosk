@@ -315,46 +315,111 @@
   stroke-width: 2;
 }
 
-/* Progress stepper */
+/* Progress stepper — pill bar */
+.stepper-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.stepper-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-surface-500);
+}
+
 .stepper {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0;
+  flex-wrap: wrap;
 }
 
-.stepper .step {
+.stepper .step-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.stepper .step-dot {
-  width: 30px;
-  height: 30px;
-  border-radius: 9999px;
-  display: flex;
+.stepper .step-pill {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px 0 9px;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  font-size: 13px;
   font-weight: 700;
   transition: all 0.15s ease;
 }
 
+.stepper .step-pill-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .stepper .step-line {
-  width: 36px;
+  width: 24px;
   height: 3px;
   border-radius: 9999px;
-  margin: 0 8px;
   transition: all 0.15s ease;
 }
 
-/* States: purple active, teal completed, gray upcoming */
-.stepper .step-dot.active { background: var(--color-primary-600); color: #fff; }
-.stepper .step-dot.done { background: var(--color-accent-500); color: #fff; }
-.stepper .step-dot.upcoming { background: var(--color-surface-200); color: var(--color-surface-500); }
-.stepper .step-line.done { background: var(--color-accent-500); }
+/* States: primary highlighted, teal completed, gray upcoming */
+.stepper .step-pill.active {
+  background: var(--color-primary-600);
+  color: #fff;
+  border-color: var(--color-primary-300);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 25%, transparent);
+  transform: scale(1.05);
+}
+
+.stepper .step-pill.active .step-pill-num {
+  background: #fff;
+  color: var(--color-primary-700);
+}
+
+.stepper .step-pill.done {
+  background: color-mix(in srgb, var(--color-accent-500) 12%, transparent);
+  color: var(--color-accent-700);
+  border-color: color-mix(in srgb, var(--color-accent-400) 50%, transparent);
+}
+
+.stepper .step-pill.done .step-pill-num {
+  background: var(--color-accent-500);
+  color: #fff;
+}
+
+.stepper .step-pill.upcoming {
+  background: var(--color-surface-200);
+  color: var(--color-surface-500);
+}
+
+.stepper .step-pill.upcoming .step-pill-num {
+  background: var(--color-surface-300);
+  color: var(--color-surface-600);
+}
+
+.stepper .step-line.done { background: color-mix(in srgb, var(--color-accent-400) 50%, transparent); }
 .stepper .step-line.upcoming { background: var(--color-surface-200); }
+
+@media (max-width: 640px) {
+  .stepper .step-pill-label { display: inline; }
+  .stepper .step-pill { padding: 0 10px 0 8px; height: 30px; font-size: 12px; }
+  .stepper .step-pill-num { width: 20px; height: 20px; }
+  .stepper .step-line { width: 14px; }
+}
 
 /* Floating emergency pill (bottom-right) */
 .emergency-fab {
@@ -745,4 +810,29 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
     linear-gradient(rgba(107, 78, 230, 0.6) 1px, transparent 1px),
     linear-gradient(90deg, rgba(107, 78, 230, 0.6) 1px, transparent 1px);
   background-size: 60px 60px;
+}
+
+/* ==============================
+   SMOOTH SCROLL (Lenis)
+   ============================== */
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
 }

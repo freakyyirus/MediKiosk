@@ -10,27 +10,32 @@ interface StepperProps {
 }
 
 /**
- * Progress stepper.
- * Colors: purple = active, teal = completed, gray = upcoming.
+ * Progress stepper rendered as a pill bar with a small "Steps" heading.
+ * Pills: purple = active (masked/highlighted), teal = completed, gray = upcoming.
  */
 export default function Stepper({ steps, current }: StepperProps) {
   return (
-    <div className="stepper" role="presentation" aria-label="Progress">
-      {steps.map((step, i) => {
-        const isDone = i < current;
-        const isActive = i === current;
-        return (
-          <div key={i} className="step" style={{ opacity: isActive ? 1 : 0.7 }} aria-current={isActive ? 'step' : undefined}>
-            <div
-              className={`step-dot ${isDone ? 'done' : isActive ? 'active' : 'upcoming'}`}
-              aria-label={isDone ? `${step.label} complete` : step.label}
-            >
-              {isDone ? <Check className="w-4 h-4" /> : <span>{i + 1}</span>}
+    <div className="stepper-wrap" role="presentation" aria-label="Progress">
+      <span className="stepper-heading">Steps</span>
+      <div className="stepper">
+        {steps.map((step, i) => {
+          const isDone = i < current;
+          const isActive = i === current;
+          return (
+            <div key={i} className="step-group">
+              <div
+                className={`step-pill ${isDone ? 'done' : isActive ? 'active' : 'upcoming'}`}
+                aria-current={isActive ? 'step' : undefined}
+                aria-label={isDone ? `${step.label} complete` : step.label}
+              >
+                {isDone ? <Check className="w-4 h-4 shrink-0" /> : <span className="step-pill-num">{i + 1}</span>}
+                <span className="step-pill-label">{step.label}</span>
+              </div>
+              {i < steps.length - 1 && <div className={`step-line ${isDone ? 'done' : 'upcoming'}`} />}
             </div>
-            {i < steps.length - 1 && <div className={`step-line ${isDone ? 'done' : 'upcoming'}`} />}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

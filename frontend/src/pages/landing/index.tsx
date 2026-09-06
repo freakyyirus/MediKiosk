@@ -17,17 +17,35 @@ import Faq from './Faq';
 import FinalCta from './FinalCta';
 import Footer from './Footer';
 import StickyMobileCta from '../../components/shared/StickyMobileCta';
+import { peekReplayLoader, clearReplayLoader, saveLoaderPageScroll, restoreLoaderPageScroll } from '../../lib/navigationController';
+import { initSmoothScroll } from '../../lib/smoothScroll';
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(() => {
-    return !sessionStorage.getItem('hasSeenPreloader');
+    // Back-button re-entry replays the loader; otherwise only the first visit.
+    const replay = peekReplayLoader();
+    return replay || !sessionStorage.getItem('hasSeenPreloader');
   });
   const reducedMotion = useReducedMotion();
 
+  // Consume the armed replay flag (do not clear inside the state initializer —
+  // React StrictMode may evaluate it twice).
   useEffect(() => {
-    document.documentElement.style.scrollBehavior = reducedMotion ? 'auto' : 'smooth';
-    return () => { document.documentElement.style.scrollBehavior = ''; };
-  }, [reducedMotion]);
+    clearReplayLoader();
+  }, []);
+
+  // Lenis smooth scrolling for the marketing page (skips with reduced motion).
+  useEffect(() => {
+    const dispose = initSmoothScroll();
+    return () => dispose();
+  }, []);
+
+  // Remember where the user was so Back restores their place after the loader.
+  useEffect(() => {
+    return () => {
+      saveLoaderPageScroll();
+    };
+  }, []);
 
   // If reduced motion, skip the preloader delay
   useEffect(() => {
@@ -37,6 +55,8 @@ export default function LandingPage() {
   const handlePreloaderDone = () => {
     sessionStorage.setItem('hasSeenPreloader', 'true');
     setLoading(false);
+    // Restore the scroll position saved when the user left the landing page.
+    restoreLoaderPageScroll();
   };
 
   return (

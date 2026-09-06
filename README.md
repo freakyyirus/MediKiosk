@@ -85,7 +85,7 @@ docker-compose.yml  PostgreSQL · Redis · MinIO
 
 Bug reports, translations, new language packs and hardware hacks are all welcome. Please open an issue first or read [CONTRIBUTING.md](CONTRIBUTING.md). Work on short-lived branches and open a PR — `main` stays releasable at all times.
 
-Built with: FastAPI · SQLAlchemy · Pydantic · React · TypeScript · Vite · Tailwind CSS · Zustand · Clerk · Supabase · Google Gemini · Bhashini · EasyOCR · Tesseract · PostgreSQL · Redis · MinIO
+Built with: FastAPI · SQLAlchemy · Pydantic · React · TypeScript · Vite · Tailwind CSS · Zustand · Supabase · Google Gemini · Bhashini · EasyOCR · Tesseract · PostgreSQL · Redis · MinIO
 
 ## License
 

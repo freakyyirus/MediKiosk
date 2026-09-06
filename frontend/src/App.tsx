@@ -1,9 +1,10 @@
 import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoadingSpinner from './components/shared/LoadingSpinner';
-import { useAuthStore, getRoleRedirect } from './stores/authStore';
+import { useAuthStore } from './stores/authStore';
 import Toast from './components/shared/Toast';
 import PageViewTracker from './components/shared/PageViewTracker';
+import { installHistoryListener, initLoaderState, recordRoutePath } from './lib/navigationController';
 import { ROUTE_META, applyPageMeta, type PageMeta } from './hooks/usePageMeta';
 
 // Kiosk Pages (eager)
@@ -87,27 +88,8 @@ function ProtectedRoute({ allowedRoles, children }: { allowedRoles?: string[]; c
   return <>{children}</>;
 }
 
-// "/" redirects authenticated users straight to their role dashboard
-// instead of the landing/marketing page (and its Preloader).
-function HomeRedirect() {
-  const { user, isAuthenticated, isLoading } = useAuthStore();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-50">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (isAuthenticated && user) {
-    return <Navigate to={getRoleRedirect(user.role)} replace />;
-  }
-
-  return <LandingPage />;
-}
-
-// Applies the unique document <title> + meta description for the active route.
+// "/" always shows the marketing/landing page (with its Preloader). Navigate
+// to a portal via the auth store's role redirect (see Nav / LoginPage).
 function RouteMetaManager() {
   const { pathname } = useLocation();
 
@@ -129,6 +111,7 @@ function RouteMetaManager() {
       }
     }
     applyPageMeta(meta ?? { title: 'MediKiosk — AI-Powered Patient Intake' });
+    recordRoutePath(pathname);
   }, [pathname]);
 
   return null;
@@ -139,6 +122,10 @@ export default function App() {
 
   useEffect(() => {
     initialize();
+    // History-state loader protocol: tag the entry + arm back-button replays.
+    initLoaderState('content');
+    const disposeHistory = installHistoryListener();
+    return () => disposeHistory();
   }, [initialize]);
 
   return (
@@ -147,8 +134,8 @@ export default function App() {
       <PageViewTracker />
       <Toast />
       <Routes>
-        {/* Landing / home; authenticated users go straight to their dashboard */}
-        <Route path="/" element={<HomeRedirect />} />
+        {/* Landing / home */}
+        <Route path="/" element={<LandingPage />} />
 
         {/* Auth Routes */}
         <Route path="/login" element={<SuspenseWrapper><LoginPage /></SuspenseWrapper>} />

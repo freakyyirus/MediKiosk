@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.middleware.clerk_auth import require_role
 from app.middleware.error_handler import NotFoundError
 from app.models.clinical import Summary
 from app.models.session import Session
@@ -28,6 +29,7 @@ async def get_physician_dashboard(
     status: str = Query("pending", description="Filter by review status"),
     limit: int = Query(50, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
+    _user: dict = Depends(require_role("physician")),
 ):
     """Get physician's patient queue with pending summaries."""
     # Get sessions with pending summaries
@@ -77,6 +79,7 @@ async def get_physician_dashboard(
 async def get_physician_session_detail(
     session_id: int,
     db: AsyncSession = Depends(get_db),
+    _user: dict = Depends(require_role("physician")),
 ):
     """Get full session details for physician review."""
     result = await db.execute(select(Session).where(Session.id == session_id))
@@ -91,6 +94,7 @@ async def confirm_session(
     session_id: int,
     review: SummaryReviewRequest,
     db: AsyncSession = Depends(get_db),
+    user: dict = Depends(require_role("physician")),
 ):
     """Physician confirms, amends, or rejects a summary."""
     # Get the summary for this session
@@ -99,9 +103,11 @@ async def confirm_session(
     if not summary:
         raise NotFoundError("Summary", f"for session {session_id}")
 
-    # Update summary
+    # Update summary — record the acting (Clerk) user id unless the request
+    # explicitly overrides it with a numeric physician_id.
     summary.review_status = review.status
-    summary.physician_id = review.physician_id
+    acting_physician_id = user.get("sub") or user.get("user_id")
+    summary.physician_id = review.physician_id or (acting_physician_id if acting_physician_id is not None else None)
     summary.reviewed_at = datetime.now(UTC)
     if review.physician_edits:
         summary.physician_edits = review.physician_edits

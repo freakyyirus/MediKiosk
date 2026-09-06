@@ -38,7 +38,7 @@ const SECTIONS: { icon: typeof Shield; title: string; body: string }[] = [
     icon: Shield,
     title: 'Authentication',
     body:
-      'Access to the patient, doctor, and hospital portals is protected by authentication managed through Clerk and Supabase. Only signed-in users with the appropriate role can view their own data or role-relevant dashboards.',
+      'Access to the patient, doctor, and hospital portals is protected by authentication managed through Supabase. Only signed-in users with the appropriate role can view their own data or role-relevant dashboards.',
   },
   {
     icon: Trash2,

@@ -61,6 +61,21 @@ class Settings(BaseSettings):
     minio_root_password: str = "medikiosk_minio_password"
     minio_bucket: str = "medikiosk-documents"
 
+    # ---- Supabase (managed PostgREST + Storage) ----
+    # Backend talks to Supabase with the SERVICE ROLE key (server-side ONLY).
+    # The anon key is for the frontend kiosk only and never grants PHI access.
+    supabase_url: str = ""
+    supabase_anon_key: str = ""
+    supabase_service_role_key: str = ""
+    supabase_bucket: str = "medikiosk-documents"
+
+    # ---- Clerk (single source of auth) ----
+    # Clerk issues JWTs signed with RSA keys published at:
+    #   {clerk_issuer}/.well-known/jwks.json
+    # Derivable from the pub key if CLERK_JWKS/ISSUER are unset.
+    clerk_issuer: str = ""
+    clerk_jwks_url: str = ""
+
     # ---- JWT ----
     jwt_secret_key: str = "change-me-to-a-random-jwt-secret"
     jwt_algorithm: str = "HS256"

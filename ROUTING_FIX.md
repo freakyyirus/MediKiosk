@@ -34,9 +34,14 @@ backward compatible; login/register, DB schemas, and existing routes are untouch
   `/` — Back from a portal page can no longer revert to the "loading/landing" screen.
   (Explicitly requested behavior.)
 
+> **Update (Supabase-only auth):** Clerk has been removed from the frontend and the
+> `/` route now always renders `<LandingPage />` (`HomeRedirect` deleted). The
+> entry-to-landing flow described below is reversed: `/` always shows the marketing
+> page + (back-button-replayed) Preloader.
+
 ### `frontend/src/pages/auth/LoginPage.tsx`
-- Demo-login, Clerk sign-in, and Supabase sign-in navigations now use
-  `navigate(..., { replace: true })` (3 call sites). The already-authenticated
+- Demo-login and Supabase sign-in navigations now use
+  `navigate(..., { replace: true })` (2 call sites). The already-authenticated
   effect (lines 48–52) already used `replace`.
 
 ### `frontend/src/pages/auth/RegisterPage.tsx`

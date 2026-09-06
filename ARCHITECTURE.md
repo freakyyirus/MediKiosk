@@ -51,12 +51,12 @@ Compact ASCII equivalent:
 | Layer | Choice |
 |---|---|
 | Frontend | React 19 + TypeScript + Vite 8, react-router v7 (client-side), Tailwind 4, Zustand, framer-motion |
-| Auth | Clerk (optional) → Supabase (optional) → **demo mock** (`setMockRole` auto-logs patient Rahul Sharma) |
+| Auth | Supabase (client) → **demo mock** (`setMockRole` auto-logs patient Rahul Sharma). Backend verifies JWTs via `backend/app/middleware/clerk_auth.py` (Clerk JWKS mode dormant; legacy HS256 `/api/v1/auth/login` JWT is the active path) |
 | Data | Supabase (patient portal); FastAPI+SQLAlchemy (kiosk/session/voice/ABDM/OCR backend) |
 | AI | Bhashini (ASR/TTS), Gemini (summaries), ML priority pipeline, OCR (backend `/advanced/*`) |
 | Infra | docker-compose: postgres, redis, minio |
 
-Demo mode: no Clerk/Supabase env → `createMockSupabase()` (`src/lib/mockService.ts`) serves seeded hospitals/doctors/slots/visits/documents so the whole portal runs offline.
+Demo mode: no Supabase env → `createMockSupabase()` (`src/lib/mockService.ts`) serves seeded hospitals/doctors/slots/visits/documents so the whole portal runs offline.
 
 ## 3. Routing & Guards
 
@@ -74,7 +74,7 @@ Guard logic: `isLoading` → spinner; not authed → `/login`; role mismatch →
 
 ## 4. Data & Auth Flow
 
-- `authStore.initialize()` (App mount): Clerk → Supabase → demo mock (synchronous in demo, so tests are deterministic).
+- `authStore.initialize()` (App mount): Supabase → demo mock (synchronous in demo, so tests are deterministic).
 - Patient portal hits **Supabase directly** (decision, not a gap): `hospitals`, `departments`, `doctors`, `opd_slots`, `visits`, `patients`/`profiles`, `documents`, storage bucket `patient-documents`.
 - Backend (`backend/app/routers/`): `auth`, `health`, `sessions` (voice-first kiosk), `voice` (`/transcribe` ASR + `/tts` TTS — new), `patients`, `documents` (MinIO), `summaries` (Gemini), `physician`, `abdm`, `advanced` (OCR, QR, ML priority, vitals analyze, emergency verify, body-map, retention/DPDPA).
 

@@ -32,8 +32,7 @@ Remaining work is **configuration, not code** (steps 1–5 below).
 | GitHub | Existing (`freakyyirus/MediKiosk`) | Push access |
 | Vercel | vercel.com | — (free tier OK) |
 | Railway | railway.com | Container service (paid: starts ~$5/mo) |
-| Supabase | Existing project (Tokyo) | `Project URL`, `anon key`, Postgres host/port/password |
-| Clerk | dashboard.clerk.com → your app → API Keys | `pk_…` publishable key (already in `frontend/.env`) |
+| Supabase | Existing project (Tokyo) | `Project URL`, `anon key`, `service_role` key, Postgres host/port/password |
 | Google AI Studio | aistudio.google.com | `GEMINI_API_KEY` |
 | Bhashini (optional) | bhashini.gov.in | `BHASHINI_API_KEY` etc. |
 | ABDM (optional/stretch) | sandbox.abdm.gov.in | `ABDM_CLIENT_ID/SECRET` |
@@ -187,7 +186,8 @@ frontend/dist
 | `VITE_API_URL` | `https://<railway-host>.up.railway.app/api/v1` |
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon key |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk `pk_…` key |
+
+> Clerk has been removed from the frontend — there is no `VITE_CLERK_PUBLISHABLE_KEY` anymore.
 
 > `VITE_API_URL` must end with `/api/v1` (the client appends nothing). It is **required** —
 > without it the app calls `/api/v1` relative, which 404s on Vercel with no `/api` server.
@@ -230,17 +230,17 @@ Optional wiring:
 ## 7. Architecture summary + costs
 
 ```
-Browser ──HTTPS──► Vercel (static SPA, Clerk.js, Supabase-js)
+Browser ──HTTPS──► Vercel (static SPA, Supabase-js)
                       │  VITE_API_URL (absolute)
                       ▼
-                 Railway (FastAPI container: tesseract + EasyOCR + Gemini + ML)
+                 Railway / Render (FastAPI container: tesseract + EasyOCR + Gemini + ML)
                       │  asyncpg
                       ▼
                  Supabase Postgres (20 tables, RLS)
 ```
 
-Costs (approx, per month): Vercel $0 · Railway ~$5 (Hobby) · Supabase ≈$0–$25 (free tier unless
-you outgrow it) · Clerk free tier.
+Costs (approx, per month): Vercel $0 · Railway ~$5 (Hobby) or Render (Free/Python) · Supabase ≈$0–$25 (free tier unless
+you outgrow it).
 
 ---
 

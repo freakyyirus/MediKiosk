@@ -5,6 +5,7 @@ import { Sparkles, Menu, X } from 'lucide-react';
 import Logo from '../../components/brand/Logo';
 import { LANGS, useLangStore, useLandingT } from './i18n';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
+import { lockScroll, unlockScroll } from '../../lib/smoothScroll';
 
 const LINKS = [
   { href: '#product', key: 'product' },
@@ -37,11 +38,11 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close dropdown on outside click / Escape; lock body scroll under drawer
+  // Close dropdown on outside click / Escape; lock scroll + Lenis drawer open
   useEffect(() => {
     if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-      return () => { document.body.style.overflow = ''; };
+      lockScroll();
+      return () => unlockScroll();
     }
   }, [menuOpen]);
 
@@ -211,7 +212,7 @@ export default function Nav() {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto px-4 py-4 grid gap-1" aria-label="Mobile">
+              <nav className="flex-1 overflow-y-auto px-4 py-4 grid gap-1" aria-label="Mobile" data-lenis-prevent>
                 {LINKS.map((l) => (
                   <a
                     key={l.href}

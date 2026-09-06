@@ -32,6 +32,7 @@ from app.ai.priority_model import (
     retrain_on_real,
 )
 from app.database import get_db
+from app.middleware.clerk_auth import require_staff
 from app.models.clinical import AuditLog, AyushAssessment, ConsentRecord, RedFlagAlert, Summary
 from app.models.document import Document
 from app.models.patient import Patient
@@ -119,7 +120,7 @@ def _merge_entities(rule_based: dict, gemini: dict) -> dict:
 
 
 @router.post("/ocr/process")
-async def ocr_process(file: UploadFile = File(...)):
+async def ocr_process(file: UploadFile = File(...), _staff: dict = Depends(require_staff())):
     """
     Full OCR pipeline: image upload → Tesseract/EasyOCR → NER → Gemini validation.
     Returns extracted drugs, diagnoses, doctor/hospital, confidence + flags.
@@ -159,7 +160,7 @@ async def ocr_process(file: UploadFile = File(...)):
 
 
 @router.post("/ocr/validate")
-async def ocr_validate(payload: dict):
+async def ocr_validate(payload: dict, _staff: dict = Depends(require_staff())):
     """Validate/extend an OCR extraction via Gemini."""
     raw_text = (payload.get("ocr_raw_text") or "").strip()
     if not raw_text:
@@ -229,7 +230,7 @@ async def qr_create(payload: dict):
 
 
 @router.post("/ml/predict-priority")
-async def ml_predict_priority(payload: dict):
+async def ml_predict_priority(payload: dict, _staff: dict = Depends(require_staff())):
     """Predict triage priority from patient vitals + symptoms using the trained model."""
     required_features = ["age"]
     missing = [f for f in required_features if payload.get(f) in (None, "")]
@@ -252,13 +253,16 @@ async def ml_predict_priority(payload: dict):
 
 
 @router.get("/ml/dataset")
-async def ml_dataset():
+async def ml_dataset(_staff: dict = Depends(require_staff())):
     """Inspect the training data store — how many real labeled cases exist."""
     return await dataset_summary()
 
 
 @router.post("/ml/samples")
-async def ml_samples(payload: dict = Body(...)):
+async def ml_samples(
+    payload: dict = Body(...),
+    _staff: dict = Depends(require_staff()),
+):
     """
     Ingest labeled REAL-world samples for retraining.
 
@@ -274,7 +278,7 @@ async def ml_samples(payload: dict = Body(...)):
 
 
 @router.post("/ml/train")
-async def ml_train(payload: dict = Body(...)):
+async def ml_train(payload: dict = Body(...), _staff: dict = Depends(require_staff())):
     """
     Retrain the production triage model on the ingested real samples.
 
@@ -294,7 +298,7 @@ async def ml_train(payload: dict = Body(...)):
 
 
 @router.post("/vitals/analyze")
-async def vitals_analyze(payload: dict):
+async def vitals_analyze(payload: dict, _staff: dict = Depends(require_staff())):
     """Analyze a vitals reading against clinical thresholds (returns abnormal flags)."""
     spo2 = payload.get("spo2")
     pulse = payload.get("pulse_rate") or payload.get("pulse")
@@ -599,7 +603,11 @@ async def _purge_sessions(db, session_ids: list[int]) -> dict:
 
 
 @router.post("/retention/run")
-async def retention_run(payload: dict = Body(default_factory=dict), db=Depends(get_db)):
+async def retention_run(
+    payload: dict = Body(default_factory=dict),
+    db=Depends(get_db),
+    _staff: dict = Depends(require_staff()),
+):
     """
     Execute the DPDPA retention policies right now (the real auto-delete).
 
@@ -701,7 +709,11 @@ async def retention_run(payload: dict = Body(default_factory=dict), db=Depends(g
 
 
 @router.post("/retention/erase-patient")
-async def erase_patient(payload: dict = Body(...), db=Depends(get_db)):
+async def erase_patient(
+    payload: dict = Body(...),
+    db=Depends(get_db),
+    _staff: dict = Depends(require_staff()),
+):
     """
     DPDPA right-to-erasure — TRUE hard delete of a patient and all PHI.
 
@@ -812,7 +824,7 @@ async def request_erasure(payload: dict = Body(...), db=Depends(get_db)):
 
 
 @router.get("/retention/requests")
-async def retention_requests(db=Depends(get_db)):
+async def retention_requests(_staff: dict = Depends(require_staff()), db=Depends(get_db)):
     """List erasure requests recorded on the backend (approval workflow)."""
     rows = (
         (await db.execute(select(AuditLog).where(AuditLog.table_name == "erasure_requests", AuditLog.action == "CREATE").order_by(AuditLog.created_at.desc())))
