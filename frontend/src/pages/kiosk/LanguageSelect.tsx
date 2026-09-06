@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Volume2 } from 'lucide-react';
 import { useUIStore } from '../../stores';
+import { bhashini } from '../../services/BhashiniService';
 import type { Language } from '../../types';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
@@ -36,14 +37,7 @@ export default function LanguageSelect() {
   };
 
   const speakLanguage = (lang: Language) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(
-        `${lang.nativeName}. ${lang.name}`
-      );
-      utterance.lang = lang.code === 'hi' ? 'hi-IN' : lang.code === 'en' ? 'en-IN' : `${lang.code}-IN`;
-      utterance.rate = 0.9;
-      speechSynthesis.speak(utterance);
-    }
+    void bhashini.speak(`${lang.nativeName}. ${lang.name}`, lang.code);
   };
 
   return (

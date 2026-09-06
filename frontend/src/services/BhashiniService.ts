@@ -119,6 +119,15 @@ class BhashiniService {
     }
   }
 
+  /** Map a 2-letter language code to a browser-recognisable BCP-47 tag (Indian region). */
+  private speechLangTag(language: string): string {
+    const base = (language || 'en').toLowerCase().split('-')[0];
+    const INDIAN = new Set(['hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or', 'as', 'ur', 'sa']);
+    if (base === 'en') return 'en-IN';
+    if (INDIAN.has(base)) return `${base}-IN`;
+    return base;
+  }
+
   private browserSpeechToText(language: string): Promise<Transcription> {
     return new Promise((resolve) => {
       if (!this.speechRecognition) {
@@ -136,7 +145,7 @@ class BhashiniService {
           start: () => void;
         };
         const rec = new SR();
-        rec.lang = language === 'en' ? 'en-IN' : language;
+        rec.lang = this.speechLangTag(language);
         rec.interimResults = false;
         rec.maxAlternatives = 1;
         rec.onresult = (e) => {
@@ -176,6 +185,51 @@ class BhashiniService {
     }
   }
 
+  /** Lazily-loaded speech voices (loaded async — getVoices() is empty on first call). */
+  private cachedVoices: SpeechSynthesisVoice[] = [];
+  private voiceLoadStarted = false;
+
+  private loadVoices(): Promise<SpeechSynthesisVoice[]> {
+    if (!('speechSynthesis' in window)) return Promise.resolve([]);
+    if (this.cachedVoices.length > 0) return Promise.resolve(this.cachedVoices);
+    return new Promise((resolve) => {
+      const got = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) this.cachedVoices = voices;
+        resolve(voices);
+      };
+      const existing = window.speechSynthesis.getVoices();
+      if (existing.length > 0) {
+        this.cachedVoices = existing;
+        resolve(existing);
+        return;
+      }
+      if (!this.voiceLoadStarted) {
+        this.voiceLoadStarted = true;
+        window.speechSynthesis.onvoiceschanged = got;
+      }
+      // Also resolve after a short timeout in case the event never fires.
+      setTimeout(got, 1500);
+    });
+  }
+
+  /** Pick the best SpeechSynthesis voice for a language code (e.g. "hi", "hi-IN"). */
+  private pickVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | undefined {
+    const base = lang.toLowerCase().split('-')[0];
+    const region = lang.toLowerCase();
+    // 1. Prefer an exact full match (e.g. "hi-IN", "ta-IN").
+    const exact = voices.find((v) => v.lang.toLowerCase() === region);
+    if (exact) return exact;
+    // 2. Prefer a voice that starts with the requested language (e.g. "hi").
+    const byLang = voices.find((v) => v.lang.toLowerCase().startsWith(base + '-'));
+    if (byLang) return byLang;
+    // 3. Any Indian voice — closest spoken-language match.
+    const indian = voices.find((v) => v.lang.toLowerCase().includes('in'));
+    if (indian) return indian;
+    // 4. Any voice at all so the assistant still talks.
+    return voices[0];
+  }
+
   private browserTts(text: string, lang: string): TtsResult {
     if (!('speechSynthesis' in window)) {
       return { audioUrl: null, supportsAudio: false, source: 'fallback' };
@@ -183,8 +237,12 @@ class BhashiniService {
     try {
       const u = new SpeechSynthesisUtterance(text);
       const voices = window.speechSynthesis.getVoices();
-      const match = voices.find((v) => v.lang.toLowerCase().startsWith(lang.toLowerCase()));
+      const match = this.pickVoice(voices, lang);
       if (match) u.voice = match;
+      // Reflect the best-guess spoken language so the utterance is tagged right.
+      u.lang = (match?.lang || lang) as string;
+      u.rate = 1;
+      u.pitch = 1.05;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
       return { audioUrl: null, supportsAudio: true, source: 'browser', voices };
@@ -224,21 +282,49 @@ class BhashiniService {
   async speak(text: string, language: string): Promise<boolean> {
     const clean = String(text || '').trim();
     if (!clean) return false;
-    const res = await this.textToSpeech(clean, language);
-    if (res.audioUrl) {
-      try {
-        const audio = new Audio();
-        audio.src = res.audioUrl;
-        return await new Promise<boolean>((resolve) => {
-          audio.onended = () => resolve(true);
-          audio.onerror = () => resolve(false);
-          audio.play().catch(() => resolve(false));
-        });
-      } catch {
-        return false;
+
+    // 1) Backend (Bhashini) TTS first — best quality, real voices.
+    try {
+      const res = await this.textToSpeech(clean, language);
+      if (res.audioUrl) {
+        // Backend returned actual audio — play it.
+        try {
+          const audio = new Audio();
+          audio.src = res.audioUrl;
+          return await new Promise<boolean>((resolve) => {
+            audio.onended = () => resolve(true);
+            audio.onerror = () => resolve(false);
+            audio.play().catch(() => resolve(false));
+          });
+        } catch {
+          // Audio element failed — try the browser synth as a last resort.
+          return this.browserSpeak(clean, language);
+        }
       }
+      // textToSpeech already fell back to the browser synth and spoke.
+      // Reflect whether audio actually started.
+      return res.supportsAudio;
+    } catch {
+      // Network/backend error — use the browser synth.
+      await this.loadVoices();
+      return this.browserSpeak(clean, language);
     }
-    return res.supportsAudio;
+  }
+
+  /** Speak via the browser Web Speech API after ensuring voices are loaded. */
+  private async browserSpeak(text: string, language: string): Promise<boolean> {
+    if (!('speechSynthesis' in window)) return false;
+    try {
+      const voices = await this.loadVoices();
+      const res = this.browserTts(text, language);
+      if (!res.supportsAudio) return false;
+      void voices; // voices are used internally by browserTts via getVoices()
+      // Force Chrome's synth to resume (some builds stall until a user gesture).
+      window.speechSynthesis.resume();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   detectLanguage(text: string): LangCode {

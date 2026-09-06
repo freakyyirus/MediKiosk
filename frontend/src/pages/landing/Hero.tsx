@@ -106,7 +106,7 @@ function HeroSection() {
         ))}
       </div>
 
-      <div className="relative z-10 w-full mx-auto px-4 sm:px-8 lg:px-12 pt-24 sm:pt-28 pb-12 sm:pb-16 grid md:grid-cols-[1.2fr_1fr] items-center gap-8 md:gap-12">
+      <div className="relative z-10 w-full mx-auto px-4 sm:px-8 lg:px-12 pt-24 sm:pt-28 pb-12 sm:pb-16 grid md:grid-cols-2 items-center gap-8 md:gap-12">
         {/* LEFT */}
         <div className="order-2 md:order-1 text-center md:text-left">
           <motion.h1
@@ -166,7 +166,7 @@ function HeroSection() {
 
         {/* RIGHT — editorial patient+doctor illustration, preloaded */}
         <div className="order-1 md:order-2 flex justify-center">
-          <div className="w-[280px] sm:w-[360px] md:w-[400px] lg:w-[460px]">
+          <div className="w-full max-w-lg sm:max-w-xl lg:max-w-2xl shadow-lg shadow-indigo-500/5 rounded-2xl">
             <HeroIllustration className="animate-float" />
           </div>
         </div>

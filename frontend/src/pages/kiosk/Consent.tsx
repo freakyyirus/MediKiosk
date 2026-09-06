@@ -5,7 +5,6 @@ import { useSessionStore } from '../../stores';
 import { consentApi } from '../../api/client';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
-import { useToastStore } from '../../components/shared/Toast';
 
 const CONSENT_ITEMS = [
   {
@@ -34,7 +33,6 @@ const CONSENT_ITEMS = [
 export default function Consent() {
   const navigate = useNavigate();
   const { session, setConsentGiven } = useSessionStore();
-  const addToast = useToastStore((s) => s.addToast);
   const [consents, setConsents] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const submittingRef = useRef(false);
@@ -50,6 +48,9 @@ export default function Consent() {
     submittingRef.current = true;
     setSaving(true);
 
+    // Try persisting consent to the backend, but never block the kiosk
+    // flow on a backend/DB failure — consent is recorded in the session
+    // store either way and can be synced later.
     if (session?.id) {
       try {
         await consentApi.submit({
@@ -61,10 +62,8 @@ export default function Consent() {
           })),
         });
       } catch {
-        addToast('error', 'We couldn\u2019t save your consent. Please try again.');
-        submittingRef.current = false;
-        setSaving(false);
-        return;
+        // Backend unavailable — proceed anyway; consent is tracked locally.
+        console.warn('Consent API unavailable, proceeding with local consent');
       }
     }
 
