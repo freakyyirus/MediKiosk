@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, Upload, X, Clock,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, Card, Button, Input, Select, LoadingSpinner, EmptyState, Modal } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
 
@@ -216,7 +216,7 @@ export default function HealthTimeline() {
         onLogout={handleLogout}
         user={{ name: 'Patient', role: 'Patient' }}
       />
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-screen flex flex-col pl-14 lg:pl-0">
         <Header
           title="Health Timeline"
           subtitle="Your visual health journey"
@@ -225,7 +225,6 @@ export default function HealthTimeline() {
               Add Past Visit
             </Button>
           }
-          onMenuToggle={() => {}}
           user={{ name: 'Patient', role: 'Patient' }}
         />
         <main className="flex-1 p-4 sm:p-6">

@@ -6,7 +6,7 @@ import {
   Stethoscope, User,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, Card, LoadingSpinner, Badge } from '../../components/shared';
 
 interface DoctorProfile {

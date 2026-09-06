@@ -7,7 +7,8 @@ import {
   Upload, X, FileText, AlertCircle, Mic, MicOff,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore, useUIStore } from '../../stores';
+import { useUIStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { useT, type DictKey } from '../../lib/i18n';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { Button, Card, Input, LoadingSpinner, EmptyState } from '../../components/shared';

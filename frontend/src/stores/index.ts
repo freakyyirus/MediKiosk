@@ -5,8 +5,10 @@
 import { create } from 'zustand';
 import type { Session, ConsentItem, InterviewQuestion, Language, RedFlag } from '../types';
 
-// Re-export auth store
-export { useAuthStore } from './authStore';
+// The auth store lives in its own module (stores/authStore) and is imported
+// directly by consumers. It is intentionally NOT re-exported here so that a
+// dynamic import of this barrel (e.g. the landing i18n bit) never pulls in
+// the Supabase client.
 
 // ============================================
 // SESSION STORE — Active kiosk session state

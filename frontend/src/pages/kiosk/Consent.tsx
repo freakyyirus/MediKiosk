@@ -75,17 +75,17 @@ export default function Consent() {
 
   return (
     <div className="min-h-screen mesh-bg flex flex-col">
-      <div className="px-10 pt-10">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-10">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={1} />
       </div>
 
-      <div className="flex-1 flex flex-col items-center max-w-lg mx-auto w-full px-8 py-8">
+      <div className="flex-1 flex flex-col items-center max-w-lg mx-auto w-full px-4 sm:px-8 py-6 sm:py-8">
         <div className="text-center pb-6 animate-fade-in">
           <div className="w-16 h-16 rounded-[22px] bg-primary-100 border border-primary-200 flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-primary-700" />
           </div>
-          <h1 className="text-3xl font-bold text-surface-900 leading-tight">Your Consent</h1>
-          <p className="text-lg text-surface-500 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-surface-900 leading-tight">Your Consent</h1>
+          <p className="text-base sm:text-lg text-surface-500 mt-2">
             Your data is encrypted. Required permissions are shown below.
           </p>
         </div>
@@ -98,13 +98,13 @@ export default function Consent() {
                 key={item.id}
                 onClick={() => toggle(item.id)}
                 aria-pressed={checked}
-                className={`w-full text-left rounded-2xl p-5 transition-all duration-150 border-2 ${
+                className={`w-full text-left rounded-2xl p-4 sm:p-5 transition-all duration-150 border-2 ${
                   checked
                     ? 'card border-primary-400 bg-primary-50/50'
                     : 'card border-transparent hover:border-primary-200'
                 }`}
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                     checked ? 'bg-primary-600 text-white' : 'bg-surface-100 text-surface-500'
                   }`}>
@@ -112,7 +112,7 @@ export default function Consent() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-lg text-surface-800">{item.title}</span>
+                      <span className="font-semibold text-base sm:text-lg text-surface-800">{item.title}</span>
                       {item.required && (
                         <span className="text-xs font-bold uppercase tracking-wider text-danger-600 bg-danger-50 px-2 py-0.5 rounded-full">
                           Required

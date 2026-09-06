@@ -6,7 +6,7 @@ import {
   Calendar, Heart, CreditCard,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, Button, Card, Input, Select, LoadingSpinner } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
 import DataDeletionRequest from '../../components/advanced/DataDeletionRequest';
@@ -202,11 +202,10 @@ export default function Profile() {
         onLogout={handleLogout}
         user={{ name: form.name || 'Patient', role: 'Patient' }}
       />
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-screen flex flex-col pl-14 lg:pl-0">
         <Header
           title="My Profile"
           subtitle="Manage your personal information"
-          onMenuToggle={() => {}}
           user={{ name: form.name || 'Patient', role: 'Patient' }}
         />
         <main className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full space-y-6">

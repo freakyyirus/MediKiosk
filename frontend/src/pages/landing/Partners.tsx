@@ -17,7 +17,7 @@ export default function Partners() {
         <div className="text-center mb-12">
           <motion.h2
             variants={fadeUp}
-            className="text-[32px] leading-tight font-semibold text-[#111827]"
+            className="text-[clamp(24px,4.5vw,32px)] leading-tight font-semibold text-[#111827]"
             style={{ fontFamily: 'Inter' }}
           >
             Plays well with India's health infrastructure.

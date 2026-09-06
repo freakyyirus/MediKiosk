@@ -49,7 +49,7 @@ export default function LanguageSelect() {
   return (
     <div className="min-h-screen mesh-bg flex flex-col">
       {/* Top bar */}
-      <div className="px-10 pt-10">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-10">
         <Stepper
           steps={[
             { label: 'Language' },
@@ -61,22 +61,22 @@ export default function LanguageSelect() {
         />
       </div>
 
-      <div className="flex-1 flex flex-col items-center px-10 py-8 max-w-5xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center px-4 sm:px-10 py-6 sm:py-8 max-w-5xl mx-auto w-full">
         {/* Header */}
-        <div className="text-center mb-10 animate-fade-in">
-          <div className="inline-block w-20 h-20 rounded-[22px] bg-gradient-to-br from-primary-600 to-primary-400 mb-6 shadow-lg shadow-primary-600/25 flex items-center justify-center">
-            <span className="text-4xl">🏥</span>
+        <div className="text-center mb-8 sm:mb-10 animate-fade-in">
+          <div className="inline-block w-16 sm:w-20 h-16 sm:h-20 rounded-[22px] bg-gradient-to-br from-primary-600 to-primary-400 mb-6 shadow-lg shadow-primary-600/25 flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">🏥</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-3">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-surface-900 mb-3">
             Choose Your Language
           </h1>
-          <p className="text-xl text-surface-500">
+          <p className="text-lg sm:text-xl text-surface-500">
             Tap your language. You can change it anytime.
           </p>
         </div>
 
-        {/* 3-column grid of 12 languages */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full mb-10">
+        {/* Responsive grid of 12 languages */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full mb-8 sm:mb-10">
           {LANGUAGES.map((lang, i) => {
             const active = selectedLang.code === lang.code;
             return (
@@ -86,19 +86,19 @@ export default function LanguageSelect() {
                 tabIndex={0}
                 onClick={() => handleSelect(lang)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSelect(lang)}
-                className={`touch-target-lg card p-5 flex flex-col items-center gap-3 cursor-pointer transition-all duration-150 animate-slide-up focus-ring ${
+                className={`touch-target-lg card p-4 sm:p-5 flex flex-col items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-150 animate-slide-up focus-ring ${
                   active
                     ? 'bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-600/30 border-transparent'
                     : 'hover:border-primary-300 hover:shadow-md'
                 }`}
-                style={{ animationDelay: `${i * 30}ms`, minHeight: '140px' }}
+                style={{ animationDelay: `${i * 30}ms`, minHeight: '120px' }}
               >
-                <span className="text-4xl" aria-hidden="true">{LANGUAGE_FLAGS[lang.code]}</span>
+                <span className="text-3xl sm:text-4xl" aria-hidden="true">{LANGUAGE_FLAGS[lang.code]}</span>
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${active ? 'text-white' : 'text-surface-800'}`}>
+                  <div className={`text-xl sm:text-2xl font-bold ${active ? 'text-white' : 'text-surface-800'}`}>
                     {lang.nativeName}
                   </div>
-                  <div className={`text-base font-medium ${active ? 'text-primary-100' : 'text-surface-500'}`}>
+                  <div className={`text-sm sm:text-base font-medium ${active ? 'text-primary-100' : 'text-surface-500'}`}>
                     {lang.name}
                   </div>
                 </div>
@@ -117,7 +117,7 @@ export default function LanguageSelect() {
           })}
         </div>
 
-        <p className="text-center text-surface-400 text-lg mb-4">
+        <p className="text-center text-surface-400 text-base sm:text-lg mb-4">
           {lowLiteracyMode ? 'Your language is selected. Press next.' : 'Audio will guide you through the health check.'}
         </p>
       </div>

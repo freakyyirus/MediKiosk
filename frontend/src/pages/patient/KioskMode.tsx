@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, MicOff, CalendarPlus, ClipboardList, FileText, Heart, Accessibility, Sparkles } from 'lucide-react';
-import { useAuthStore, useUIStore } from '../../stores';
+import { useUIStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { APP_LANGS, useT } from '../../lib/i18n';
 import { bhashini } from '../../services/BhashiniService';
 import { useVoiceInput } from '../../hooks/useVoiceInput';

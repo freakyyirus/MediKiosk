@@ -171,47 +171,47 @@ export default function Identification() {
 
   return (
     <div className="min-h-screen mesh-bg flex flex-col text-surface-900 font-sans">
-      <div className="px-10 pt-10">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-10">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={0} />
       </div>
-      <div className="flex-1 flex flex-col items-center px-6 py-8 max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center px-4 sm:px-6 py-6 sm:py-8 max-w-4xl mx-auto w-full">
         
         {/* Header */}
-        <div className="text-center mb-10 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold text-surface-900 mb-4">
+        <div className="text-center mb-8 sm:mb-10 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-surface-900 mb-4">
             Let's Get You Started
           </h1>
-          <p className="text-surface-500 text-xl">
+          <p className="text-surface-500 text-lg sm:text-xl">
             How would you like to register for your visit?
           </p>
         </div>
 
         {/* Options */}
         {!mode && (
-          <div className="flex flex-col sm:flex-row gap-6 w-full max-w-3xl animate-slide-up mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full max-w-3xl animate-slide-up mb-8">
             <button
               onClick={() => setMode('abha')}
-              className="touch-target-lg flex-1 card p-10 flex flex-col items-center gap-6 hover:shadow-lg transition-all duration-150 border-2 border-transparent hover:border-primary-300"
+              className="touch-target-lg flex-1 card p-6 sm:p-10 flex flex-col items-center gap-4 sm:gap-6 hover:shadow-lg transition-all duration-150 border-2 border-transparent hover:border-primary-300"
             >
-              <div className="w-20 h-20 rounded-2xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                <QrCode className="w-10 h-10 text-primary-600" />
+              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-2xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                <QrCode className="w-8 sm:w-10 h-8 sm:h-10 text-primary-600" />
               </div>
               <div className="text-center">
-                <div className="font-bold text-2xl text-surface-900 mb-2">Use ABHA ID</div>
-                <div className="text-lg text-surface-500">Scan QR or enter manually</div>
+                <div className="font-bold text-xl sm:text-2xl text-surface-900 mb-2">Use ABHA ID</div>
+                <div className="text-base sm:text-lg text-surface-500">Scan QR or enter manually</div>
               </div>
             </button>
 
             <button
               onClick={() => setMode('walkin')}
-              className="touch-target-lg flex-1 card p-10 flex flex-col items-center gap-6 hover:shadow-lg transition-all duration-150 border-2 border-transparent hover:border-primary-300"
+              className="touch-target-lg flex-1 card p-6 sm:p-10 flex flex-col items-center gap-4 sm:gap-6 hover:shadow-lg transition-all duration-150 border-2 border-transparent hover:border-primary-300"
             >
-              <div className="w-20 h-20 rounded-2xl bg-surface-100 flex items-center justify-center transition-colors">
-                <UserPlus className="w-10 h-10 text-primary-600" />
+              <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-2xl bg-surface-100 flex items-center justify-center transition-colors">
+                <UserPlus className="w-8 sm:w-10 h-8 sm:h-10 text-primary-600" />
               </div>
               <div className="text-center">
-                <div className="font-bold text-2xl text-surface-900 mb-2">Continue as Guest</div>
-                <div className="text-lg text-surface-500">Quick and simple registration</div>
+                <div className="font-bold text-xl sm:text-2xl text-surface-900 mb-2">Continue as Guest</div>
+                <div className="text-base sm:text-lg text-surface-500">Quick and simple registration</div>
               </div>
             </button>
           </div>
@@ -219,10 +219,10 @@ export default function Identification() {
 
         {/* ABHA Input */}
         {mode === 'abha' && (
-          <div className="card p-10 w-full max-w-2xl animate-slide-up mb-8">
-            <h2 className="text-2xl font-bold text-surface-900 mb-8 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center">
-                <QrCode className="w-6 h-6 text-primary-600" />
+          <div className="card p-6 sm:p-10 w-full max-w-2xl animate-slide-up mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-surface-900 mb-6 sm:mb-8 flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-primary-50 flex items-center justify-center shrink-0">
+                <QrCode className="w-5 sm:w-6 h-5 sm:h-6 text-primary-600" />
               </div>
               Enter Your ABHA ID
             </h2>
@@ -232,7 +232,7 @@ export default function Identification() {
                 value={abhaId}
                 onChange={(e) => setAbhaId(e.target.value)}
                 placeholder="XX-XXXX-XXXX-XXXX"
-                className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-xl font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
+                className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-lg sm:text-xl font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
                 autoFocus
               />
               {error && (
@@ -250,10 +250,10 @@ export default function Identification() {
                 Verifying your ABHA ID…
               </p>
             )}
-            <div className="flex gap-4 mt-10">
+            <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-10">
               <button
                 onClick={() => setMode(null)}
-                className="flex-1 touch-target bg-white border border-surface-300 rounded-2xl px-6 py-5 text-lg font-semibold text-surface-700 hover:bg-surface-100 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 touch-target bg-white border border-surface-300 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-base sm:text-lg font-semibold text-surface-700 hover:bg-surface-100 transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back
@@ -261,7 +261,7 @@ export default function Identification() {
               <button
                 onClick={handleAbhaSubmit}
                 disabled={loading}
-                className="flex-[2] touch-target bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-lg font-bold rounded-2xl px-6 py-5 transition-colors shadow-lg shadow-primary-600/25"
+                className="flex-[2] touch-target bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-base sm:text-lg font-bold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 transition-colors shadow-lg shadow-primary-600/25"
               >
                 {loading ? 'Verifying...' : 'Continue'}
               </button>
@@ -274,10 +274,10 @@ export default function Identification() {
 
         {/* Guest Input */}
         {mode === 'walkin' && (
-          <div className="card p-10 w-full max-w-2xl animate-slide-up mb-8">
-            <h2 className="text-2xl font-bold text-surface-900 mb-8 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-surface-100 flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-primary-600" />
+          <div className="card p-6 sm:p-10 w-full max-w-2xl animate-slide-up mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-surface-900 mb-6 sm:mb-8 flex items-center gap-3">
+              <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-xl bg-surface-100 flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 sm:w-6 h-5 sm:h-6 text-primary-600" />
               </div>
               Guest Registration
             </h2>
@@ -289,11 +289,11 @@ export default function Identification() {
                   value={walkInData.name}
                   onChange={(e) => setWalkInData({ ...walkInData, name: e.target.value })}
                   placeholder="Enter your full name"
-                  className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
+                  className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
                   autoFocus
                 />
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div>
                   <label className="block text-sm font-semibold text-surface-600 mb-2 ml-1">Age</label>
                   <input
@@ -301,7 +301,7 @@ export default function Identification() {
                     value={walkInData.age}
                     onChange={(e) => setWalkInData({ ...walkInData, age: e.target.value })}
                     placeholder="e.g. 45"
-                    className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
+                    className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
                   />
                 </div>
                 <div>
@@ -309,7 +309,7 @@ export default function Identification() {
                   <select
                     value={walkInData.gender}
                     onChange={(e) => setWalkInData({ ...walkInData, gender: e.target.value })}
-                    className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors text-surface-900 appearance-none"
+                    className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors text-surface-900 appearance-none"
                   >
                     <option value="" disabled>Select</option>
                     <option value="male">Male</option>
@@ -325,7 +325,7 @@ export default function Identification() {
                   value={walkInData.phone}
                   onChange={(e) => setWalkInData({ ...walkInData, phone: e.target.value })}
                   placeholder="Enter 10-digit number"
-                  className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-6 py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
+                  className="w-full bg-surface-50 border-2 border-surface-200 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-lg font-medium focus:outline-none focus:border-primary-500 transition-colors placeholder:text-surface-400 text-surface-900"
                 />
               </div>
             </div>
@@ -343,10 +343,10 @@ export default function Identification() {
                 Registering your visit…
               </p>
             )}
-            <div className="flex gap-4 mt-10">
+            <div className="flex gap-3 sm:gap-4 mt-8 sm:mt-10">
               <button
                 onClick={() => setMode(null)}
-                className="flex-1 touch-target bg-white border border-surface-300 rounded-2xl px-6 py-5 text-lg font-semibold text-surface-700 hover:bg-surface-100 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 touch-target bg-white border border-surface-300 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 text-base sm:text-lg font-semibold text-surface-700 hover:bg-surface-100 transition-colors flex items-center justify-center gap-2"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back
@@ -354,7 +354,7 @@ export default function Identification() {
               <button
                 onClick={handleWalkInSubmit}
                 disabled={loading}
-                className="flex-[2] touch-target bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-lg font-bold rounded-2xl px-6 py-5 transition-colors shadow-lg shadow-primary-600/25"
+                className="flex-[2] touch-target bg-primary-600 hover:bg-primary-700 disabled:bg-surface-300 disabled:text-surface-500 text-white text-base sm:text-lg font-bold rounded-2xl px-4 sm:px-6 py-4 sm:py-5 transition-colors shadow-lg shadow-primary-600/25"
               >
                 {loading ? 'Registering...' : 'Continue'}
               </button>

@@ -1,19 +1,17 @@
 """
-Clerk authentication — single source of truth for web/staff auth.
+Authentication dependencies — the single real identity flow.
 
-Verifies Clerk-issued JWTs against the Clerk JWKS endpoint (RS256), replacing
-the legacy custom signed HS256 JWTs produced by the mock ``/auth/login``.
+Primary verifier: **Supabase Auth** (see ``app.utils.supabase_jwt``). The
+frontend logs in with Supabase and sends its session token; we validate it
+server-side against the project's GoTrue endpoint. This is the ONLY production
+identity path.
 
-Engineers' role is carried in the Clerk JWT's custom claim ``role``
-(configured in the Clerk JWT template / session claims); ``sub`` is the unique
-Clerk user id.
-
-Graceful degradation (offline / local demo):
-  * If CLERK_ISSUER is not set, we fall back to the legacy ``verify_access_token``
-    using the custom JWT secret so existing mock flows (tests, local dev, the
-    old login endpoint) keep working until Clerk is fully wired.
-  * JWT verification is always synchronous-verified against cached JWKS; the
-    JWKS is refreshed lazily with a background-safe re-fetch on expiry.
+Legacy paths (dormant, never in production):
+  * Clerk JWKS (RS256) — code kept dormant for reference; CLERK_ISSUER is blank.
+  * Custom HS256 JWTs from the old mock ``/auth/login`` — the endpoint is gone;
+    the ``verify_access_token`` fallback exists ONLY so local dev / the test
+    suite can exercise protected routes offline (``app_env != production``).
+    Production fails closed when no real identity provider is configured.
 """
 
 from __future__ import annotations
@@ -29,6 +27,7 @@ from jose.constants import ALGORITHMS
 
 from app.config import get_settings
 from app.utils.security import verify_access_token
+from app.utils.supabase_jwt import supabase_auth_enabled, verify_supabase_token
 
 logger = logging.getLogger("medikiosk.auth.clerk")
 
@@ -109,13 +108,27 @@ def _is_clerk_enabled() -> bool:
 
 
 async def _verify(token: str) -> dict:
-    """Verify a Clerk JWT first; fall back to the legacy custom JWT.
+    """Verify a bearer token, in priority order: Supabase -> Clerk -> legacy-dev.
 
-    During the transition the old mock ``/auth/login`` still issues custom
-    HS256 JWTs. Clerk JWTs (RS256/ES256 via JWKS) take precedence; legacy
-    fallback keeps those flows working and is logged so engineers can cut it
-    over once Clerk is fully wired.
+    * Supabase (production identity) is validated server-side via GoTrue and is
+      the ONLY path allowed in production.
+    * Clerk JWKS verification is dormant (CLERK_ISSUER blank) but kept intact.
+    * The legacy custom HS256 fallback only applies when ``app_env`` is NOT
+      ``production`` — it exists so local dev and the offline test suite can
+      exercise protected routes without a live Supabase session.
     """
+    if supabase_auth_enabled():
+        claims = await verify_supabase_token(token)
+        if claims:
+            return claims
+        # Local dev / offline tests only — never in production.
+        if settings.app_env != "production":
+            legacy = verify_access_token(token)
+            if legacy:
+                logger.warning("Supabase verification failed; accepted dev-only legacy token")
+                return {**legacy, "iss": "legacy-dev"}
+        raise JWTError("Supabase token verification failed")
+
     if _is_clerk_enabled():
         try:
             jwks = await _load_jwks()
@@ -130,7 +143,12 @@ async def _verify(token: str) -> dict:
                 raise
         except JWTError:
             logger.warning("Clerk JWT verification failed — falling back to legacy custom JWT")
-    # Legacy fallback: custom HS256 JWT (mock/local).
+
+    # No identity provider configured at all.
+    if settings.app_env == "production":
+        raise JWTError("No identity provider configured")
+
+    # Legacy fallback: custom HS256 JWT (local dev / offline tests).
     payload = verify_access_token(token)
     if not payload:
         raise JWTError("Invalid legacy token")

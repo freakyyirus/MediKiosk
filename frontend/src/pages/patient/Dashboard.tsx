@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { Sidebar, Header, StatsCard, Card, Button, LoadingSpinner, EmptyState } from '../../components/shared';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { useT } from '../../lib/i18n';
 import type { Patient } from '../../types';
 
@@ -118,11 +118,10 @@ export default function PatientDashboard() {
         }}
       />
 
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-screen flex flex-col pl-14 lg:pl-0">
         <Header
           title="Patient Portal"
           subtitle={`Welcome back, ${profile?.name?.split(' ')[0] || 'Patient'}!`}
-          onMenuToggle={() => {}}
           user={{ name: profile?.name || 'Patient', role: 'Patient' }}
         />
 

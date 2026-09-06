@@ -51,7 +51,7 @@ export default function Solution() {
               key={i}
               variants={fadeUp}
               transition={{ duration: 0.6, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="bg-white rounded-2xl shadow-lg shadow-surface-900/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden will-change-transform flex flex-col"
+              className="bg-white rounded-2xl shadow-lg shadow-surface-900/5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
             >
               {/* gradient header */}
               <div className="h-24 flex items-center justify-center" style={{ background: f.gradient }}>
@@ -62,7 +62,7 @@ export default function Solution() {
                       <motion.span className="absolute inset-0 rounded-full bg-white/40" animate={{ scale: [1, 1.4], opacity: [0.4, 0] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeOut', delay: 0.4 }} />
                     </>
                   )}
-                  <div className="relative w-14 h-14 rounded-full bg-white/25 backdrop-blur flex items-center justify-center">
+                  <div className="relative w-14 h-14 rounded-full bg-white/25 flex items-center justify-center">
                     <f.icon className="w-7 h-7 text-white" />
                   </div>
                 </div>
@@ -146,10 +146,10 @@ function MiniMockup({ type }: { type: 'voice' | 'camera' | 'summary' }) {
             <span className="text-[12px] font-bold text-blue-900 leading-none" style={{ fontFamily: 'cursive', transform: 'skewX(-15deg)' }}>Rx: Tab Paracetamol 500mg</span>
             <span className="text-[11px] font-bold text-blue-900 leading-none ml-4 mt-1" style={{ fontFamily: 'cursive', transform: 'skewX(-15deg)' }}>1 tab BD x 5 days</span>
           </div>
-          <motion.span 
-             className="absolute inset-x-0 h-5 bg-gradient-to-b from-transparent to-coral-400/10 border-b border-coral-400 pointer-events-none" 
-             animate={{ top: ['-50%', '150%'] }} 
-             transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
+          <motion.span
+            className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-transparent to-coral-400/10 border-b border-coral-400 pointer-events-none"
+            animate={{ y: ['-50%', '150%'] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'linear' }}
           />
         </div>
       </div>

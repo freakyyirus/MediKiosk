@@ -25,21 +25,21 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
         clearInterval(iv);
         setTimeout(() => {
           setPhraseIdx((p) => (p + 1) % PHRASES.length);
-        }, 700);
+        }, 350);
       }
-    }, 45);
+    }, 22);
     return () => clearInterval(iv);
   }, [phraseIdx]);
 
-  // total 2.5s then fade out
+  // total ~1.0s then fade out — keep the splash quick so content is usable fast.
   useEffect(() => {
-    const t = setTimeout(() => setLeaving(true), 2500);
+    const t = setTimeout(() => setLeaving(true), 1000);
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
     if (leaving) {
-      const t = setTimeout(onDone, 600);
+      const t = setTimeout(onDone, 400);
       return () => clearTimeout(t);
     }
   }, [leaving, onDone]);
@@ -77,7 +77,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
               className="h-full bg-primary-600"
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}
-              transition={{ duration: 2.4, ease: 'easeInOut' }}
+              transition={{ duration: 0.9, ease: 'easeInOut' }}
             />
           </div>
         </motion.div>

@@ -1,5 +1,11 @@
 """
 Patient management API endpoints.
+
+Route visibility (kiosk model):
+  * POST "" (create), GET "/{id}", GET "" (search) — intentionally PUBLIC so an
+    anonymous walk-up kiosk patient can register and self-identify.
+  * PATCH "/{id}" — STAFF ONLY (require_staff); modifies PHI and must not be
+    reachable by walk-up anonymous clients.
 """
 
 from fastapi import APIRouter, Depends, Query
@@ -7,6 +13,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.middleware.clerk_auth import require_staff
 from app.middleware.error_handler import NotFoundError
 from app.models.patient import Patient
 from app.schemas.schemas import PatientCreate, PatientResponse, PatientUpdate
@@ -45,6 +52,7 @@ async def update_patient(
     patient_id: int,
     patient_data: PatientUpdate,
     db: AsyncSession = Depends(get_db),
+    _: None = Depends(require_staff()),
 ):
     """Partially update a patient."""
     result = await db.execute(select(Patient).where(Patient.id == patient_id))

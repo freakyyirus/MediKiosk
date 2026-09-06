@@ -6,7 +6,7 @@ import {
   ChevronUp, MapPin, Stethoscope, Pill, FileText, Clock, X,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, Card, Button, LoadingSpinner, EmptyState, Badge } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
 import { useT } from '../../lib/i18n';
@@ -317,11 +317,10 @@ export default function MyVisits() {
         onLogout={handleLogout}
         user={{ name: 'Patient', role: 'Patient' }}
       />
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-screen flex flex-col pl-14 lg:pl-0">
         <Header
           title={t('myVisitsTitle')}
           subtitle="View and manage your appointments"
-          onMenuToggle={() => {}}
           user={{ name: 'Patient', role: 'Patient' }}
         />
         <main className="flex-1 p-4 sm:p-6">

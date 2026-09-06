@@ -4,10 +4,14 @@ MediKiosk Application Configuration.
 Loads settings from environment variables / .env file using Pydantic Settings.
 """
 
+import logging
 import shutil
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger("medikiosk.config")
 
 
 class Settings(BaseSettings):
@@ -110,6 +114,14 @@ class Settings(BaseSettings):
     @property
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",")]
+
+    @model_validator(mode="after")
+    def enforce_production_safety(self) -> "Settings":
+        """Fail-safe: debug can never be enabled in production."""
+        if self.app_env == "production" and self.app_debug:
+            logger.warning("app_debug forced to False (APP_ENV=production)")
+            self.app_debug = False
+        return self
 
 
 @lru_cache

@@ -97,7 +97,7 @@ export default function Ayush() {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* radar chart */}
           <div className="flex justify-center">
-            <div className="absolute inset-0 -z-10 rounded-full bg-teal-400/10 blur-3xl" />
+            <div className="absolute inset-0 -z-10 rounded-full bg-teal-400/10 blur-2xl" />
             <RadarChart />
           </div>
 

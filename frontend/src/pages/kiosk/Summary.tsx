@@ -115,9 +115,9 @@ export default function Summary() {
 
   return (
     <div className="min-h-screen mesh-bg flex flex-col text-surface-900">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 max-w-4xl mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-10 max-w-4xl mx-auto w-full">
         <div className="text-center mb-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-success-100 mx-auto mb-6">
+          <div className="inline-flex items-center justify-center w-20 sm:w-24 h-20 sm:h-24 rounded-full bg-success-100 mx-auto mb-6">
             <svg viewBox="0 0 52 52" className="w-12 h-12">
               <path
                 className="draw-check"
@@ -130,21 +130,21 @@ export default function Summary() {
               />
             </svg>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-success-700 mb-3">Your Health Check is Complete</h1>
-          <p className="text-xl text-surface-500 max-w-lg mx-auto">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-success-700 mb-3">Your Health Check is Complete</h1>
+          <p className="text-lg sm:text-xl text-surface-500 max-w-lg mx-auto">
             Your history is saved securely and ready for your physician.
           </p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-8 w-full">
+        <div className="flex flex-col md:flex-row gap-6 sm:gap-8 w-full">
           {/* Left: token & actions */}
           <div className="flex-1 flex flex-col gap-5 animate-slide-up">
-            <div className="card p-8 text-center">
+            <div className="card p-5 sm:p-8 text-center">
               <p className="text-surface-500 text-lg mb-2 uppercase tracking-wider font-semibold">Your OPD Token</p>
-              <div className="text-[96px] leading-none font-black text-primary-700 mb-3 tracking-tight">
+              <div className="text-[64px] sm:text-[96px] leading-none font-black text-primary-700 mb-3 tracking-tight">
                 {tokenNumber}
               </div>
-              <p className="text-lg text-surface-600 font-medium">Estimated wait: ~15 minutes</p>
+              <p className="text-base sm:text-lg text-surface-600 font-medium">Estimated wait: ~15 minutes</p>
               <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-primary-700 bg-primary-50 px-3 py-1 rounded-full font-medium">
                 <span className="w-2 h-2 rounded-full bg-success-500 animate-pulse" /> Ready for Review
               </div>
@@ -164,8 +164,8 @@ export default function Summary() {
           </div>
 
           {/* Right: clinical summary cards */}
-          <div className="flex-[1.4] card p-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
-            <h3 className="text-2xl font-bold text-surface-900 mb-6 border-b border-surface-100 pb-4">
+          <div className="flex-[1.4] card p-5 sm:p-8 animate-slide-up" style={{ animationDelay: '100ms' }}>
+            <h3 className="text-xl sm:text-2xl font-bold text-surface-900 mb-6 border-b border-surface-100 pb-4">
               Medical Summary
             </h3>
 

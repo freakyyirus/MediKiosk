@@ -53,7 +53,7 @@ export function Section({
       initial="hidden"
       whileInView="show"
       viewport={{ once: true, amount: 0.15 }}
-      className={`relative ${className}`}
+      className={`landing-section relative ${className}`}
       style={{ background: bg }}
     >
       {children}

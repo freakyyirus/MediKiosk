@@ -231,7 +231,7 @@ export default function Guardian({ state = 'whole', className = '', orbitCards =
           {orbit.map((p, i) => (
             <motion.div
               key={i}
-              className="absolute w-9 h-9 rounded-xl bg-white/80 backdrop-blur border border-white/60 shadow-lg shadow-primary-600/10 flex items-center justify-center"
+              className="absolute w-9 h-9 rounded-xl bg-white/90 border border-white/60 shadow-lg shadow-primary-600/10 flex items-center justify-center"
               style={{ left: `${p.x}%`, top: `${p.y * 0.48}%` }}
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 0.9, scale: 1 }}

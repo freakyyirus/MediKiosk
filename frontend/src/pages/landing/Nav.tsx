@@ -5,7 +5,7 @@ import { Sparkles, Menu, X } from 'lucide-react';
 import Logo from '../../components/brand/Logo';
 import { LANGS, useLangStore, useLandingT } from './i18n';
 import { useAuthStore, getRoleRedirect } from '../../stores/authStore';
-import { lockScroll, unlockScroll } from '../../lib/smoothScroll';
+import { lockScroll, unlockScroll, scrollToHash } from '../../lib/smoothScroll';
 
 const LINKS = [
   { href: '#product', key: 'product' },
@@ -64,7 +64,7 @@ export default function Nav() {
 
   const go = (href: string) => {
     setMenuOpen(false);
-    document.querySelector<HTMLElement>(href)?.scrollIntoView({ behavior: 'smooth' });
+    scrollToHash(href, -80);
   };
 
   return (
@@ -74,7 +74,7 @@ export default function Nav() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-white/80 backdrop-blur-md'
+          scrolled ? 'bg-white/95 shadow-sm' : 'bg-white/90'
         }`}
         style={{ height: 72 }}
       >

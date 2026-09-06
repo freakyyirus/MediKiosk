@@ -71,7 +71,7 @@ export default function Impact() {
 
         {/* before/after bar chart */}
         <motion.div variants={fadeUp} className="bg-white rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_-4px_rgba(0,0,0,0.04)] border border-surface-100 max-w-[800px] mx-auto relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-400/5 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-teal-400/5 blur-[48px] rounded-full pointer-events-none" />
           <div className="text-center text-xl font-bold text-[#111827] mb-10 tracking-tight" style={{ fontFamily: 'Inter' }}>Before vs After MediKiosk</div>
           <div className="grid gap-8">
             {METRICS.map((m, i) => (

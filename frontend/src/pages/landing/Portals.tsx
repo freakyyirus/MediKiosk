@@ -89,7 +89,7 @@ export default function Portals() {
               className="bg-white rounded-2xl shadow-lg shadow-surface-900/5 hover:shadow-2xl overflow-hidden flex flex-col"
             >
               <div className="h-28 flex items-center justify-center" style={{ background: p.gradient }}>
-                <div className="w-14 h-14 rounded-full bg-white/25 backdrop-blur flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-white/25 flex items-center justify-center">
                   <p.icon className="w-7 h-7 text-white" />
                 </div>
               </div>

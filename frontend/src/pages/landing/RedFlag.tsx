@@ -29,7 +29,7 @@ export default function RedFlag() {
           </motion.div>
           <motion.h2
             variants={fadeUp}
-            className="text-[48px] leading-tight font-bold text-[#111827] max-w-[560px]"
+            className="text-[clamp(34px,6.5vw,48px)] leading-tight font-bold text-[#111827] max-w-[560px]"
             style={{ fontFamily: 'Inter' }}
           >
             Emergencies don't wait in line.

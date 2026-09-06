@@ -6,7 +6,7 @@ import {
   FileImage, File, Shield, FlaskConical, Pill, AlertCircle,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, Button, LoadingSpinner, EmptyState, Badge, Modal } from '../../components/shared';
 import { useToastStore } from '../../components/shared/Toast';
 import type { Document as DocRecord, DocumentType } from '../../types';
@@ -278,7 +278,7 @@ export default function DocumentsVault() {
         onLogout={handleLogout}
         user={{ name: 'Patient', role: 'Patient' }}
       />
-      <div className="lg:ml-64 min-h-screen flex flex-col">
+      <div className="lg:ml-64 min-h-screen flex flex-col pl-14 lg:pl-0">
         <Header
           title="Documents Vault"
           subtitle="Manage your medical documents"
@@ -287,7 +287,6 @@ export default function DocumentsVault() {
               Upload
             </Button>
           }
-          onMenuToggle={() => {}}
           user={{ name: 'Patient', role: 'Patient' }}
         />
         <main className="flex-1 p-4 sm:p-6">

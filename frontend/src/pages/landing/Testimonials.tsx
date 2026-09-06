@@ -35,7 +35,7 @@ export default function Testimonials() {
           <SectionLabel className="mb-4" color="#4F46E5">How it helps</SectionLabel>
           <motion.h2
             variants={fadeUp}
-            className="text-[40px] leading-tight font-semibold text-[#111827]"
+            className="text-[clamp(28px,5.5vw,40px)] leading-tight font-semibold text-[#111827]"
             style={{ fontFamily: 'Inter' }}
           >
             Designed for real-world clinical workflows.

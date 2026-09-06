@@ -22,16 +22,22 @@ import { initSmoothScroll } from '../../lib/smoothScroll';
 
 export default function LandingPage() {
   const [loading, setLoading] = useState(() => {
-    // Back-button re-entry replays the loader; otherwise only the first visit.
+    // Back-button re-entry restores instantly (no loader); only a first-ever
+    // visit shows the quick splash.
     const replay = peekReplayLoader();
-    return replay || !sessionStorage.getItem('hasSeenPreloader');
+    return !replay && !sessionStorage.getItem('hasSeenPreloader');
   });
   const reducedMotion = useReducedMotion();
 
   // Consume the armed replay flag (do not clear inside the state initializer —
-  // React StrictMode may evaluate it twice).
+  // React StrictMode may evaluate it twice). Back-button entries skip the
+  // loader and restore the saved scroll position immediately.
   useEffect(() => {
+    const replay = peekReplayLoader();
     clearReplayLoader();
+    if (replay) {
+      restoreLoaderPageScroll();
+    }
   }, []);
 
   // Lenis smooth scrolling for the marketing page (skips with reduced motion).

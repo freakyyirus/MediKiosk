@@ -88,8 +88,13 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    /* Native wheel input only — CSS smooth-scroll glides every step and
+       makes scrolling feel deliberately slow (anchors use Lenis/auto). */
+    scroll-behavior: auto;
     -webkit-tap-highlight-color: transparent;
+    /* Clip (not hidden) so sticky/fixed positioning still works while
+       decorative absolute elements can never cause a horizontal scrollbar. */
+    overflow-x: clip;
   }
 
   body {
@@ -100,6 +105,7 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
   }
 
   /* High contrast mode */
@@ -283,8 +289,8 @@
 /* Glassmorphism card (over content) */
 .glass-card {
   background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(107, 78, 230, 0.14);
@@ -589,6 +595,14 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
    LANDING PAGE
    ============================== */
 
+/* content-visibility: auto was removed because the "un-skip" layout burst
+   when each section enters the viewport fights Framer Motion's whileInView
+   and causes visible scroll jank. The page is ~15 sections; the upfront
+   rendering cost is acceptable for the smooth scroll experience. */
+.landing-section {
+  contain: layout style;
+}
+
 /* Hero gradient mesh */
 .mesh-landing {
   background:
@@ -616,8 +630,8 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
 /* Fixed glassmorphism nav */
 .glassmorphism-nav {
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 8px 32px rgba(107, 78, 230, 0.12);
 }
@@ -632,8 +646,6 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
 
 /* Tilt cards on Solution section */
 .tilt-card {
-  transform-style: preserve-3d;
-  will-change: transform;
   transition: box-shadow 0.2s ease;
 }
 
@@ -708,18 +720,14 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
    KD LANDING V2 (Framer Motion)
    ============================== */
 
-/* hero animated mesh */
+/* hero animated mesh — static gradient (animating background-position repaints
+   the whole hero every frame and is a major scroll-jank source) */
 .hero-mesh {
   background:
     radial-gradient(60% 50% at 15% 20%, rgba(107, 78, 230, 0.12), transparent 60%),
     radial-gradient(50% 45% at 85% 15%, rgba(155, 135, 245, 0.14), transparent 60%),
     radial-gradient(55% 50% at 78% 85%, rgba(45, 212, 191, 0.10), transparent 60%),
     #F8F7FF;
-  animation: mesh-drift 16s ease-in-out infinite alternate;
-}
-@keyframes mesh-drift {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 12% 8%; }
 }
 
 /* hero floating breath particles */
@@ -755,8 +763,6 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
 /* glass banner (solution) */
 .glass-banner {
   background: rgba(107, 78, 230, 0.06);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(107, 78, 230, 0.16);
 }
 

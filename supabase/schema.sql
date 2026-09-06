@@ -22,7 +22,33 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
 
 -- ============================================================================
--- 2. TABLES (mirror of backend/app/models/)
+-- 2. CLEANUP PREVIOUS SCHEMAS
+-- ============================================================================
+-- Drop conflicting tables from previous schemas (like mediflow_schema)
+DROP TABLE IF EXISTS public.ayush_assessments CASCADE;
+DROP TABLE IF EXISTS public.audit_logs CASCADE;
+DROP TABLE IF EXISTS public.red_flag_alerts CASCADE;
+DROP TABLE IF EXISTS public.consent_records CASCADE;
+DROP TABLE IF EXISTS public.summaries CASCADE;
+DROP TABLE IF EXISTS public.documents CASCADE;
+DROP TABLE IF EXISTS public.session_messages CASCADE;
+DROP TABLE IF EXISTS public.sessions CASCADE;
+DROP TABLE IF EXISTS public.patients CASCADE;
+
+-- Drop mediflow specific tables if they exist
+DROP TABLE IF EXISTS public.queues CASCADE;
+DROP TABLE IF EXISTS public.lab_tests CASCADE;
+DROP TABLE IF EXISTS public.prescription_items CASCADE;
+DROP TABLE IF EXISTS public.prescriptions CASCADE;
+DROP TABLE IF EXISTS public.visits CASCADE;
+DROP TABLE IF EXISTS public.opd_slots CASCADE;
+DROP TABLE IF EXISTS public.doctors CASCADE;
+DROP TABLE IF EXISTS public.departments CASCADE;
+DROP TABLE IF EXISTS public.hospitals CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
+
+-- ============================================================================
+-- 3. TABLES (mirror of backend/app/models/)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS public.patients (
@@ -275,26 +301,5 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
 
 -- Sequences must be usable by service_role for IDENTITY inserts to work.
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
-
--- ============================================================================
--- 5. DOCUMENT STORAGE BUCKET
--- ============================================================================
--- Create the private storage bucket for uploaded medical documents.
--- (Run bucket creation via Supabase Dashboard → Storage if this throws due to
---  missing storage API privileges. Bucket must be PRIVATE.)
-
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-    'medikiosk-documents',
-    'medikiosk-documents',
-    false,                       -- PRIVATE — never public
-    15728640,                    -- 15 MB
-    ARRAY['image/png','image/jpeg','image/webp','application/pdf']
-)
-ON CONFLICT (id) DO NOTHING;
-
--- Backend service-role bypasses bucket RLS; anon gets nothing here.
-REVOKE ALL ON storage.objects FROM anon;
-REVOKE ALL ON storage.buckets FROM anon;
 
 COMMIT;

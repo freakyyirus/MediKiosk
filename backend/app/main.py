@@ -18,7 +18,6 @@ from app.routers import (
     abdm,
     advanced,
     ai,
-    auth,
     consent,
     documents,
     health,
@@ -99,7 +98,6 @@ register_exception_handlers(app)
 app.include_router(health.router)
 
 # API v1 routes
-app.include_router(auth.router)
 app.include_router(ai.router)
 app.include_router(patients.router)
 app.include_router(sessions.router)

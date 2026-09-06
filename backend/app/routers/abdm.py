@@ -22,9 +22,10 @@ from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.config import get_settings
+from app.middleware.clerk_auth import require_staff
 
 logger = logging.getLogger("medikiosk.routers.abdm")
 router = APIRouter(prefix="/api/v1/abdm", tags=["ABDM Integration"])
@@ -280,7 +281,10 @@ def build_fhir_bundle(
 
 
 @router.post("/generate-fhir/{session_id}")
-async def generate_fhir_bundle(session_id: int):
+async def generate_fhir_bundle(
+    session_id: int,
+    _: None = Depends(require_staff()),
+):
     """
     Generate a FHIR R4 Bundle from the session's clinical summary.
 

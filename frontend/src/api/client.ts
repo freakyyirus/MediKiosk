@@ -16,12 +16,26 @@ const api = axios.create({
   },
 });
 
-// Request interceptor — attach JWT token
+// Request interceptor — attach the real identity token:
+// 1. Consumer apps flow: the Supabase session access_token (validated
+//    server-side by the backend via GoTrue).
+// 2. Dev override: sessionStorage 'access_token' (used by offline/tests only).
 api.interceptors.request.use(
-  (config) => {
-    const token = sessionStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+  async (config) => {
+    const legacyToken = sessionStorage.getItem('access_token');
+    if (legacyToken) {
+      config.headers.Authorization = `Bearer ${legacyToken}`;
+      return config;
+    }
+    try {
+      const { supabase } = await import('../lib/supabase');
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+    } catch {
+      // Supabase unconfigured/offline — send unauthenticated (public kiosk).
     }
     return config;
   },

@@ -8,7 +8,7 @@ import {
   Shield, Send, UserPlus, LogOut, Heart,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import {
   Card, Button, Input, Select, Modal, Badge,
   LoadingSpinner, EmptyState,

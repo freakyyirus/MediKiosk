@@ -14,71 +14,83 @@ export default function Home() {
   return (
     <div className={`min-h-screen ${ayushMode ? 'ayush-mode' : 'mesh-bg'} flex flex-col text-surface-900 ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
       {/* Header */}
-      <header className="w-full flex items-center justify-between px-10 py-6">
-        <div className="flex items-center gap-3">
+      <header className="w-full flex items-center justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5 md:px-10 md:py-6">
+        <div className="flex items-center gap-3 shrink-0">
           <Logo size={46} variant="gradient" />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-3">
           <button
             onClick={() => toggleLowLiteracyMode()}
-            className={`flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${lowLiteracyMode ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${lowLiteracyMode ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            title={lowLiteracyMode ? 'Low-literacy: ON' : 'Accessibility'}
+            aria-label={lowLiteracyMode ? 'Low-literacy: ON' : 'Accessibility'}
           >
             <Accessibility className="w-5 h-5" />
-            {lowLiteracyMode ? 'Low-literacy: ON' : 'Accessibility'}
+            <span className="hidden md:inline">{lowLiteracyMode ? 'Low-lit: ON' : 'Accessibility'}</span>
           </button>
           <button
             onClick={() => toggleHighContrast()}
-            className={`flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${highContrast ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${highContrast ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            title="High contrast"
+            aria-label="High contrast"
           >
             <Accessibility className="w-5 h-5" />
-            Contrast
+            <span className="hidden sm:inline">Contrast</span>
           </button>
           <button
             onClick={() => setAyushMode((v) => !v)}
-            className={`flex items-center gap-2 px-4 py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${ayushMode ? 'border-accent-400 bg-accent-50 text-accent-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${ayushMode ? 'border-accent-400 bg-accent-50 text-accent-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
+            title="AYUSH"
+            aria-label="AYUSH"
           >
-            <Sparkles className="w-5 h-5" /> AYUSH
+            <Sparkles className="w-5 h-5" />
+            <span className="hidden sm:inline">AYUSH</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-surface-200 rounded-xl text-surface-600 font-medium text-sm hover:border-surface-300 transition-colors touch-target">
-            <HelpCircle className="w-5 h-5" /> Help
+          <button
+            className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border border-surface-200 rounded-xl text-surface-600 font-medium text-sm hover:border-surface-300 transition-colors touch-target"
+            title="Help"
+            aria-label="Help"
+          >
+            <HelpCircle className="w-5 h-5" />
+            <span className="hidden sm:inline">Help</span>
           </button>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col md:flex-row items-center px-10 max-w-6xl mx-auto w-full gap-8 py-4">
-        <div className="flex-1">
-          <h1 className={`text-5xl md:text-6xl font-black text-surface-900 leading-[1.08] mb-6 ${lowLiteracyMode ? 'text-6xl' : ''}`}>
-            Your First Step to<br /> Better Care.
+      <main className="flex-1 flex flex-col md:flex-row items-center px-4 sm:px-6 md:px-10 max-w-6xl mx-auto w-full gap-8 py-4">
+        <div className="flex-1 w-full">
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black text-surface-900 leading-[1.08] mb-6 text-center md:text-left ${lowLiteracyMode ? 'text-5xl sm:text-6xl' : ''}`}>
+            Your First Step to Better Care.
           </h1>
-          <p className="text-xl md:text-2xl text-surface-500 mb-10 max-w-xl leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl text-surface-500 mb-10 max-w-xl leading-relaxed text-center md:text-left mx-auto md:mx-0">
             Tell us how you're feeling and we'll guide you through a simple health check before you see the doctor.
           </p>
 
           <button
             onClick={() => navigate('/kiosk/language')}
-            className="touch-target-lg px-10 py-5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white text-2xl font-bold rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary-600/30 transition-all hover:scale-[1.02]"
+            className="touch-target-lg w-full sm:w-auto px-10 py-5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white text-2xl font-bold rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-primary-600/30 transition-all hover:scale-[1.02]"
           >
             Start Health Check <ArrowRight className="w-6 h-6" />
           </button>
 
-          <div className="flex gap-6 mt-10 flex-wrap">
-            <div className="flex items-center gap-2 text-base font-medium text-surface-600">
+          <div className="flex gap-4 sm:gap-6 mt-10 flex-wrap justify-center md:justify-start">
+            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-surface-600">
               <Shield className="w-5 h-5 text-primary-600" /> Private & Secure
             </div>
-            <div className="flex items-center gap-2 text-base font-medium text-surface-600">
+            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-surface-600">
               <Globe className="w-5 h-5 text-primary-600" /> Multilingual
             </div>
-            <div className="flex items-center gap-2 text-base font-medium text-surface-600">
+            <div className="flex items-center gap-2 text-sm sm:text-base font-medium text-surface-600">
               <Heart className="w-5 h-5 text-coral-400" /> Easy to Use
             </div>
           </div>
         </div>
 
         {/* Soft 3D-style illustration (CSS shapes) */}
-        <div className="flex-[0.9] flex justify-center">
-          <div className="relative w-full max-w-[420px] aspect-square animate-float">
+        <div className="flex-[0.9] flex justify-center w-full">
+          <div className="relative w-full max-w-[320px] sm:max-w-[420px] aspect-square animate-float">
             <div className="absolute inset-0 bg-white rounded-[40px] shadow-[0_30px_60px_rgba(107,78,230,0.15)] border border-surface-100 overflow-hidden">
               <div className="absolute -top-16 -right-16 w-48 h-48 bg-primary-100 rounded-full blur-2xl" />
               <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-accent-100 rounded-full blur-2xl" />
@@ -101,7 +113,7 @@ export default function Home() {
         </div>
       </main>
 
-      <footer className="w-full px-10 pb-6 text-center text-surface-400 text-sm">
+      <footer className="w-full px-4 sm:px-10 pb-6 text-center text-surface-400 text-sm">
         Digital health assistance · Audio guided
       </footer>
 

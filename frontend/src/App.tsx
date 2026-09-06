@@ -7,18 +7,20 @@ import PageViewTracker from './components/shared/PageViewTracker';
 import { installHistoryListener, initLoaderState, recordRoutePath } from './lib/navigationController';
 import { ROUTE_META, applyPageMeta, type PageMeta } from './hooks/usePageMeta';
 
-// Kiosk Pages (eager)
+// Landing (eager — first paint)
 import LandingPage from './pages/LandingPage';
-import KioskHome from './pages/kiosk/Home';
-import KioskLanguageSelect from './pages/kiosk/LanguageSelect';
-import KioskIdentification from './pages/kiosk/Identification';
-import KioskConsent from './pages/kiosk/Consent';
-import KioskInterview from './pages/kiosk/Interview';
-import KioskBodyMap from './pages/kiosk/BodyMap';
-import KioskDocumentUpload from './pages/kiosk/DocumentUpload';
-import KioskSummary from './pages/kiosk/Summary';
-import KioskAyush from './pages/kiosk/AyushAssessment';
-import KioskEmergency from './pages/kiosk/EmergencyDemo';
+
+// Kiosk Pages (lazy — only downloaded when the walk-up flow starts)
+const KioskHome = React.lazy(() => import('./pages/kiosk/Home'));
+const KioskLanguageSelect = React.lazy(() => import('./pages/kiosk/LanguageSelect'));
+const KioskIdentification = React.lazy(() => import('./pages/kiosk/Identification'));
+const KioskConsent = React.lazy(() => import('./pages/kiosk/Consent'));
+const KioskInterview = React.lazy(() => import('./pages/kiosk/Interview'));
+const KioskBodyMap = React.lazy(() => import('./pages/kiosk/BodyMap'));
+const KioskDocumentUpload = React.lazy(() => import('./pages/kiosk/DocumentUpload'));
+const KioskSummary = React.lazy(() => import('./pages/kiosk/Summary'));
+const KioskAyush = React.lazy(() => import('./pages/kiosk/AyushAssessment'));
+const KioskEmergency = React.lazy(() => import('./pages/kiosk/EmergencyDemo'));
 
 // Lazy Auth Pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
@@ -148,16 +150,16 @@ export default function App() {
 
         {/* Kiosk Patient Flow */}
         <Route path="/kiosk" element={<Navigate to="/kiosk/home" replace />} />
-        <Route path="/kiosk/home" element={<KioskHome />} />
-        <Route path="/kiosk/language" element={<KioskLanguageSelect />} />
-        <Route path="/kiosk/identify" element={<KioskIdentification />} />
-        <Route path="/kiosk/consent" element={<KioskConsent />} />
-        <Route path="/kiosk/body-map" element={<KioskBodyMap />} />
-        <Route path="/kiosk/interview" element={<KioskInterview />} />
-        <Route path="/kiosk/ayush" element={<KioskAyush />} />
-        <Route path="/kiosk/emergency" element={<KioskEmergency />} />
-        <Route path="/kiosk/documents" element={<KioskDocumentUpload />} />
-        <Route path="/kiosk/summary" element={<KioskSummary />} />
+        <Route path="/kiosk/home" element={<SuspenseWrapper><KioskHome /></SuspenseWrapper>} />
+        <Route path="/kiosk/language" element={<SuspenseWrapper><KioskLanguageSelect /></SuspenseWrapper>} />
+        <Route path="/kiosk/identify" element={<SuspenseWrapper><KioskIdentification /></SuspenseWrapper>} />
+        <Route path="/kiosk/consent" element={<SuspenseWrapper><KioskConsent /></SuspenseWrapper>} />
+        <Route path="/kiosk/body-map" element={<SuspenseWrapper><KioskBodyMap /></SuspenseWrapper>} />
+        <Route path="/kiosk/interview" element={<SuspenseWrapper><KioskInterview /></SuspenseWrapper>} />
+        <Route path="/kiosk/ayush" element={<SuspenseWrapper><KioskAyush /></SuspenseWrapper>} />
+        <Route path="/kiosk/emergency" element={<SuspenseWrapper><KioskEmergency /></SuspenseWrapper>} />
+        <Route path="/kiosk/documents" element={<SuspenseWrapper><KioskDocumentUpload /></SuspenseWrapper>} />
+        <Route path="/kiosk/summary" element={<SuspenseWrapper><KioskSummary /></SuspenseWrapper>} />
 
         {/* Patient Portal */}
         <Route path="/patient" element={

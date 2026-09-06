@@ -95,21 +95,21 @@ export default function BodyMapPage() {
 
   return (
     <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
-      <div className="px-10 pt-8">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-8">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={1} />
       </div>
 
-      <div className="flex-1 flex flex-col items-center max-w-4xl mx-auto w-full px-6 py-6">
+      <div className="flex-1 flex flex-col items-center max-w-4xl mx-auto w-full px-4 sm:px-6 py-5 sm:py-6">
         {!selected ? (
           <>
             <div className="text-center mb-4 animate-fade-in">
               <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
                 <Sparkles className="w-4 h-4" /> Touch the map
               </span>
-              <h2 className="text-3xl md:text-4xl font-bold text-surface-900 mt-3">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-surface-900 mt-3">
                 {language === 'hi' ? 'अपने दर्द वाले हिस्से पर टच करें' : 'Touch where it hurts'}
               </h2>
-              <p className="text-lg text-surface-500 mt-2 max-w-xl mx-auto">
+              <p className="text-base sm:text-lg text-surface-500 mt-2 max-w-xl mx-auto">
                 {language === 'hi'
                   ? 'नीचे चित्र में जहाँ दर्द है वहाँ टच करें — कोई बात नहीं अगर आप पढ़ नहीं सकते।'
                   : 'Tap the body part on the picture — no reading needed.'}
@@ -127,7 +127,7 @@ export default function BodyMapPage() {
                 </div>
               )}
             </div>
-            <div className="w-full card p-6 animate-slide-up">
+            <div className="w-full card p-4 sm:p-6 animate-slide-up">
               <InteractiveBodyMap
                 language={language === 'hi' ? 'hi' : 'en'}
                 onSelect={handleSelect}
@@ -142,10 +142,10 @@ export default function BodyMapPage() {
             <button onClick={() => { setSelected(null); setRedFlags([]); speechSynthesis.cancel(); }} className="mb-4 inline-flex items-center gap-2 text-surface-500 hover:text-surface-800 font-medium">
               <ArrowLeft className="w-5 h-5" /> {language === 'hi' ? 'वापस (Body Map)' : 'Back (Body Map)'}
             </button>
-            <div className="card p-8">
+            <div className="card p-5 sm:p-8">
               <div className="text-center mb-6">
                 <span className="text-4xl block mb-2">{selected.part.icon}</span>
-                <h2 className="text-3xl font-bold text-surface-900">
+                <h2 className="text-2xl sm:text-3xl font-bold text-surface-900">
                   {language === 'hi' ? selected.part.label_hi : selected.part.label_en}
                 </h2>
                 <p className="text-sm font-semibold text-primary-600 uppercase tracking-wider mt-2">
@@ -175,10 +175,10 @@ export default function BodyMapPage() {
                 <div className="space-y-6">
                   {selected.part.questions.map((q) => (
                     <div key={q.id}>
-                      <p className="text-2xl font-bold text-surface-900 mb-4">
+                      <p className="text-xl sm:text-2xl font-bold text-surface-900 mb-4">
                         {language === 'hi' ? q.question_hi : q.question_en}
                       </p>
-                      <div className={`grid gap-3 ${q.type === 'multi_select' ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                      <div className={`grid gap-3 ${q.type === 'multi_select' ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
                         {q.options.map((opt) => {
                           const active = selected.symptoms.includes(opt.value);
                           return (

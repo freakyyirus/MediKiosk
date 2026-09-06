@@ -95,8 +95,8 @@ export default function Problem() {
           className="mt-8 bg-gradient-to-br from-white to-primary-50 border border-primary-100 rounded-[32px] p-8 md:p-12 shadow-xl shadow-primary-900/5 relative overflow-hidden flex flex-col md:flex-row items-center gap-10 md:gap-16 max-w-[1200px] mx-auto"
         >
           {/* Decorative background glows */}
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-300/20 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-accent-300/20 rounded-full blur-[80px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-300/20 rounded-full blur-[64px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-accent-300/20 rounded-full blur-[48px] translate-y-1/3 -translate-x-1/3 pointer-events-none" />
 
           {/* Guardian Image */}
           <div className="relative z-10 w-[200px] md:w-[260px] shrink-0">
@@ -132,11 +132,11 @@ export default function Problem() {
 function MarqueeRow({ quotes, reverse }: { quotes: string[]; reverse?: boolean }) {
   const row = [...quotes, ...quotes];
   return (
-    <div className={`marquee-track flex gap-4 pr-4 shrink-0 will-change-transform ${reverse ? 'marquee-reverse' : ''}`}>
+    <div className={`marquee-track flex gap-4 pr-4 shrink-0 ${reverse ? 'marquee-reverse' : ''}`}>
       {row.map((q, i) => (
         <span
           key={i}
-          className="shrink-0 px-5 py-3 rounded-full bg-white/80 backdrop-blur border border-surface-200 shadow-sm text-[15px] text-[#6B7280] whitespace-nowrap"
+          className="shrink-0 px-5 py-3 rounded-full bg-white/90 border border-surface-200 shadow-sm text-[15px] text-[#6B7280] whitespace-nowrap"
         >
           " {q} "
         </span>

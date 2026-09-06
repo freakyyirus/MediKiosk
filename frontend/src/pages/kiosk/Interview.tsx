@@ -234,28 +234,28 @@ export default function Interview() {
 
   return (
     <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
-      <div className="px-10 pt-8">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-8">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={1} />
         <div className="mt-5 w-full h-1.5 bg-surface-200/70 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all duration-300" style={{ width: `${aiTurn?.topic === 'complete' || complete ? 100 : 40}%` }} />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center max-w-3xl mx-auto w-full px-8 py-6">
+      <div className="flex-1 flex flex-col items-center max-w-3xl mx-auto w-full px-4 sm:px-8 py-5 sm:py-6">
         {/* AI speech banner */}
         <div className="w-full text-center animate-fade-in mb-4">
           <span className="text-sm font-semibold uppercase tracking-wider text-primary-600 bg-primary-100 px-3 py-1 rounded-full">
             {t('बात कर रही हूँ', 'AI Health Assistant')}
           </span>
           {aiTurn && !complete ? (
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <h2 className="text-2xl md:text-3xl font-bold text-surface-900 leading-snug max-w-2xl">{aiTurn.speech}</h2>
+            <div className="mt-4 flex items-center justify-center gap-3 flex-wrap">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 leading-snug max-w-2xl">{aiTurn.speech}</h2>
               <button onClick={() => void aiService.speak(aiTurn, lang)} className="audio-btn shrink-0" aria-label="Hear again">
                 <Volume2 className="w-6 h-6" />
               </button>
             </div>
           ) : (
-            <h2 className="text-2xl md:text-3xl font-bold text-surface-500 leading-snug mt-4">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-surface-500 leading-snug mt-4">
               {thinking ? t('सोच रही हूँ…', 'Thinking…') : t('माइक दबाइए और बोलिए', 'Tap the mic and speak')}
             </h2>
           )}

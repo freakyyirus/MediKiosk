@@ -86,21 +86,21 @@ function HeroSection() {
     <section id="top" className="relative min-h-screen flex items-center overflow-hidden bg-[#F8F7FF]">
       {/* animated gradient mesh */}
       <div className="absolute inset-0 hero-mesh" aria-hidden="true" />
-      {/* floating breath particles */}
+      {/* floating breath particles (kept light — compositor-friendly props only) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {Array.from({ length: 42 }).map((_, i) => (
+        {Array.from({ length: 20 }).map((_, i) => (
           <span
             key={i}
             className="hero-breath"
             style={{
-              left: `${(i * 9.7) % 100}%`,
+              left: `${(i * 19.7) % 100}%`,
               bottom: '-4%',
-              width: `${5 + (i % 4) * 4}px`,
-              height: `${5 + (i % 4) * 4}px`,
+              width: `${6 + (i % 3) * 4}px`,
+              height: `${6 + (i % 3) * 4}px`,
               background: i % 3 === 0 ? '#14B8A6' : '#4F46E5',
-              opacity: 0.25 + (i % 5) * 0.06,
-              animationDuration: `${9 + (i % 6) * 2}s`,
-              animationDelay: `${(i % 7) * 1.3}s`,
+              opacity: 0.18 + (i % 4) * 0.06,
+              animationDuration: `${12 + (i % 5) * 2}s`,
+              animationDelay: `${(i % 6) * 1.6}s`,
             }}
           />
         ))}

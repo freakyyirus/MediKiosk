@@ -103,17 +103,17 @@ export default function DocumentUpload() {
 
   return (
     <div className="min-h-screen mesh-bg flex flex-col">
-      <div className="px-10 pt-8">
+      <div className="px-4 sm:px-10 pt-5 sm:pt-8">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={2} />
       </div>
 
-      <div className="flex-1 flex flex-col items-center max-w-3xl mx-auto w-full px-8 py-6">
+      <div className="flex-1 flex flex-col items-center max-w-3xl mx-auto w-full px-4 sm:px-8 py-5 sm:py-6">
         <div className="text-center animate-fade-in mb-6 w-full">
           <div className="w-16 h-16 rounded-[22px] bg-primary-100 border border-primary-200 flex items-center justify-center mx-auto mb-4">
             <Camera className="w-8 h-8 text-primary-700" />
           </div>
-          <h1 className="text-3xl font-bold text-surface-900">Upload Documents</h1>
-          <p className="text-lg text-surface-500 mt-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-surface-900">Upload Documents</h1>
+          <p className="text-base sm:text-lg text-surface-500 mt-2">
             Scan prescriptions, lab reports, or imaging for faster assessment.
           </p>
           <p className="text-sm text-surface-500 mt-2 max-w-lg mx-auto">

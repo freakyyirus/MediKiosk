@@ -6,7 +6,7 @@ import {
   Calendar, ChevronRight, User, QrCode, ScanText,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useAuthStore } from '../../stores';
+import { useAuthStore } from '../../stores/authStore';
 import { Sidebar, Header, StatsCard, Card, LoadingSpinner, EmptyState, Button } from '../../components/shared';
 
 interface DoctorProfile {

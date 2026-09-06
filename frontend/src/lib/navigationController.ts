@@ -11,6 +11,8 @@
  * and restores the scroll position saved the last time it unmounted.
  */
 
+import { scrollToHash } from './smoothScroll';
+
 const STORAGE = {
   scroll: 'mk_landing_scroll',
   replay: 'mk_landing_replay',
@@ -107,7 +109,8 @@ export const manualScrollByHash = (): void => {
   if (!raw) return;
   const id = raw.startsWith('#') ? raw.slice(1) : raw;
   const el = document.getElementById(id) ?? document.querySelector(`[name="${id}"]`);
-  el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (!el) return;
+  scrollToHash(id, -80);
 };
 
 /** Non-destructive read — used by the loader page's lazy state initializer. */
