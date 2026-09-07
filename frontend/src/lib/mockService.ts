@@ -402,8 +402,10 @@ function buildMockTable(table: string) {
 export function createMockSupabase() {
   return {
     auth: {
-      signUp: async () => {
-        return { data: { user: null, session: null }, error: null };
+      signUp: async (credentials: { email?: string; password?: string; options?: any }) => {
+        const id = `mock-user-${Date.now()}`;
+        const user = { id, email: credentials.email || '', user_metadata: credentials.options?.data || {} };
+        return { data: { user, session: { user } }, error: null };
       },
       signInWithPassword: async ({ email }: { email: string; password: string }) => {
         if (email === 'patient@demo.com') {
