@@ -8,7 +8,7 @@ import logging
 import shutil
 from functools import lru_cache
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger("medikiosk.config")
@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
 
     # ---- PostgreSQL ----
+    # DATABASE_URL wins when set (e.g. hosted Postgres on Render/Railway);
+    # otherwise the connection is assembled from the POSTGRES_* components.
+    database_url_raw: str = Field(default="", alias="DATABASE_URL", validation_alias="DATABASE_URL")
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_db: str = "medikiosk"
@@ -41,10 +44,14 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        if self.database_url_raw:
+            return self.database_url_raw
         return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     @property
     def database_url_sync(self) -> str:
+        if self.database_url_raw:
+            return self.database_url_raw.replace("+asyncpg", "")
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
     # ---- Redis ----
@@ -79,6 +86,7 @@ class Settings(BaseSettings):
     # Derivable from the pub key if CLERK_JWKS/ISSUER are unset.
     clerk_issuer: str = ""
     clerk_jwks_url: str = ""
+    clerk_secret_key: str = ""
 
     # ---- JWT ----
     jwt_secret_key: str = "change-me-to-a-random-jwt-secret"
@@ -95,6 +103,22 @@ class Settings(BaseSettings):
     # ---- Google Gemini ----
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.1-flash-lite"
+
+    # ---- Google Places (nearby hospital discovery) ----
+    google_places_api_key: str = ""
+    google_places_radius_m: int = 10000
+
+    # ---- Notifications (email + WhatsApp for external hospital booking) ----
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "Medikiosk <no-reply@medikiosk.in>"
+    smtp_use_tls: bool = True
+
+    whatsapp_api_url: str = ""
+    whatsapp_api_token: str = ""
+    whatsapp_from_phone: str = ""
 
     # ---- ABDM Sandbox ----
     abdm_base_url: str = "https://dev.abdm.gov.in/gateway"
