@@ -45,6 +45,45 @@ def main() -> int:
         r = client.get("/")
         check("root /", r.status_code == 200 and "MediKiosk" in r.text)
 
+        # 0b) Kiosk journey — full in-memory flow (works without Postgres)
+        r = client.post("/api/v1/kiosk/start-session", json={"language": "en", "device_id": "smoke-test"})
+        check("kiosk start-session", r.status_code == 200 and "session_id" in r.json(), f"code={r.status_code} body={r.text[:160]}")
+        sid = r.json().get("session_id") if r.status_code == 200 else None
+        if sid:
+            r = client.post("/api/v1/kiosk/select-language", json={"session_id": sid, "language": "ta"})
+            check("kiosk select-language (ta)", r.status_code == 200 and r.json().get("language") == "ta")
+
+            r = client.post(
+                "/api/v1/kiosk/patient-details",
+                json={"session_id": sid, "name": "Smoke", "age": 40, "gender": "male", "phone": "9876543210"},
+            )
+            check("kiosk patient-details", r.status_code == 200)
+
+            r = client.post("/api/v1/kiosk/select-body-part", json={"session_id": sid, "body_part": "chest", "organ": "Heart"})
+            check("kiosk select-body-part", r.status_code == 200 and r.json().get("department") == "cardiology")
+
+            r = client.post("/api/v1/kiosk/ask-question", json={"session_id": sid, "question_id": "init", "answer": ""})
+            check("kiosk ask-question", r.status_code == 200 and "question" in r.json())
+
+            r = client.post(
+                "/api/v1/kiosk/submit-response",
+                json={"session_id": sid, "question_id": "q1", "answer": "I have chest pain and shortness of breath."},
+            )
+            check("kiosk submit-response", r.status_code == 200)
+
+            r = client.post("/api/v1/kiosk/interview-summary", json={"session_id": sid, "question_id": "x", "answer": ""})
+            check("kiosk interview-summary", r.status_code == 200 and "department" in r.json())
+
+            r = client.get("/api/v1/kiosk/nearby-hospitals", params={"lat": 12.9716, "lon": 77.5946})
+            check("kiosk nearby-hospitals", r.status_code == 200 and "partners" in r.json())
+
+        # 0c) Voice translate proxy (Bhashini NMT, passthrough-safe)
+        r = client.post(
+            "/api/v1/voice/translate",
+            json={"text": "I have a headache", "source_language": "en", "target_language": "hi"},
+        )
+        check("voice /translate", r.status_code == 200 and "translation" in r.json())
+
         if not args.skip_db:
             # 1) Patients CRUD
             pid = None
