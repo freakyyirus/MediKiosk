@@ -30,6 +30,9 @@ yarn-error.log*
 .pnpm-debug.log*
 frontend/dist/
 frontend/build/
+frontend/test-results/
+frontend/playwright-report/
+frontend/playwright/.cache/
 .tsbuildinfo
 
 # ========================================
