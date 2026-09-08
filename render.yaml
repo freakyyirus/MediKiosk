@@ -1,32 +1,22 @@
 # Render blueprint — reproducible deploy of the MediKiosk FastAPI backend.
 #
 # Apply via: Render Dashboard → Blueprints → New Blueprint Instance → this repo.
-# Or create a manual Web Service and use these same build/start commands.
 #
-# The failure "Could not read package.json: ENOENT ... /opt/render/project/src/package.json"
-# happens when Render is told to run a NODE service from the repo ROOT. This is a
-# Python/FastAPI backend (there is deliberately no root package.json). Create the
-# service with:
-#   * Runtime: Python 3 (or apply this Blueprint — render.yaml sets the runtime)
-#   * Root Directory: backend
-#   * Build Command: pip install -r requirements.txt
-#   * Start Command: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-#   * Health Check Path: /health
-# The frontend is deployed separately (Vercel) and points /api at this backend.
+# Uses the root Dockerfile (multi-stage, pre-installed tesseract + OCR runtimes),
+# because the EasyOCR/PyTorch stack needs system libraries a bare pip build
+# cannot provide. The frontend is deployed separately (Vercel).
 
 services:
   - type: web
     name: medikiosk-backend
-    runtime: python
-    plan: free
+    runtime: docker
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
-    autoDeploy: true
+    dockerfilePath: ../Dockerfile
+    dockerContext: ..
+    plan: starter
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.14.3
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
