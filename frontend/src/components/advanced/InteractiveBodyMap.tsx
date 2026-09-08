@@ -5,7 +5,6 @@ interface InteractiveBodyMapProps {
   language?: 'en' | 'hi';
   onSelect: (partId: string) => void;
   selectedIds?: string[];
-  highContrast?: boolean;
   lowLiteracy?: boolean;
 }
 
@@ -26,7 +25,6 @@ export default function InteractiveBodyMap({
   language = 'en',
   onSelect,
   selectedIds = [],
-  highContrast = false,
   lowLiteracy = false,
 }: InteractiveBodyMapProps) {
   const [focused, setFocused] = useState<string | null>(null);
@@ -52,14 +50,14 @@ export default function InteractiveBodyMap({
   ];
 
   const zoneFill = (id: string) => {
-    if (selectedIds.includes(id)) return highContrast ? '#FFD60A' : '#34D399';
-    if (focused === id) return highContrast ? '#FFD60A' : '#6B4EE6';
-    return highContrast ? '#E0E0E0' : '#E9E5FB';
+    if (selectedIds.includes(id)) return '#34D399';
+    if (focused === id) return '#6B4EE6';
+    return '#E9E5FB';
   };
 
   const zoneStroke = (id: string) => {
-    if (selectedIds.includes(id)) return highContrast ? '#000000' : '#059669';
-    return highContrast ? '#000000' : '#8A7CC8';
+    if (selectedIds.includes(id)) return '#059669';
+    return '#8A7CC8';
   };
 
   const handleClick = (id: string) => {
@@ -77,7 +75,7 @@ export default function InteractiveBodyMap({
     <div className="relative w-full max-w-[520px] mx-auto select-none" role="group" aria-label="Body map">
       <svg viewBox="0 0 400 600" className="w-full h-auto" role="img" aria-label="Tap the body part that hurts">
         {/* Simple body base silhouette */}
-        <g fill="none" stroke={highContrast ? '#000' : '#C7C0E6'} strokeWidth="6" strokeLinecap="round">
+        <g fill="none" stroke="#C7C0E6" strokeWidth="6" strokeLinecap="round">
           {/* head */}
           <circle cx="200" cy="70" r="48" />
           {/* torso */}
@@ -123,7 +121,7 @@ export default function InteractiveBodyMap({
                 textAnchor="middle"
                 fontSize={lowLiteracy ? 16 : 13}
                 fontWeight="700"
-                fill={highContrast ? '#000' : '#4A3F7A'}
+                fill="#4A3F7A"
                 pointerEvents="none"
               >
                 {label(base)}
@@ -133,7 +131,7 @@ export default function InteractiveBodyMap({
         })}
 
         {/* Private region marker */}
-        <text x="200" y="425" textAnchor="middle" fontSize="12" fill={highContrast ? '#000' : '#8A7CC8'} pointerEvents="none">
+        <text x="200" y="425" textAnchor="middle" fontSize="12" fill="#8A7CC8" pointerEvents="none">
           {language === 'hi' ? 'निजी' : 'Private'}
         </text>
       </svg>
@@ -146,9 +144,7 @@ export default function InteractiveBodyMap({
             onClick={() => onSelect(b.id)}
             className={`px-3 py-1.5 rounded-full text-sm font-semibold border-2 transition-colors touch-target ${
               selectedIds.includes(b.id)
-                ? highContrast
-                  ? 'bg-black text-yellow-300 border-black'
-                  : 'bg-success-500 text-white border-success-600'
+                ? 'bg-success-500 text-white border-success-600'
                 : 'bg-white text-surface-600 border-surface-200 hover:border-primary-400'
             }`}
           >
