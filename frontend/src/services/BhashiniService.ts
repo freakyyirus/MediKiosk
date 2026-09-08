@@ -1,3 +1,5 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
 /**
  * BhashiniService — singleton wrapper around the MediKiosk backend NLP surface
  * (/api/v1/voice, /api/v1/advanced/ocr) plus browser-native and local fallbacks.
@@ -8,7 +10,7 @@
  * when the backend is offline.
  */
 
-type LangCode = 'en' | 'hi' | 'ta' | 'bn' | 'mr' | 'te' | 'kn' | 'ml' | 'gu' | 'pa';
+type LangCode = 'en' | 'hi' | 'ta' | 'bn' | 'mr' | 'te' | 'kn' | 'ml' | 'gu' | 'pa' | 'ur' | 'or' | 'as';
 
 export interface Transcription {
   transcript: string;
@@ -94,11 +96,57 @@ class BhashiniService {
     return attempt();
   }
 
+  private async geminiSpeechToText(audioBlob: Blob, language: string): Promise<Transcription> {
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) throw new Error('No Gemini API key');
+      
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+      const base64Audio = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(audioBlob);
+      });
+
+      const mimeType = audioBlob.type || 'audio/webm';
+      const prompt = `Please transcribe the following audio accurately in the given language. 
+Language: ${language}.
+Only output the transcription text, nothing else. Do not add quotes or markdown. If it's silent or unclear, output empty string.`;
+
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            mimeType,
+            data: base64Audio
+          }
+        }
+      ]);
+      
+      const text = result.response.text().trim();
+      return {
+        transcript: text,
+        confidence: 0.95,
+        red_flags: [],
+        source: 'fallback'
+      };
+    } catch (e) {
+      console.warn("Gemini STT fallback failed:", e);
+      // Last resort: browser API (will just start listening again, confusing but better than fatal)
+      return this.browserSpeechToText(language);
+    }
+  }
+
   // ── Gated by backend /voice/transcribe ──────────────────────────
   async speechToText(audioBlob: Blob, language: string, sessionId?: number): Promise<Transcription> {
     if (!sessionId) {
-      const browser = await this.browserSpeechToText(language);
-      return browser;
+      return this.geminiSpeechToText(audioBlob, language);
     }
     try {
       const fd = new FormData();
@@ -115,7 +163,7 @@ class BhashiniService {
         source: 'backend',
       };
     } catch {
-      return this.browserSpeechToText(language);
+      return this.geminiSpeechToText(audioBlob, language);
     }
   }
 
@@ -164,6 +212,23 @@ class BhashiniService {
   /** Dictation via the browser Web Speech API (no backend, no MediaRecorder). */
   async dictate(language: string): Promise<Transcription> {
     return this.browserSpeechToText(language);
+  }
+
+  // ── NMT translation via backend proxy ────────────────────────────
+  async translate(text: string, sourceLang: string, targetLang: string): Promise<string> {
+    if (!text?.trim() || sourceLang === targetLang) return text;
+    try {
+      const res = await this.request('/voice/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, source_language: sourceLang, target_language: targetLang }),
+      }, 15000);
+      if (!res.ok) throw new Error(`backend ${res.status}`);
+      const data = await res.json();
+      return data.translation || text;
+    } catch {
+      return text;
+    }
   }
 
   // ── Gated by backend /voice/tts ─────────────────────────────────
@@ -338,6 +403,9 @@ class BhashiniService {
       ['bn', /[\u0980-\u09FF]/], // Bengali
       ['gu', /[\u0A80-\u0AFF]/], // Gujarati
       ['pa', /[\u0A00-\u0A7F]/], // Punjabi (Gurmukhi)
+      ['or', /[\u0B00-\u0B7F]/], // Odia
+      ['as', /[\u0980-\u09FF]/], // Assamese (uses Bengali script)
+      ['ur', /[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/], // Urdu (Arabic script)
       ['mr', /\u0960|ॲ|ळ/], // Marathi markers within Devanagari
       ['hi', /[\u0900-\u097F]/], // Devanagari
     ];
