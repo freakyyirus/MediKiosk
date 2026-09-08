@@ -1,0 +1,68 @@
+# Python
+**/__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.eggs/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+!.env.template
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/build/
+frontend/test-results/
+frontend/playwright-report/
+frontend/.next/
+
+# Data / storage
+data/
+postgres_data/
+redis_data/
+minio_data/
+uploads/
+*.log
+
+# VCS / IDE
+.git/
+.gitignore
+.gitattributes
+.github/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docs (not needed at runtime)
+docs/
+spec/
+MANUAL.md
+HANDOFF.md
+DEPLOYMENT.md
+ARCHITECTURE.md
+NEXT_STEPS.md
+PRODUCTION_GO_LIVE.md
+REMAINING.md
+EXECUTION_PLAN_IMPLEMENTATION.md
+MANUAL_STEPS_TODO.md
+
+# Repo config that is not runtime code
+Makefile
+docker-compose.yml
+vercel.json
+render.yaml
+README.md
+CONTRIBUTING.md
+LICENSE
