@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.asr_client import BhashiniASR
 from app.ai.red_flag_engine import RedFlagEngine
+from app.ai.translation_client import bhashini_translation
 from app.ai.tts_client import BhashiniTTS
 from app.database import get_db
 from app.middleware.error_handler import NotFoundError
@@ -81,3 +82,23 @@ async def synthesize_audio(req: TTSRequest):
     """
     audio_b64 = await tts_client.synthesize(req.text, req.language, req.gender)
     return {"audio": audio_b64}
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    source_language: str
+    target_language: str
+
+
+@router.post("/translate")
+async def translate_text(req: TranslateRequest):
+    """
+    Translate text using Bhashini NMT (IndicTrans-v2).
+
+    Passes through the source text unchanged when translation is not possible
+    (missing credentials or upstream failure) — the kiosk never dead-ends.
+    """
+    translation = await bhashini_translation.translate(
+        req.text, req.source_language, req.target_language
+    )
+    return {"translation": translation}
