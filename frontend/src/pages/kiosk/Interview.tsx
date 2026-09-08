@@ -26,7 +26,7 @@ const QUICK_REPLIES = [
 
 export default function Interview() {
   const navigate = useNavigate();
-  const { language, lowLiteracyMode, highContrast } = useUIStore();
+  const { language, lowLiteracyMode } = useUIStore();
   const { session, setSession, addMessage, addRedFlag, conversationHistory } = useSessionStore();
   const { transcription, setTranscription, resetAudio } = useAudioStore();
   const lastBodyPart = useAdvancedStore((s) => s.bodyTaps[0]?.body_part ?? null);
@@ -233,7 +233,7 @@ export default function Interview() {
   }
 
   return (
-    <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
+    <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''}`}>
       <div className="px-4 sm:px-10 pt-5 sm:pt-8">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={1} />
         <div className="mt-5 w-full h-1.5 bg-surface-200/70 rounded-full overflow-hidden">
