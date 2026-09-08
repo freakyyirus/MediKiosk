@@ -2,6 +2,7 @@ import React, { Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import { useAuthStore } from './stores/authStore';
+import { useUIStore } from './stores';
 import Toast from './components/shared/Toast';
 import PageViewTracker from './components/shared/PageViewTracker';
 import { installHistoryListener, initLoaderState, recordRoutePath } from './lib/navigationController';
@@ -19,8 +20,8 @@ const KioskInterview = React.lazy(() => import('./pages/kiosk/Interview'));
 const KioskBodyMap = React.lazy(() => import('./pages/kiosk/BodyMap'));
 const KioskDocumentUpload = React.lazy(() => import('./pages/kiosk/DocumentUpload'));
 const KioskSummary = React.lazy(() => import('./pages/kiosk/Summary'));
-const KioskAyush = React.lazy(() => import('./pages/kiosk/AyushAssessment'));
 const KioskEmergency = React.lazy(() => import('./pages/kiosk/EmergencyDemo'));
+const KioskAnatomyFlow = React.lazy(() => import('./pages/kiosk/AnatomyFlow'));
 
 // Lazy Auth Pages
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
@@ -121,6 +122,7 @@ function RouteMetaManager() {
 
 export default function App() {
   const initialize = useAuthStore((s) => s.initialize);
+  const highContrast = useUIStore((s) => s.highContrast);
 
   useEffect(() => {
     initialize();
@@ -131,7 +133,7 @@ export default function App() {
   }, [initialize]);
 
   return (
-    <div className="min-h-screen bg-surface-50 text-surface-900 font-sans">
+    <div className={`min-h-screen bg-surface-50 text-surface-900 font-sans${highContrast ? ' high-contrast' : ''}`}>
       <RouteMetaManager />
       <PageViewTracker />
       <Toast />
@@ -148,18 +150,20 @@ export default function App() {
         <Route path="/privacy-policy" element={<SuspenseWrapper><PrivacyPolicy /></SuspenseWrapper>} />
         <Route path="/terms" element={<SuspenseWrapper><TermsPage /></SuspenseWrapper>} />
 
-        {/* Kiosk Patient Flow */}
+        {/* Kiosk Patient Flow (strict single journey) */}
         <Route path="/kiosk" element={<Navigate to="/kiosk/home" replace />} />
         <Route path="/kiosk/home" element={<SuspenseWrapper><KioskHome /></SuspenseWrapper>} />
         <Route path="/kiosk/language" element={<SuspenseWrapper><KioskLanguageSelect /></SuspenseWrapper>} />
-        <Route path="/kiosk/identify" element={<SuspenseWrapper><KioskIdentification /></SuspenseWrapper>} />
-        <Route path="/kiosk/consent" element={<SuspenseWrapper><KioskConsent /></SuspenseWrapper>} />
-        <Route path="/kiosk/body-map" element={<SuspenseWrapper><KioskBodyMap /></SuspenseWrapper>} />
-        <Route path="/kiosk/interview" element={<SuspenseWrapper><KioskInterview /></SuspenseWrapper>} />
-        <Route path="/kiosk/ayush" element={<SuspenseWrapper><KioskAyush /></SuspenseWrapper>} />
-        <Route path="/kiosk/emergency" element={<SuspenseWrapper><KioskEmergency /></SuspenseWrapper>} />
-        <Route path="/kiosk/documents" element={<SuspenseWrapper><KioskDocumentUpload /></SuspenseWrapper>} />
-        <Route path="/kiosk/summary" element={<SuspenseWrapper><KioskSummary /></SuspenseWrapper>} />
+        {/* The combined flow: Patient Details → Anatomy → Interview → Summary → OPD Booking */}
+        <Route path="/kiosk/anatomy" element={<SuspenseWrapper><KioskAnatomyFlow /></SuspenseWrapper>} />
+        {/* Legacy fragmented steps all funnel into the combined flow */}
+        <Route path="/kiosk/identify" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/consent" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/body-map" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/interview" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/documents" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/summary" element={<Navigate to="/kiosk/anatomy" replace />} />
+        <Route path="/kiosk/emergency" element={<Navigate to="/kiosk/anatomy" replace />} />
 
         {/* Patient Portal */}
         <Route path="/patient" element={
