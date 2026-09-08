@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Globe, Accessibility, HelpCircle, Shield, Heart, Sparkles, ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { Globe, Contrast, HelpCircle, Shield, Heart, ArrowRight } from 'lucide-react';
 import EmergencyFab from '../../components/EmergencyFab';
 import StickyMobileCta from '../../components/shared/StickyMobileCta';
 import { useUIStore } from '../../stores';
@@ -8,11 +7,10 @@ import Logo from '../../components/brand/Logo';
 
 export default function Home() {
   const navigate = useNavigate();
-  const { lowLiteracyMode, highContrast, toggleLowLiteracyMode, toggleHighContrast } = useUIStore();
-  const [ayushMode, setAyushMode] = useState(false);
+  const { highContrast, toggleHighContrast } = useUIStore();
 
   return (
-    <div className={`min-h-screen ${ayushMode ? 'ayush-mode' : 'mesh-bg'} flex flex-col text-surface-900 ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
+    <div className={`min-h-screen mesh-bg flex flex-col text-surface-900 ${highContrast ? 'high-contrast' : ''}`}>
       {/* Header */}
       <header className="w-full flex items-center justify-between gap-2 px-4 py-4 sm:px-6 sm:py-5 md:px-10 md:py-6">
         <div className="flex items-center gap-3 shrink-0">
@@ -21,31 +19,15 @@ export default function Home() {
 
         <div className="flex items-center justify-end gap-1.5 sm:gap-3">
           <button
-            onClick={() => toggleLowLiteracyMode()}
-            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${lowLiteracyMode ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
-            title={lowLiteracyMode ? 'Low-literacy: ON' : 'Accessibility'}
-            aria-label={lowLiteracyMode ? 'Low-literacy: ON' : 'Accessibility'}
-          >
-            <Accessibility className="w-5 h-5" />
-            <span className="hidden md:inline">{lowLiteracyMode ? 'Low-lit: ON' : 'Accessibility'}</span>
-          </button>
-          <button
             onClick={() => toggleHighContrast()}
-            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${highContrast ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
-            title="High contrast"
-            aria-label="High contrast"
+            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${
+              highContrast ? 'border-[#FFFF00] bg-black text-white' : 'border-surface-200 text-surface-600 hover:border-surface-300'
+            }`}
+            title={highContrast ? 'High contrast: ON' : 'High contrast'}
+            aria-label={highContrast ? 'High contrast: ON' : 'High contrast'}
           >
-            <Accessibility className="w-5 h-5" />
-            <span className="hidden sm:inline">Contrast</span>
-          </button>
-          <button
-            onClick={() => setAyushMode((v) => !v)}
-            className={`flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border rounded-xl font-medium text-sm transition-colors touch-target ${ayushMode ? 'border-accent-400 bg-accent-50 text-accent-700' : 'border-surface-200 text-surface-600 hover:border-surface-300'}`}
-            title="AYUSH"
-            aria-label="AYUSH"
-          >
-            <Sparkles className="w-5 h-5" />
-            <span className="hidden sm:inline">AYUSH</span>
+            <Contrast className="w-5 h-5" />
+            <span className="hidden md:inline">{highContrast ? 'High contrast: ON' : 'High contrast'}</span>
           </button>
           <button
             className="flex items-center gap-2 px-2.5 sm:px-4 py-2.5 sm:py-2.5 bg-white border border-surface-200 rounded-xl text-surface-600 font-medium text-sm hover:border-surface-300 transition-colors touch-target"
@@ -61,7 +43,7 @@ export default function Home() {
       {/* Main content */}
       <main className="flex-1 flex flex-col md:flex-row items-center px-4 sm:px-6 md:px-10 max-w-6xl mx-auto w-full gap-8 py-4">
         <div className="flex-1 w-full">
-          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black text-surface-900 leading-[1.08] mb-6 text-center md:text-left ${lowLiteracyMode ? 'text-5xl sm:text-6xl' : ''}`}>
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-black text-surface-900 leading-[1.08] mb-6 text-center md:text-left ${highContrast ? 'text-6xl' : ''}`}>
             Your First Step to Better Care.
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-surface-500 mb-10 max-w-xl leading-relaxed text-center md:text-left mx-auto md:mx-0">
