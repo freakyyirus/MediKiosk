@@ -18,9 +18,12 @@ from app.routers import (
     abdm,
     advanced,
     ai,
+    clerk_webhook,
     consent,
     documents,
     health,
+    kiosk,
+    outreach,
     patients,
     physician,
     sessions,
@@ -108,6 +111,9 @@ app.include_router(summaries.router)
 app.include_router(abdm.router)
 app.include_router(consent.router)
 app.include_router(advanced.router)
+app.include_router(outreach.router)
+app.include_router(kiosk.router)
+app.include_router(clerk_webhook.router)
 
 
 # ---- Root ----
