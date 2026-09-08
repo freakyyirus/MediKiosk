@@ -7,56 +7,62 @@
 MediKiosk is a bilingual (5-language), voice-first health kiosk + patient portal. A patient on the kiosk floor books an OPD slot, is triaged by AI (vitals/red-flags), and walks away with a scannable QR slip. The same patient then manages visits, documents, and profile from the web portal; hospital admins run OPD/triage/queue and doctor-facing tools; clinicians triage the queue and can OCR handwritten prescriptions.
 
 ```mermaid
-flowchart LR
-    subgraph KIOSK["🏥 Kiosk (hospital floor)"]
-        A["/kiosk/home (public)"] --> B["Language / Identify"]
-        B --> C["Consent + Body-map + Interview"]
-        C --> D["Documents / Summary"]
+flowchart TD
+    %% Define Styles
+    classDef userAction fill:#a2d2ff,stroke:#000,stroke-width:2px,color:#000
+    classDef decision fill:#ffd6a5,stroke:#000,stroke-width:2px,color:#000
+    classDef aiProcess fill:#c8b6ff,stroke:#000,stroke-width:2px,color:#000
+    classDef systemProcess fill:#ffcad4,stroke:#000,stroke-width:2px,color:#000
+    classDef endpoint fill:#fdffb6,stroke:#000,stroke-width:2px,color:#000
+
+    %% Workflow
+    A([Open App]):::userAction --> B[Select Language & Voice/Text Mode]:::userAction
+    B --> C[Identify via ABHA or Guest]:::userAction
+    C --> D{Identity Verified?}:::decision
+    
+    D -- No --> E[Guest Registration]:::systemProcess
+    E --> F
+    D -- Yes --> F[Show Human Anatomy Map]:::userAction
+    
+    F --> G[Voice Interview based on Body Part]:::userAction
+    G --> H[AI Medical Analysis & Summarization]:::aiProcess
+    
+    %% AI Insights cluster
+    subgraph AI Insights
+        H1(Triage & Red Flags):::aiProcess
+        H2(Symptom Extraction):::aiProcess
+        H3(Specialty Suggestion):::aiProcess
     end
-
-    subgraph PORTAL["🌐 Patient Portal (web)"]
-        E["/patient/dashboard"] --> F["Book OPD (7-step)"]
-        F --> G["QR slip + token"]
-        E --> H["Visits / Timeline / Docs / Profile"]
-    end
-
-    subgraph STAFF["🩺 Staff Portals"]
-        I["Hospital Admin OPD / Triage / Queue / Vitals / Retention"]
-        J["Doctor Queue / Patient / Schedule / Scan-QR / OCR"]
-    end
-
-    KIOSK -->|same session| PORTAL
-    PORTAL --> STAFF
-    STAFF -. "blocked for demo: /physician /admin" .-> X["❌ /unauthorized"]
-```
-
-Compact ASCII equivalent:
-
-```
-   Kiosk floor (public)          Patient portal (authed)          Staff portals
- ┌──────────────────────┐      ┌───────────────────────┐      ┌───────────────────────────┐
- │ /kiosk/home ─┐        │      │ /patient/dashboard     │      │ Hospital admin: OPD,      │
- │ language     │        │      │   ├─ Book OPD (7-step) │      │   triage, queue, vitals,  │
- │ identify     │        │      │   │     → QR slip+token│      │   retention               │
- │ consent      │        │      │   ├─ Visits            │      │ Doctor: queue, patient,   │
- │ body-map     │        │      │   ├─ Timeline          │      │   schedule, scan-QR, OCR  │
- │ interview    │        │      │   ├─ Documents         │      └───────────────────────────┘
- │ docs/summary ┘        │      │   └─ Profile           │      Legacy /physician /admin
- └──────────────────────┘      │   └─ /patient/kiosk (voice, HC)│  → blocked → /unauthorized
-                               └───────────────────────┘
+    H -.- H1 & H2 & H3
+    
+    H --> I{Requires Emergency?}:::decision
+    I -- Yes --> J[Route to Nearest ER / Call Ambulance]:::endpoint
+    
+    I -- No --> K[Fetch Nearby Hospitals via Maps API]:::systemProcess
+    K --> L[Select Hospital & Book OPD]:::userAction
+    
+    L --> M[Upload Medical Documents]:::userAction
+    M --> N[OCR Document Validation]:::aiProcess
+    
+    N --> O{Valid Document?}:::decision
+    O -- No --> P[Retry Upload]:::decision
+    P --> M
+    
+    O -- Yes --> Q[Final Review & Confirmation]:::endpoint
 ```
 
 ## 2. Tech Stack
 
-| Layer | Choice |
+| Category | Technologies |
 |---|---|
-| Frontend | React 19 + TypeScript + Vite 8, react-router v7 (client-side), Tailwind 4, Zustand, framer-motion |
-| Auth | Supabase (client) → **demo mock** (`setMockRole` auto-logs patient Rahul Sharma). Backend verifies JWTs via `backend/app/middleware/clerk_auth.py` (Clerk JWKS mode dormant; legacy HS256 `/api/v1/auth/login` JWT is the active path) |
-| Data | Supabase (patient portal); FastAPI+SQLAlchemy (kiosk/session/voice/ABDM/OCR backend) |
-| AI | Bhashini (ASR/TTS), Gemini (summaries), ML priority pipeline, OCR (backend `/advanced/*`) |
-| Infra | docker-compose: postgres, redis, minio |
+| **Frontend** | React 19, TypeScript, Vite 8, Tailwind CSS v4, Zustand, Framer Motion, React Router v7 |
+| **Backend** | Python 3.14, FastAPI, Uvicorn, SQLAlchemy (Async) |
+| **AI & APIs** | Google Gemini (Speech-to-Text & NLP Summaries), EasyOCR (Vision), WebRTCVAD (Audio), Google Maps Places API |
+| **Databases** | PostgreSQL (via Supabase), Redis (Caching) |
+| **Deployment** | Docker, Render, Supabase Auth/Storage |
+| **Security & Roles** | Casbin (RBAC), JWT verification via FastAPI middlewares |
 
-Demo mode: no Supabase env → `createMockSupabase()` (`src/lib/mockService.ts`) serves seeded hospitals/doctors/slots/visits/documents so the whole portal runs offline.
+Demo mode: Offline-capable mock services serve seeded hospitals/doctors/slots/visits/documents so the portal can run independently.
 
 ## 3. Routing & Guards
 
