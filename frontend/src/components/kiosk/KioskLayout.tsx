@@ -19,7 +19,7 @@ const ACTIVITY_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'wheel'] as con
 
 export default function KioskLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const { highContrast, lowLiteracyMode } = useUIStore();
+  const { highContrast } = useUIStore();
   const t = useT();
   const [countdown, setCountdown] = useState(AUTO_EXIT_MS);
   const remainingRef = useRef(AUTO_EXIT_MS);
@@ -51,7 +51,7 @@ export default function KioskLayout({ children }: { children: React.ReactNode })
   const urgent = countdown <= 30_000;
 
   return (
-    <div className={`min-h-screen bg-white text-surface-900 flex flex-col ${highContrast ? 'high-contrast' : ''} ${lowLiteracyMode ? 'low-literacy' : ''}`}>
+    <div className={`min-h-screen text-surface-900 flex flex-col ${highContrast ? 'high-contrast' : 'bg-white'}`}>
       <header className="w-full flex items-center justify-between px-6 sm:px-10 py-5 border-b border-surface-200 bg-surface-50">
         <div className="flex items-center gap-3">
           <Logo size={44} variant="gradient" showWordmark={false} />
