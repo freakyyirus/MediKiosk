@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Volume2 } from 'lucide-react';
 import { useUIStore } from '../../stores';
 import { bhashini } from '../../services/BhashiniService';
+import { kioskApi } from '../../api/client';
 import type { Language } from '../../types';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
+import { kt } from '../../lib/kioskI18n';
 
 const LANGUAGES: (Language & { flag?: string })[] = [
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', icon: '🇮🇳' },
@@ -19,21 +22,42 @@ const LANGUAGES: (Language & { flag?: string })[] = [
   { code: 'pa', name: 'Punjabi', nativeName: 'ਪੰਜਾਬੀ', icon: '🇮🇳' },
   { code: 'or', name: 'Odia', nativeName: 'ଓଡ଼ିଆ', icon: '🇮🇳' },
   { code: 'as', name: 'Assamese', nativeName: 'অসমীয়া', icon: '🇮🇳' },
+  { code: 'ur', name: 'Urdu', nativeName: 'اردو', icon: '🇵🇰' },
 ];
 
 const LANGUAGE_FLAGS: Record<string, string> = {
   hi: '🇮🇳', en: '🇬🇧', bn: '🇮🇳', ta: '🇮🇳', te: '🇮🇳', mr: '🇮🇳',
   gu: '🇮🇳', kn: '🇮🇳', ml: '🇮🇳', pa: '🇮🇳', or: '🇮🇳', as: '🇮🇳',
+  ur: '🇵🇰',
 };
 
 export default function LanguageSelect() {
   const navigate = useNavigate();
-  const { language: selectedLang, setLanguage, lowLiteracyMode } = useUIStore();
+  const { language: selectedLang, setLanguage, highContrast } = useUIStore();
+  const [starting, setStarting] = useState(false);
 
-  const handleSelect = (lang: Language) => {
+  const handleSelect = async (lang: Language) => {
+    if (starting) return;
+    setStarting(true);
     setLanguage(lang);
     if (navigator.vibrate) navigator.vibrate(20);
-    setTimeout(() => navigate('/kiosk/identify'), 150);
+
+    try {
+      // Request mic permission early
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      // Mic denied — still proceed; voice steps will use fallbacks.
+    }
+
+    try {
+      const { data: session } = await kioskApi.startSession(lang.code);
+      sessionStorage.setItem('kiosk_session_id', session.session_id);
+      await kioskApi.selectLanguage(session.session_id, lang.code);
+    } catch {
+      // Backend offline — proceed with local-only flow.
+    }
+
+    setTimeout(() => navigate('/kiosk/anatomy'), 150);
   };
 
   const speakLanguage = (lang: Language) => {
@@ -46,10 +70,11 @@ export default function LanguageSelect() {
       <div className="px-4 sm:px-10 pt-5 sm:pt-10">
         <Stepper
           steps={[
-            { label: 'Language' },
-            { label: 'Health Check' },
-            { label: 'Documents' },
-            { label: 'Done' },
+            { label: kt(selectedLang.code, 'stepperLanguage') },
+            { label: kt(selectedLang.code, 'stepperBasicDetails') },
+            { label: kt(selectedLang.code, 'stepperHealthCheck') },
+            { label: kt(selectedLang.code, 'stepperDocuments') },
+            { label: kt(selectedLang.code, 'stepperDone') },
           ]}
           current={0}
         />
@@ -69,7 +94,7 @@ export default function LanguageSelect() {
           </p>
         </div>
 
-        {/* Responsive grid of 12 languages */}
+        {/* Responsive grid of 13 languages */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full mb-8 sm:mb-10">
           {LANGUAGES.map((lang, i) => {
             const active = selectedLang.code === lang.code;
@@ -78,8 +103,8 @@ export default function LanguageSelect() {
                 key={lang.code}
                 role="button"
                 tabIndex={0}
-                onClick={() => handleSelect(lang)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSelect(lang)}
+                onClick={() => void handleSelect(lang)}
+                onKeyDown={(e) => e.key === 'Enter' && void handleSelect(lang)}
                 className={`touch-target-lg card p-4 sm:p-5 flex flex-col items-center gap-2 sm:gap-3 cursor-pointer transition-all duration-150 animate-slide-up focus-ring ${
                   active
                     ? 'bg-gradient-to-br from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-600/30 border-transparent'
@@ -112,7 +137,7 @@ export default function LanguageSelect() {
         </div>
 
         <p className="text-center text-surface-400 text-base sm:text-lg mb-4">
-          {lowLiteracyMode ? 'Your language is selected. Press next.' : 'Audio will guide you through the health check.'}
+          {highContrast ? 'Selection confirmed.' : 'Audio will guide you through the health check.'}
         </p>
       </div>
 
