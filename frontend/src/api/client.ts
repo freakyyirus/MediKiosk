@@ -330,6 +330,190 @@ export const advancedApi = {
     }>('/advanced/ml/train', opts),
 };
 
+// ---- Kiosk Flow (spec §3-8) ----
+
+export interface KioskSession {
+  session_id: string;
+  language: string;
+  message: string;
+}
+
+export interface KioskPatient {
+  name: string;
+  age: number;
+  gender: string;
+  phone: string;
+  email?: string | null;
+  address?: string | null;
+}
+
+export interface KioskBodyPartResponse {
+  session_id: string;
+  body_part: string;
+  organ: string | null;
+  department: string;
+  department_label: string;
+}
+
+export interface KioskQuestion {
+  status: 'question' | 'summary' | 'emergency' | 'continue';
+  question_id: string;
+  question_index?: number;
+  max_questions?: number;
+  question?: string;
+  force_audio?: boolean;
+  retry?: boolean;
+  emergency?: boolean;
+  emergency_message?: string;
+}
+
+export interface KioskSubmitResponse {
+  status: 'continue' | 'summary' | 'emergency';
+  answered: number;
+  max_questions: number;
+  red_flags: string[];
+  severity: string;
+  is_emergency: boolean;
+}
+
+export interface KioskSummary {
+  session_id: string;
+  language: string;
+  body_part: string;
+  patient: KioskPatient;
+  department: string;
+  department_label: string;
+  summary: {
+    chief_complaint: string;
+    red_flags: string[];
+    severity: string;
+    suggested_department: string;
+    physician_summary: string;
+  };
+  summary_in_language: {
+    chief_complaint: string;
+    physician_summary: string;
+    red_flags: string | string[];
+  };
+  red_flags: string[];
+  severity: string;
+  emergency: boolean;
+}
+
+export interface KioskHospital {
+  id: string;
+  place_id?: string;
+  name: string;
+  address: string;
+  lat: number;
+  lon: number;
+  rating: number | null;
+  user_ratings_total: number;
+  phone: string | null;
+  departments_available?: string[];
+  is_partner: boolean;
+  distance_km?: number;
+}
+
+export interface KioskNearbyResponse {
+  location: { lat: number; lon: number };
+  partners: KioskHospital[];
+  non_partners: KioskHospital[];
+  all: KioskHospital[];
+}
+
+export interface KioskBookingResult {
+  booking_id: string;
+  status: string;
+  hospital: { id: string; name: string; phone: string | null };
+  department: string;
+  date: string;
+  time_slot: string;
+  message: string;
+  notified: boolean;
+}
+
+export interface KioskExternalBookingResult {
+  request_id: string;
+  status: string;
+  hospital_name: string;
+  message: string;
+}
+
+export const kioskApi = {
+  startSession: (language = 'en', deviceId?: string) =>
+    api.post<KioskSession>('/kiosk/start-session', { language, device_id: deviceId }),
+
+  selectLanguage: (sessionId: string, language: string) =>
+    api.post<{ session_id: string; language: string; language_locked: boolean }>(
+      '/kiosk/select-language',
+      { session_id: sessionId, language },
+    ),
+
+  patientDetails: (sessionId: string, data: KioskPatient & { gender: string }) =>
+    api.post<{ session_id: string; patient: KioskPatient }>(
+      '/kiosk/patient-details',
+      { session_id: sessionId, ...data },
+    ),
+
+  selectBodyPart: (sessionId: string, bodyPart: string, organ?: string | null) =>
+    api.post<KioskBodyPartResponse>('/kiosk/select-body-part', {
+      session_id: sessionId,
+      body_part: bodyPart,
+      organ: organ ?? null,
+    }),
+
+  askQuestion: (sessionId: string, questionId: string, answer?: string, confidence?: number) =>
+    api.post<KioskQuestion>('/kiosk/ask-question', {
+      session_id: sessionId,
+      question_id: questionId,
+      answer: answer ?? '',
+      audio_confidence: confidence ?? null,
+    }),
+
+  submitResponse: (sessionId: string, questionId: string, answer: string, confidence?: number, duration?: number) =>
+    api.post<KioskSubmitResponse>('/kiosk/submit-response', {
+      session_id: sessionId,
+      question_id: questionId,
+      answer,
+      audio_confidence: confidence ?? null,
+      audio_duration_s: duration ?? null,
+    }),
+
+  interviewSummary: (sessionId: string, questionId: string) =>
+    api.post<KioskSummary>('/kiosk/interview-summary', {
+      session_id: sessionId,
+      question_id: questionId,
+      answer: '',
+    }),
+
+  nearbyHospitals: (lat: number, lon: number, department?: string, radius?: number) =>
+    api.get<KioskNearbyResponse>('/kiosk/nearby-hospitals', {
+      params: { lat, lon, department: department ?? undefined, radius: radius ?? undefined },
+    }),
+
+  bookOpd: (sessionId: string, hospitalId: string, department: string, date: string, timeSlot: string, isPartner = true) =>
+    api.post<KioskBookingResult>('/kiosk/book-opd', {
+      session_id: sessionId,
+      hospital_id: hospitalId,
+      department,
+      date,
+      time_slot: timeSlot,
+      is_partner: isPartner,
+    }),
+
+  externalBookingRequest: (sessionId: string, hospitalId: string, hospitalName: string, department: string, date: string, timeSlot: string, consentGiven = true) =>
+    api.post<KioskExternalBookingResult>('/kiosk/external-booking-request', {
+      session_id: sessionId,
+      hospital_id: hospitalId,
+      hospital_name: hospitalName,
+      department,
+      date,
+      time_slot: timeSlot,
+      consent_given: consentGiven,
+    }),
+};
+
 // ---- Gemini Talking-AI (F0: live conversation with the patient) ----
 export interface AIChatTurn {
   speech: string;
