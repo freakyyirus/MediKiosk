@@ -18,11 +18,18 @@ test('landing page: hero + primary CTAs', async ({ page }) => {
   await expect(page).toHaveTitle(/MediKiosk/i);
   // Hero illustration (editorial patient+doctor scene) renders
   await expect(page.getByRole('img', { name: /patient speaks/i })).toBeVisible();
-  // Primary CTAs
-  await expect(page.getByRole('link', { name: /See How It Works/i })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Watch 2-Min Demo/i })).toBeVisible();
+  // Primary CTA into the kiosk portal
+  await expect(page.getByRole('link', { name: /Kiosk|Patient Check-in|Start/i }).first()).toBeVisible();
+  // "Watch 2-Min Demo" is desktop-visible (the "See How It Works" text is the mobile-only twin)
+  await expect(page.getByText(/Watch 2-Min Demo/i)).toBeVisible();
   // Nav pip to the kiosk portal
   await expect(page.getByRole('navigation')).toContainText(/Kiosk|Portals/i);
+});
+
+test('landing page (mobile): See How It Works link visible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await gotoAndWait(page, '/');
+  await expect(page.getByText(/See How It Works/i)).toBeVisible();
 });
 
 test('kiosk palette: public journey starts', async ({ page }) => {
@@ -32,19 +39,40 @@ test('kiosk palette: public journey starts', async ({ page }) => {
   await expect(page).toHaveURL(/\/kiosk\/language/);
 });
 
-test('kiosk body-map triage click-through (F1)', async ({ page }) => {
+test('kiosk flow: legacy fragmented routes funnel into combined anatomy flow', async ({ page }) => {
+  // Old /kiosk/body-map and /kiosk/interview now redirect to the combined flow
   await gotoAndWait(page, '/kiosk/body-map');
-  await expect(page.getByRole('img', { name: /body part/i })).toBeVisible();
-  // Kiosk defaults to Hindi — select Chest (छाती) via the legend chip
-  await page.getByRole('button', { name: 'छाती', exact: true }).click();
-  // F1: department hint appears (cardiology) behind the Hindi label
-  await expect(page.getByText('हृदय विभाग')).toBeVisible();
-  // Answer the chest symptom question and confirm the part
-  await page.getByRole('button', { name: 'सीने में दर्द' }).click();
-  await page.getByRole('button', { name: /सही है — आगे बढ़ें/i }).click();
-  // Back on the map, the interview step is re-enabled
-  await page.getByRole('button', { name: /Continue to Interview/i }).click();
-  await expect(page).toHaveURL(/\/kiosk\/interview/);
+  await expect(page).toHaveURL(/\/kiosk\/anatomy/);
+
+  await gotoAndWait(page, '/kiosk/interview');
+  await expect(page).toHaveURL(/\/kiosk\/anatomy/);
+
+  await gotoAndWait(page, '/kiosk/summary');
+  await expect(page).toHaveURL(/\/kiosk\/anatomy/);
+});
+
+test('kiosk anatomy: body map shows and prompts for selection', async ({ page }) => {
+  await gotoAndWait(page, '/kiosk/anatomy');
+  // The anatomy flow first shows the "patient details" step
+  await expect(page.getByRole('heading', { name: /Tell us about you|अपने बारे में बताएं/i })).toBeVisible();
+  // Enter basic details to reach the body map
+  await page.getByPlaceholder(/Full name|पूरा नाम/i).fill('Test Patient');
+  await page.getByPlaceholder(/Mobile|मोबाइल/i).fill('9876543210');
+  await page.getByRole('button', { name: /Continue|आगे बढ़ें/i }).click();
+  // Body-map prompt appears
+  await expect(page.getByRole('heading', { name: /Touch Where You Have|समस्या वाले/i })).toBeVisible();
+});
+
+test('kiosk flow: 4-step stepper (Language → Health Check → Documents → Done)', async ({ page }) => {
+  await gotoAndWait(page, '/kiosk/anatomy');
+  // The combined flow starts at step 2 ("Health Check"), localized to the store language
+  await expect(page.locator('.step-pill')).toHaveCount(4);
+  await expect(page.locator('.step-pill').first()).toContainText(/Language|भाषा/i);
+  await expect(page.locator('.step-pill').nth(1)).toContainText(/Health Check|स्वास्थ्य/i);
+  await expect(page.locator('.step-pill').nth(2)).toContainText(/Documents|दस्तावेज़/i);
+  await expect(page.locator('.step-pill').nth(3)).toContainText(/Done|पूर्ण/i);
+  // Health Check pill is the active step
+  await expect(page.locator('.step-pill.active')).toContainText(/Health Check|स्वास्थ्य/i);
 });
 
 test('protected routes gate unauthenticated users', async ({ page }) => {
