@@ -16,7 +16,7 @@ interface SelectedPart {
 
 export default function BodyMapPage() {
   const navigate = useNavigate();
-  const { lowLiteracyMode, highContrast } = useUIStore();
+  const { lowLiteracyMode } = useUIStore();
   const { transcription, setTranscription } = useAudioStore();
   const recordBodyTap = useAdvancedStore((s) => s.recordBodyTap);
 
@@ -94,7 +94,7 @@ export default function BodyMapPage() {
   const criticalFlag = redFlags.find((f) => f.severity === 'critical' || f.severity === 'high');
 
   return (
-    <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''} ${highContrast ? 'high-contrast' : ''}`}>
+    <div className={`min-h-screen mesh-bg flex flex-col ${lowLiteracyMode ? 'low-literacy' : ''}`}>
       <div className="px-4 sm:px-10 pt-5 sm:pt-8">
         <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={1} />
       </div>
@@ -132,7 +132,6 @@ export default function BodyMapPage() {
                 language={language === 'hi' ? 'hi' : 'en'}
                 onSelect={handleSelect}
                 selectedIds={doneParts}
-                highContrast={highContrast}
                 lowLiteracy={lowLiteracyMode}
               />
             </div>
