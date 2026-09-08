@@ -817,10 +817,10 @@ CREATE TRIGGER trg_audit_lab_tests
 INSERT INTO hospitals (id, name, address, phone, email, registration_number, is_verified)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
-    'City General Hospital',
-    '42 MG Road, Sector 5, New Delhi, India',
-    '+91-11-23456789',
-    'admin@citygeneralhospital.in',
+    'City Heart Hospital',
+    '100 Feet Rd, Koramangala, Bengaluru 560034',
+    '+91 80 2550 1001',
+    'admin@cityheart.in',
     'REG-MOHI-2024-0001',
     true
 );
@@ -859,9 +859,9 @@ INSERT INTO doctors (id, hospital_id, full_name, qualification, specialization, 
 -- 5.5 Patients
 -- ============================================================
 INSERT INTO patients (id, date_of_birth, gender, blood_group, address, emergency_contact_name, emergency_contact_phone, abha_id) VALUES
-    ('00000000-0000-0000-0000-000000000020', '1990-03-15', 'male',   'B+',  '12 Park Lane, Sector 2, New Delhi',    'Sunita Mehta',   '+91-9123456700', 'ABHA-2024-1001'),
-    ('00000000-0000-0000-0000-000000000021', '1985-07-22', 'female', 'O+',  '45 Lake View, Sector 8, New Delhi',    'Manoj Gupta',    '+91-9123456704', 'ABHA-2024-1002'),
-    ('00000000-0000-0000-0000-000000000022', '2001-11-08', 'male',   'A-',  '78 Hill Road, Sector 12, New Delhi',   'Priyanka Das',   '+91-9123456705', 'ABHA-2024-1003');
+    ('00000000-0000-0000-0000-000000000020', '1990-03-15', 'male',   'B+',  '12 Park Lane, Koramangala, Bengaluru 560034',    'Sunita Mehta',   '+91-9123456700', 'ABHA-2024-1001'),
+    ('00000000-0000-0000-0000-000000000021', '1985-07-22', 'female', 'O+',  '45 Lake View, Indiranagar, Bengaluru 560008',    'Manoj Gupta',    '+91-9123456704', 'ABHA-2024-1002'),
+    ('00000000-0000-0000-0000-000000000022', '2001-11-08', 'male',   'A-',  '78 Hill Road, Jayanagar, Bengaluru 560011',   'Priyanka Das',   '+91-9123456705', 'ABHA-2024-1003');
 
 -- 5.6 OPD Slots (for each doctor)
 -- ============================================================
