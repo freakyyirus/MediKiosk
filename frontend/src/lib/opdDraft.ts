@@ -6,10 +6,11 @@
 const STORAGE_KEY = 'medikiosk:opdDraft';
 
 export interface OpdDraftHospital {
-  id: number;
+  id: number | string;
   name: string;
   address: string | null;
   is_verified: boolean;
+  is_external?: boolean;
 }
 
 export interface OpdDraftDepartment {
