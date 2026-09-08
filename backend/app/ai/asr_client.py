@@ -32,14 +32,16 @@ ASR_COMPUTE_URL = "https://dhruva-api.bhashini.gov.in/services/inference/pipelin
 
 # Bhashini does not ship a dedicated ASR model for every Indian language.
 # Instead it exposes two conformer multilingual models — one for the
-# Indo-Aryan family (hi, bn, gu, mr, or, pa, as) and one for Dravidian
+# Indo-Aryan family (hi, bn, gu, mr, or, pa, as, ur) and one for Dravidian
 # (ta, te, kn, ml). English uses Whisper. Verified live: hi and en return
 # 200 and transcribe.
 _MULTILINGUAL_INDO_ARYAN = "ai4bharat/conformer-multilingual-indo_aryan-gpu--t4"
 _MULTILINGUAL_DRAVIDIAN = "ai4bharat/conformer-multilingual-dravidian-gpu--t4"
 _ENGLISH_ASR = "ai4bharat/whisper-medium-en--gpu--t4"
+_URDU_ASR = "ai4bharat/whisper-medium-ur--gpu--t4"
 
 # Language code (ULCA "sourceLanguage") -> trusted Bhashini ASR serviceId.
+# All 13 production languages (en, hi, bn, te, mr, ta, gu, kn, ml, pa, or, as, ur).
 _ASR_SERVICE_IDS = {
     # English (Whisper)
     "en": _ENGLISH_ASR,
@@ -51,6 +53,7 @@ _ASR_SERVICE_IDS = {
     "or": _MULTILINGUAL_INDO_ARYAN,
     "pa": _MULTILINGUAL_INDO_ARYAN,
     "as": _MULTILINGUAL_INDO_ARYAN,
+    "ur": _URDU_ASR,
     # Dravidian language family
     "ta": _MULTILINGUAL_DRAVIDIAN,
     "te": _MULTILINGUAL_DRAVIDIAN,
