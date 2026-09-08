@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, CalendarPlus, ClipboardList, FileText, Heart, Accessibility, Sparkles } from 'lucide-react';
+import { Mic, MicOff, CalendarPlus, ClipboardList, FileText, Heart, Stethoscope, Activity } from 'lucide-react';
 import { useUIStore } from '../../stores';
 import { useAuthStore } from '../../stores/authStore';
 import { APP_LANGS, useT } from '../../lib/i18n';
@@ -19,7 +19,7 @@ const ACTIONS = [
 export default function KioskMode() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { highContrast, lowLiteracyMode, toggleHighContrast, toggleLowLiteracyMode, language, setLanguage } = useUIStore();
+  const { highContrast, toggleHighContrast, language, setLanguage } = useUIStore();
   const t = useT();
   const addToast = useToastStore(s => s.addToast);
   const [listening, setListening] = useState(false);
@@ -74,20 +74,13 @@ export default function KioskMode() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => toggleLowLiteracyMode()}
-              className={`touch-target flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold text-base transition-colors ${
-                lowLiteracyMode ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-300 text-surface-700'
-              }`}
-            >
-              <Accessibility size={20} /> {t('easyRead')}
-            </button>
-            <button
               onClick={() => toggleHighContrast()}
+              aria-pressed={highContrast}
               className={`touch-target flex items-center gap-2 rounded-xl border px-4 py-2.5 font-semibold text-base transition-colors ${
-                highContrast ? 'border-accent-400 bg-accent-50 text-accent-700' : 'border-surface-300 text-surface-700'
+                highContrast ? 'border-primary-400 bg-primary-50 text-primary-700' : 'border-surface-300 text-surface-700'
               }`}
             >
-              <Sparkles size={20} /> {t('highContrast')}
+              {highContrast ? 'AA' : 'A'} {t('highContrast')}
             </button>
           </div>
         </div>
@@ -138,6 +131,21 @@ export default function KioskMode() {
             </button>
           ))}
         </div>
+
+        {/* Launch the same AI intake flow as the landing-page kiosk */}
+        <button
+          onClick={() => navigate('/kiosk/home')}
+          className="touch-target-lg w-full flex items-center gap-5 rounded-3xl bg-gradient-to-br from-primary-600 to-primary-800 text-white p-6 text-left shadow-lg hover:shadow-xl transition-shadow"
+        >
+          <span className="flex items-center justify-center w-16 h-16 rounded-2xl bg-white/20 shrink-0">
+            <Activity size={36} />
+          </span>
+          <span className="flex-1">
+            <span className="block text-2xl font-black">{t('startHealthCheck')}</span>
+            <span className="block text-base text-white/90 mt-1">{t('startHealthCheckDesc')}</span>
+          </span>
+          <span className="text-3xl">→</span>
+        </button>
 
         {/* Big action cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
