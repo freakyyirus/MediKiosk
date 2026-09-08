@@ -23,6 +23,7 @@ _TTS_SERVICE_IDS = {
     "pa": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "or": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
     "as": "ai4bharat/indic-tts-coqui-indo_aryan-gpu--t4",
+    "ur": "ai4bharat/indic-tts-coqui-misc-gpu--t4",
     "ta": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
     "te": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
     "kn": "ai4bharat/indic-tts-coqui-dravidian-gpu--t4",
