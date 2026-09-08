@@ -108,22 +108,6 @@
     overflow-x: clip;
   }
 
-  /* High contrast mode */
-  .high-contrast {
-    --color-surface-50: #ffffff;
-    --color-surface-900: #000000;
-    --color-primary-600: #3b2387;
-    --color-primary-700: #2b1870;
-    background: #ffffff !important;
-    color: #000000 !important;
-  }
-
-  .high-contrast .card,
-  .high-contrast button,
-  .high-contrast [class*="rounded"] {
-    border-color: #000000 !important;
-  }
-
   /* Low literacy mode: larger icons */
   .low-literacy [class*="btn-icon"] {
     transform: scale(1.4);
@@ -706,6 +690,160 @@ input[type="range"].pain-slider::-webkit-slider-thumb {
 .radar-draw {
   animation: logo-fade-in 0.8s ease-out;
 }
+
+/* ==============================
+   HIGH CONTRAST MODE
+   ============================== */
+
+.high-contrast,
+.high-contrast * {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-color: #00FFFF !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+.high-contrast {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+.high-contrast .card,
+.high-contrast .glass-card {
+  background: #111111 !important;
+  border: 3px solid #00FFFF !important;
+  box-shadow: none !important;
+}
+
+.high-contrast button,
+.high-contrast [role="button"] {
+  background-color: #FFFF00 !important;
+  color: #000000 !important;
+  border: 3px solid #00FFFF !important;
+  font-weight: 700 !important;
+  min-height: 56px !important;
+}
+
+.high-contrast button:hover,
+.high-contrast button:focus {
+  background-color: #FFFFCC !important;
+  border-color: #FFFF00 !important;
+}
+
+.high-contrast input,
+.high-contrast select,
+.high-contrast textarea {
+  background-color: #111111 !important;
+  color: #FFFFFF !important;
+  border: 3px solid #00FFFF !important;
+  min-height: 48px !important;
+  font-size: 24px !important;
+}
+
+.high-contrast h1,
+.high-contrast h2,
+.high-contrast h3 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  color: #FFFF00 !important;
+}
+
+.high-contrast p,
+.high-contrast span,
+.high-contrast label,
+.high-contrast div {
+  font-size: 24px !important;
+  min-height: 1.4em !important;
+}
+
+.high-contrast a {
+  color: #00FFFF !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast .mesh-bg {
+  background: #000000 !important;
+}
+
+.high-contrast svg text {
+  fill: #FFFFFF !important;
+}
+
+.high-contrast svg path,
+.high-contrast svg rect,
+.high-contrast svg ellipse {
+  stroke: #00FFFF !important;
+}
+
+.high-contrast .bg-primary-600,
+.high-contrast .bg-primary-500,
+.high-contrast .bg-primary-700 {
+  background-color: #FFFF00 !important;
+  color: #000000 !important;
+}
+
+.high-contrast .bg-green-500,
+.high-contrast .bg-green-600 {
+  background-color: #00FF00 !important;
+  color: #000000 !important;
+}
+
+.high-contrast .bg-red-500 {
+  background-color: #FF0000 !important;
+  color: #FFFFFF !important;
+}
+
+/* ==============================
+   RED PULSE ANIMATION
+   ============================== */
+
+@keyframes red-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    border-color: #ef4444;
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+    border-color: #dc2626;
+  }
+}
+
+.animate-red-pulse {
+  animation: red-pulse 1.5s ease-in-out infinite;
+}
+
+/* ==============================
+   WAVEFORM ANIMATION
+   ============================== */
+
+@keyframes waveform-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 40px;
+}
+
+.waveform-bar {
+  width: 4px;
+  height: 100%;
+  background: #6366f1;
+  border-radius: 2px;
+  animation: waveform-bar 0.8s ease-in-out infinite;
+}
+
+.waveform-bar:nth-child(1) { animation-delay: 0s; }
+.waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+.waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+.waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+.waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+.waveform-bar:nth-child(6) { animation-delay: 0.5s; }
+.waveform-bar:nth-child(7) { animation-delay: 0.6s; }
 
 /* Reduced motion accessibility */
 @media (prefers-reduced-motion: reduce) {
