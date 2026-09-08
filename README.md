@@ -5,10 +5,10 @@ Open-source, self-service healthcare kiosk software that lets patients check in,
 A voice-first, multilingual kiosk for OPDs, clinics and hospitals. It captures symptoms through touch or speech, runs real-time red-flag triage, digitizes old prescriptions, and hands the physician a clean, structured summary. Built to work for low-bandwidth clinics and busy city hospitals alike.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.11](https://img.shields.io/badge/Python-3.11-3776ab?logo=python&logoColor=white)](backend)
+[![Python 3.14](https://img.shields.io/badge/Python-3.14-3776ab?logo=python&logoColor=white)](backend)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](backend)
-[![React 18](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=black)](frontend)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](frontend)
+[![React 19](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](frontend)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178c6?logo=typescript&logoColor=white)](frontend)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192?logo=postgresql&logoColor=white)](docker-compose.yml)
 [![GitHub stars](https://img.shields.io/github/stars/freakyyirus/MediKiosk?style=social)](https://github.com/freakyyirus/MediKiosk)
 
@@ -25,7 +25,7 @@ A voice-first, multilingual kiosk for OPDs, clinics and hospitals. It captures s
 
 ## Getting Started
 
-Prerequisites: Docker & Docker Compose · Node.js 18+ · Python 3.10+
+Prerequisites: Docker & Docker Compose · Node.js 20+ · Python 3.11+
 
 ```bash
 git clone https://github.com/freakyyirus/MediKiosk.git
