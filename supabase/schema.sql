@@ -302,4 +302,329 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON
 -- Sequences must be usable by service_role for IDENTITY inserts to work.
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
+-- ============================================================================
+-- 5. MISSING TABLES (Production Blocker) — anatomy interview + non-partner OPD
+-- ============================================================================
+
+-- Link kiosk patient rows (bigint) to the Clerk/Supabase auth user id (uuid).
+-- Kept nullable: walk-up kiosk patients can exist without an account, while
+-- identifying patients claim their rows via `user_id`.
+ALTER TABLE public.patients ADD COLUMN IF NOT EXISTS user_id uuid UNIQUE;
+
+CREATE TABLE IF NOT EXISTS public.hospitals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(200) NOT NULL,
+    address TEXT,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    place_id VARCHAR(100) UNIQUE,
+    is_partner BOOLEAN DEFAULT FALSE,
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+    departments TEXT[] DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.departments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES public.hospitals(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.doctors (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES public.hospitals(id) ON DELETE CASCADE,
+    department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    specialization VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.opd_slots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hospital_id UUID REFERENCES public.hospitals(id) ON DELETE CASCADE,
+    department_id UUID REFERENCES public.departments(id) ON DELETE CASCADE,
+    doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+    slot_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    max_patients INT DEFAULT 10,
+    booked_count INT DEFAULT 0,
+    is_available BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.visits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id bigint REFERENCES public.patients(id) ON DELETE CASCADE,
+    hospital_id UUID REFERENCES public.hospitals(id) ON DELETE SET NULL,
+    department_id UUID REFERENCES public.departments(id) ON DELETE SET NULL,
+    doctor_id UUID REFERENCES public.doctors(id) ON DELETE SET NULL,
+    slot_id UUID REFERENCES public.opd_slots(id) ON DELETE SET NULL,
+    status VARCHAR(20) DEFAULT 'pending',
+    visit_date DATE,
+    token_number INT,
+    chief_complaint TEXT,
+    ai_summary TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Clerk/Supabase auth-user extended profile (id == auth user UUID).
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY,
+    role VARCHAR(20) DEFAULT 'patient',
+    hospital_id UUID REFERENCES public.hospitals(id) ON DELETE SET NULL,
+    full_name VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 6. NEW FEATURE TABLES — Anatomy Interview + Non-Partner Outreach
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS public.interviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id bigint REFERENCES public.patients(id) ON DELETE CASCADE,
+    selected_body_part VARCHAR(50),
+    selected_organ VARCHAR(50),
+    conversation_json JSONB DEFAULT '[]',
+    ai_summary TEXT,
+    recommended_department VARCHAR(50),
+    pain_severity INT,
+    is_emergency BOOLEAN DEFAULT FALSE,
+    language VARCHAR(20) DEFAULT 'en',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.outreach_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    patient_id bigint REFERENCES public.patients(id) ON DELETE CASCADE,
+    interview_id UUID REFERENCES public.interviews(id) ON DELETE SET NULL,
+    hospital_name VARCHAR(200) NOT NULL,
+    hospital_address TEXT,
+    hospital_phone VARCHAR(20),
+    hospital_email VARCHAR(100),
+    place_id VARCHAR(100),
+    department VARCHAR(50),
+    preferred_date DATE,
+    preferred_time VARCHAR(50),
+    chief_complaint TEXT,
+    patient_name VARCHAR(100),
+    patient_phone VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'pending',
+    email_sent_at TIMESTAMP WITH TIME ZONE,
+    whatsapp_sent_at TIMESTAMP WITH TIME ZONE,
+    confirmed_at TIMESTAMP WITH TIME ZONE,
+    consent_given BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================================================
+-- 7. INDEXES (new tables)
+-- ============================================================================
+CREATE INDEX IF NOT EXISTS idx_hospitals_is_partner  ON public.hospitals (is_partner);
+CREATE INDEX IF NOT EXISTS idx_departments_hospital  ON public.departments (hospital_id);
+CREATE INDEX IF NOT EXISTS idx_doctors_hospital      ON public.doctors (hospital_id);
+CREATE INDEX IF NOT EXISTS idx_doctors_department    ON public.doctors (department_id);
+CREATE INDEX IF NOT EXISTS idx_opd_slots_hospital    ON public.opd_slots (hospital_id);
+CREATE INDEX IF NOT EXISTS idx_opd_slots_date        ON public.opd_slots (slot_date);
+CREATE INDEX IF NOT EXISTS idx_visits_patient        ON public.visits (patient_id);
+CREATE INDEX IF NOT EXISTS idx_visits_hospital       ON public.visits (hospital_id);
+CREATE INDEX IF NOT EXISTS idx_interviews_patient    ON public.interviews (patient_id);
+CREATE INDEX IF NOT EXISTS idx_outreach_patient      ON public.outreach_requests (patient_id);
+CREATE INDEX IF NOT EXISTS idx_outreach_status       ON public.outreach_requests (status);
+CREATE INDEX IF NOT EXISTS idx_patients_user_id      ON public.patients (user_id);
+
+-- ============================================================================
+-- 8. ROW-LEVEL SECURITY (CRITICAL FIX)
+-- ============================================================================
+-- Policy model (Clerk auth): `auth.uid()` returns the Clerk user UUID. Kiosk
+-- patient rows (bigint) are owned through `public.patients.user_id` (nullable
+-- for anonymous walk-up rows). The backend (service_role) bypasses RLS.
+
+ALTER TABLE public.patients          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sessions          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session_messages  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.documents         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.summaries         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consent_records   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.red_flag_alerts   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ayush_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hospitals         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.doctors           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.opd_slots         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.visits            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.interviews        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.outreach_requests ENABLE ROW LEVEL SECURITY;
+
+-- Patients: read + write own record (claim via user_id).
+DROP POLICY IF EXISTS "patients_select_own" ON public.patients;
+CREATE POLICY "patients_select_own" ON public.patients
+  FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "patients_insert_own" ON public.patients;
+CREATE POLICY "patients_insert_own" ON public.patients
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "patients_update_own" ON public.patients;
+CREATE POLICY "patients_update_own" ON public.patients
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Sessions: patient owns their sessions (mapped through patients.user_id).
+DROP POLICY IF EXISTS "sessions_select_own" ON public.sessions;
+CREATE POLICY "sessions_select_own" ON public.sessions
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "sessions_insert_own" ON public.sessions;
+CREATE POLICY "sessions_insert_own" ON public.sessions
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+-- Session messages: visible to the session's owner.
+DROP POLICY IF EXISTS "messages_select_own" ON public.session_messages;
+CREATE POLICY "messages_select_own" ON public.session_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.sessions s
+      JOIN public.patients p ON p.id = s.patient_id
+      WHERE s.id = session_id AND p.user_id = auth.uid()
+    )
+  );
+
+-- Directory tables: readable by any authenticated user (kiosk + portals).
+DROP POLICY IF EXISTS "hospitals_select_all" ON public.hospitals;
+CREATE POLICY "hospitals_select_all" ON public.hospitals
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "departments_select_all" ON public.departments;
+CREATE POLICY "departments_select_all" ON public.departments
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "doctors_select_all" ON public.doctors;
+CREATE POLICY "doctors_select_all" ON public.doctors
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "slots_select_all" ON public.opd_slots;
+CREATE POLICY "slots_select_all" ON public.opd_slots
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Visits: patient reads own; hospital_admin manages own hospital's rows.
+DROP POLICY IF EXISTS "visits_patient" ON public.visits;
+CREATE POLICY "visits_patient" ON public.visits
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "visits_hospital_admin" ON public.visits;
+CREATE POLICY "visits_hospital_admin" ON public.visits
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles pf
+      WHERE pf.id = auth.uid() AND pf.role = 'hospital_admin' AND pf.hospital_id = visits.hospital_id
+    )
+  );
+
+-- Profiles: auth user reads + updates own profile row.
+DROP POLICY IF EXISTS "profiles_select_own" ON public.profiles;
+CREATE POLICY "profiles_select_own" ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
+
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
+CREATE POLICY "profiles_insert_own" ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+CREATE POLICY "profiles_update_own" ON public.profiles
+  FOR UPDATE USING (auth.uid() = id);
+
+-- Anatomy interviews: patient owns their interviews.
+DROP POLICY IF EXISTS "interviews_select_own" ON public.interviews;
+CREATE POLICY "interviews_select_own" ON public.interviews
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "interviews_insert_own" ON public.interviews;
+CREATE POLICY "interviews_insert_own" ON public.interviews
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+-- Outreach: patient owns their requests.
+DROP POLICY IF EXISTS "outreach_select_own" ON public.outreach_requests;
+CREATE POLICY "outreach_select_own" ON public.outreach_requests
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "outreach_insert_own" ON public.outreach_requests;
+CREATE POLICY "outreach_insert_own" ON public.outreach_requests
+  FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "outreach_update_own" ON public.outreach_requests;
+CREATE POLICY "outreach_update_own" ON public.outreach_requests
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM public.patients p WHERE p.id = patient_id AND p.user_id = auth.uid())
+  );
+
+-- ============================================================================
+-- 9. PRIVILEGES (make the above policies usable)
+-- ============================================================================
+-- service_role: full DML on every table (for the FastAPI backend).
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+    public.hospitals, public.departments, public.doctors, public.opd_slots,
+    public.visits, public.profiles, public.interviews, public.outreach_requests
+    TO service_role;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- authenticated: enough rights for the app-facing tables; RLS restricts rows.
+GRANT SELECT ON public.hospitals, public.departments, public.doctors, public.opd_slots
+    TO authenticated;
+
+GRANT SELECT, INSERT, UPDATE ON
+    public.patients, public.profiles, public.interviews, public.outreach_requests
+    TO authenticated;
+
+GRANT SELECT, INSERT ON public.sessions, public.session_messages, public.visits
+    TO authenticated;
+
+-- ============================================================================
+-- 10. SECURITY FIXES (Supabase linter) — guard functions that may not exist
+-- ============================================================================
+DO $$
+DECLARE _fnname text;
+BEGIN
+    FOREACH _fnname IN ARRAY ARRAY[
+        'log_audit_change', 'generate_token_number', 'assign_token_on_visit',
+        'get_user_role', 'get_user_hospital_id', 'update_updated_at_column'
+    ] LOOP
+        IF EXISTS (
+            SELECT 1 FROM pg_proc p
+            JOIN pg_namespace n ON n.oid = p.pronamespace
+            WHERE n.nspname = 'public' AND p.proname = _fnname
+        ) THEN
+            EXECUTE format('ALTER FUNCTION public.%I SET search_path = public', _fnname);
+            EXECUTE format('REVOKE EXECUTE ON FUNCTION public.%I FROM anon, authenticated', _fnname);
+        END IF;
+    END LOOP;
+END $$;
+
 COMMIT;
