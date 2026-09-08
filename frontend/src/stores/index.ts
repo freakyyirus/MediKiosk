@@ -75,15 +75,15 @@ export const useSessionStore = create<SessionState>((set) => ({
 interface UIState {
   language: Language;
   fontSize: 'small' | 'medium' | 'large' | 'extra-large';
-  highContrast: boolean;
   lowLiteracyMode: boolean;
+  highContrast: boolean;
   ttsSpeed: number;
   sidebarOpen: boolean;
 
   setLanguage: (lang: Language) => void;
   setFontSize: (size: 'small' | 'medium' | 'large' | 'extra-large') => void;
-  toggleHighContrast: () => void;
   toggleLowLiteracyMode: () => void;
+  toggleHighContrast: () => void;
   setTTSSpeed: (speed: number) => void;
   toggleSidebar: () => void;
 }
@@ -98,15 +98,15 @@ const defaultLanguage: Language = {
 export const useUIStore = create<UIState>((set) => ({
   language: defaultLanguage,
   fontSize: 'medium',
-  highContrast: false,
   lowLiteracyMode: false,
+  highContrast: false,
   ttsSpeed: 1.0,
   sidebarOpen: false,
 
   setLanguage: (lang) => set({ language: lang }),
   setFontSize: (size) => set({ fontSize: size }),
-  toggleHighContrast: () => set((s) => ({ highContrast: !s.highContrast })),
   toggleLowLiteracyMode: () => set((s) => ({ lowLiteracyMode: !s.lowLiteracyMode })),
+  toggleHighContrast: () => set((s) => ({ highContrast: !s.highContrast })),
   setTTSSpeed: (speed) => set({ ttsSpeed: speed }),
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
 }));
