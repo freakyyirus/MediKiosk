@@ -7,7 +7,10 @@
 
 import { useUIStore } from '../stores';
 
-export type LangCode = 'en' | 'hi' | 'ta' | 'bn' | 'mr';
+// 13 production languages (Bhashini STT/TTS/NMT coverage, spec §3).
+export type LangCode =
+  | 'en' | 'hi' | 'bn' | 'te' | 'mr' | 'ta' | 'gu' | 'kn'
+  | 'ml' | 'pa' | 'or' | 'as' | 'ur';
 
 export type DictKey =
   // kiosk
@@ -15,6 +18,7 @@ export type DictKey =
   | 'helloWithName' | 'howCanWeHelp' | 'tapToSpeak' | 'listening' | 'speechHint'
   | 'youSaid' | 'didntCatch' | 'micUnavailable'
   | 'languageQuick' | 'easyRead' | 'highContrast'
+  | 'startHealthCheck' | 'startHealthCheckDesc'
   | 'bookOpd' | 'myVisits' | 'myDocuments' | 'healthTimeline'
   | 'bookOpdDesc' | 'myVisitsDesc' | 'myDocumentsDesc' | 'healthTimelineDesc'
   | 'footerAutoExit'
@@ -22,7 +26,7 @@ export type DictKey =
   | 'bookOpdPageTitle' | 'selectHospital' | 'selectDepartment' | 'selectDoctor'
   | 'selectDateTime' | 'patientIntake' | 'reviewConfirm' | 'bookingConfirmed'
   | 'cancel' | 'back' | 'next' | 'confirmBooking'
-  | 'stepHospital' | 'stepDepartment' | 'stepDoctor' | 'stepDateTime' | 'stepIntake' | 'stepReview' | 'stepConfirmed'
+  | 'stepLanguage' | 'stepHospital' | 'stepDepartment' | 'stepDoctor' | 'stepDateTime' | 'stepIntake' | 'stepHealthCheck' | 'stepDocuments' | 'stepReview' | 'stepConfirmed'
   | 'searchHospitals' | 'noHospitals' | 'noDepartments' | 'noDoctors' | 'noSlots'
   | 'slotsLeft' | 'full' | 'free' | 'consultation'
   | 'selectDate' | 'selectTimeSlot'
@@ -56,6 +60,8 @@ const en: Dict = {
   languageQuick: 'Language:',
   easyRead: 'Easy Read',
   highContrast: 'High Contrast',
+  startHealthCheck: 'Start Health Check',
+  startHealthCheckDesc: 'Guided AI check-up, then we recommend a hospital',
   bookOpd: 'Book OPD',
   myVisits: 'My Visits',
   myDocuments: 'My Documents',
@@ -77,11 +83,14 @@ const en: Dict = {
   back: 'Back',
   next: 'Next',
   confirmBooking: 'Confirm Booking',
+  stepLanguage: 'Language',
   stepHospital: 'Hospital',
   stepDepartment: 'Department',
   stepDoctor: 'Doctor',
   stepDateTime: 'Date & Time',
   stepIntake: 'Intake',
+  stepHealthCheck: 'Health Check',
+  stepDocuments: 'Documents',
   stepReview: 'Review',
   stepConfirmed: 'Confirmed',
   searchHospitals: 'Search hospitals...',
@@ -140,6 +149,8 @@ const hi: Dict = {
   languageQuick: 'भाषा:',
   easyRead: 'आसान पढ़ाई',
   highContrast: 'उच्च कंट्रास्ट',
+  startHealthCheck: 'स्वास्थ्य जांच शुरू करें',
+  startHealthCheckDesc: 'AI-निर्देशित जांच, फिर हम अस्पताल सुझाते हैं',
   bookOpd: 'ओपीडी बुक करें',
   myVisits: 'मेरी विज़िट',
   myDocuments: 'मेरे दस्तावेज़',
@@ -161,8 +172,8 @@ const hi: Dict = {
   back: 'वापस',
   next: 'आगे',
   confirmBooking: 'बुकिंग की पुष्टि करें',
-  stepHospital: 'अस्पताल', stepDepartment: 'विभाग', stepDoctor: 'डॉक्टर',
-  stepDateTime: 'दिनांक व समय', stepIntake: 'विवरण', stepReview: 'समीक्षा', stepConfirmed: 'पुष्ट',
+  stepLanguage: 'भाषा', stepHospital: 'अस्पताल', stepDepartment: 'विभाग', stepDoctor: 'डॉक्टर',
+  stepDateTime: 'दिनांक व समय', stepIntake: 'विवरण', stepHealthCheck: 'स्वास्थ्य जांच', stepDocuments: 'दस्तावेज़', stepReview: 'समीक्षा', stepConfirmed: 'पुष्ट',
   searchHospitals: 'अस्पताल खोजें...',
   noHospitals: 'कोई अस्पताल नहीं मिला',
   noDepartments: 'कोई विभाग नहीं मिला',
@@ -218,7 +229,9 @@ const ta: Dict = {
   micUnavailable: 'மைக்ரோஃபோன் கிடைக்கவில்லை. மைக் அணுகலை அனுமதித்து மீண்டும் முயற்சிக்கவும்.',
   languageQuick: 'மொழி:',
   easyRead: 'எளிய வாசிப்பு',
-  highContrast: 'உயர் மாறுபாடு',
+  highContrast: 'அதிக மாறுபாடு',
+  startHealthCheck: 'சுகாதார பரிசோதனையை தொடங்குங்கள்',
+  startHealthCheckDesc: 'AI வழிகாட்டிய பரிசோதனை, பின்னர் நாங்கள் மருத்துவமனையை பரிந்துரைக்கிறோம்',
   bookOpd: 'OPD பதிவு',
   myVisits: 'என் வருகைகள்',
   myDocuments: 'என் ஆவணங்கள்',
@@ -240,8 +253,8 @@ const ta: Dict = {
   back: 'பின்',
   next: 'அடுத்து',
   confirmBooking: 'பதிவை உறுதி செய்',
-  stepHospital: 'மருத்துவமனை', stepDepartment: 'துறை', stepDoctor: 'மருத்துவர்',
-  stepDateTime: 'தேதி & நேரம்', stepIntake: 'விவரம்', stepReview: 'மதிப்பாய்வு', stepConfirmed: 'உறுதி',
+  stepLanguage: 'மொழி', stepHospital: 'மருத்துவமனை', stepDepartment: 'துறை', stepDoctor: 'மருத்துவர்',
+  stepDateTime: 'தேதி & நேரம்', stepIntake: 'விவரம்', stepHealthCheck: 'சுகாதார பரிசோதனை', stepDocuments: 'ஆவணங்கள்', stepReview: 'மதிப்பாய்வு', stepConfirmed: 'உறுதி',
   searchHospitals: 'மருத்துவமனைகளை தேடு...',
   noHospitals: 'மருத்துவமனைகள் எதுவும் இல்லை',
   noDepartments: 'துறைகள் எதுவும் இல்லை',
@@ -298,6 +311,8 @@ const bn: Dict = {
   languageQuick: 'ভাষা:',
   easyRead: 'সহজ পাঠ',
   highContrast: 'উচ্চ কনট্রাস্ট',
+  startHealthCheck: 'স্বাস্থ্য পরীক্ষা শুরু করুন',
+  startHealthCheckDesc: 'AI-নির্দেশিত পরীক্ষা, তারপর আমরা হাসপাতালের পরামর্শ দিই',
   bookOpd: 'ওপিডি বুক করুন',
   myVisits: 'আমার ভিজিট',
   myDocuments: 'আমার নথি',
@@ -319,8 +334,8 @@ const bn: Dict = {
   back: 'পিছনে',
   next: 'পরবর্তী',
   confirmBooking: 'বুকিং নিশ্চিত করুন',
-  stepHospital: 'হাসপাতাল', stepDepartment: 'বিভাগ', stepDoctor: 'ডাক্তার',
-  stepDateTime: 'তারিখ ও সময়', stepIntake: 'বিবরণ', stepReview: 'পর্যালোচনা', stepConfirmed: 'নিশ্চিত',
+  stepLanguage: 'ভাষা', stepHospital: 'হাসপাতাল', stepDepartment: 'বিভাগ', stepDoctor: 'ডাক্তার',
+  stepDateTime: 'তারিখ ও সময়', stepIntake: 'বিবরণ', stepHealthCheck: 'স্বাস্থ্য পরীক্ষা', stepDocuments: 'নথি', stepReview: 'পর্যালোচনা', stepConfirmed: 'নিশ্চিত',
   searchHospitals: 'হাসপাতাল খুঁজুন...',
   noHospitals: 'কোনো হাসপাতাল পাওয়া যায়নি',
   noDepartments: 'কোনো বিভাগ পাওয়া যায়নি',
@@ -377,6 +392,8 @@ const mr: Dict = {
   languageQuick: 'भाषा:',
   easyRead: 'सोपे वाचन',
   highContrast: 'उच्च कॉन्ट्रास्ट',
+  startHealthCheck: 'आरोग्य तपासणी सुरू करा',
+  startHealthCheckDesc: 'AI-ने मार्गदर्शित तपासणी, मग आम्ही हॉस्पिटल सुचवतो',
   bookOpd: 'ओपीडी बुक करा',
   myVisits: 'माझ्या भेटी',
   myDocuments: 'माझी कागदपत्रे',
@@ -398,8 +415,8 @@ const mr: Dict = {
   back: 'मागे',
   next: 'पुढे',
   confirmBooking: 'बुकिंगची पुष्टी करा',
-  stepHospital: 'रुग्णालय', stepDepartment: 'विभाग', stepDoctor: 'डॉक्टर',
-  stepDateTime: 'दिनांक व वेळ', stepIntake: 'तपशील', stepReview: 'पुनरावलोकन', stepConfirmed: 'पुष्टी',
+  stepLanguage: 'भाषा', stepHospital: 'रुग्णालय', stepDepartment: 'विभाग', stepDoctor: 'डॉक्टर',
+  stepDateTime: 'दिनांक व वेळ', stepIntake: 'तपशील', stepHealthCheck: 'आरोग्य तपासणी', stepDocuments: 'कागदपत्रे', stepReview: 'पुनरावलोकन', stepConfirmed: 'पुष्टी',
   searchHospitals: 'रुग्णालय शोधा...',
   noHospitals: 'रुग्णालय सापडले नाही',
   noDepartments: 'विभाग सापडले नाही',
@@ -440,11 +457,12 @@ const mr: Dict = {
   langEn: 'English', langHi: 'हिन्दी', langTa: 'தமிழ்', langBn: 'বাংলা', langMr: 'मराठी',
 };
 
-const DICTS: Record<LangCode, Dict> = { en, hi, ta, bn, mr };
+const DICTS: Partial<Record<LangCode, Dict>> = { en, hi, ta, bn, mr };
 
 export function t(key: DictKey, lang: LangCode, vars?: Record<string, string | number>): string {
-  const dict = DICTS[lang] ?? DICTS.en;
-  let s: string = dict[key] ?? DICTS.en[key] ?? key;
+  const dict = DICTS[lang] ?? DICTS.en ?? en;
+  const fallback = DICTS.en ?? en;
+  let s: string = dict[key] ?? fallback[key] ?? key;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
       s = s.split(`{${k}}`).join(String(v));
@@ -463,10 +481,20 @@ export function useT() {
 }
 
 export interface LanguageOption { code: LangCode; nativeName: string }
+// 13 production languages (spec §3 / backend kiosk_data.SUPPORTED_LANGUAGES).
+// `ur` added per revised spec; dictionaries for non-core languages fall back to English.
 export const APP_LANGS: LanguageOption[] = [
   { code: 'en', nativeName: 'English' },
   { code: 'hi', nativeName: 'हिन्दी' },
-  { code: 'ta', nativeName: 'தமிழ்' },
   { code: 'bn', nativeName: 'বাংলা' },
+  { code: 'te', nativeName: 'తెలుగు' },
   { code: 'mr', nativeName: 'मराठी' },
+  { code: 'ta', nativeName: 'தமிழ்' },
+  { code: 'gu', nativeName: 'ગુજરાતી' },
+  { code: 'kn', nativeName: 'ಕನ್ನಡ' },
+  { code: 'ml', nativeName: 'മലയാളം' },
+  { code: 'pa', nativeName: 'ਪੰਜਾਬੀ' },
+  { code: 'or', nativeName: 'ଓଡ଼ିଆ' },
+  { code: 'as', nativeName: 'অসমীয়া' },
+  { code: 'ur', nativeName: 'اردو' },
 ];
