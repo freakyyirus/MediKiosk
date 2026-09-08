@@ -1,7 +1,7 @@
 """
 Bhashini ASR + TTS tests.
 
-ASR: all 9 production languages must resolve to a real model — never a Hindi
+ASR: all 13 production languages must resolve to a real model — never a Hindi
 fallback. Unknown languages must fall back to the multilingual model while
 KEEPING the requested language code (Bhashini multilingual models expect a
 valid sourceLanguage).
@@ -17,11 +17,13 @@ from app.ai.asr_client import (
     BhashiniASR,
     resolve_asr_service_id,
 )
+from app.ai.translation_client import BhashiniTranslation
 from app.ai.tts_client import _TTS_SERVICE_IDS, BhashiniTTS, resolve_tts_service_id
 
-ALL_LANGS = ["en", "hi", "ta", "te", "kn", "ml", "bn", "mr", "gu", "pa"]
+# 13 production languages (spec §3): en, hi, bn, te, mr, ta, gu, kn, ml, pa, or, as, ur
+ALL_LANGS = ["en", "hi", "bn", "te", "mr", "ta", "gu", "kn", "ml", "pa", "or", "as", "ur"]
 DRAVIDIAN = ["ta", "te", "kn", "ml"]
-INDO_ARYAN = ["hi", "bn", "mr", "gu", "pa"]
+INDO_ARYAN = ["hi", "bn", "mr", "gu", "pa", "or", "as"]
 NO_KEY = {"bhashini_ulca_api_key": "", "bhashini_api_key": ""}
 
 
@@ -35,6 +37,11 @@ def _no_bhashini_keys(monkeypatch):
         monkeypatch.setattr(asr_mod.settings, key, value)
         monkeypatch.setattr(tts_mod.settings, key, value)
 
+    import app.ai.translation_client as tr_mod
+
+    for key, value in NO_KEY.items():
+        monkeypatch.setattr(tr_mod.settings, key, value)
+
 
 def test_asr_service_ids_exist_for_all_languages():
     assert {lang: _ASR_SERVICE_IDS.get(lang) for lang in ALL_LANGS}.keys() == set(ALL_LANGS)
@@ -46,6 +53,14 @@ def test_asr_english_uses_whisper():
     service_id, resolved = resolve_asr_service_id("en")
     assert service_id == _ENGLISH_ASR
     assert resolved == "en"
+
+
+def test_asr_urdu_uses_dedicated_whisper_model():
+    from app.ai.asr_client import _URDU_ASR
+
+    service_id, resolved = resolve_asr_service_id("ur")
+    assert service_id == _URDU_ASR, "Urdu must use its dedicated Whisper model"
+    assert resolved == "ur"
 
 
 def test_asr_dravidian_languages_use_dravidian_model():
@@ -115,3 +130,47 @@ def test_tts_all_languages_map_to_models():
     for lang in ALL_LANGS:
         service_id = resolve_tts_service_id(lang)
         assert service_id in set(_TTS_SERVICE_IDS.values())
+
+
+# ---- NMT translation proxy (/api/v1/voice/translate) ----
+
+@pytest.mark.asyncio
+async def test_translate_passthrough_without_key():
+    """With no Bhashini credentials NMT must pass text through unchanged."""
+    result = await BhashiniTranslation().translate("तबीयत खराब है", "hi", "en")
+    assert result == "तबीयत खराब है"
+
+
+@pytest.mark.asyncio
+async def test_translate_same_language_returns_source():
+    result = await BhashiniTranslation().translate("Hello", "en", "en")
+    assert result == "Hello"
+
+
+@pytest.mark.asyncio
+async def test_translate_empty_text_returns_empty():
+    result = await BhashiniTranslation().translate("", "en", "hi")
+    assert result == ""
+
+
+def test_translate_endpoint_returns_passthrough_without_key():
+    """The HTTP proxy endpoint degrades gracefully (never dead-ends)."""
+    from fastapi.testclient import TestClient
+
+    from app.ai.translation_client import bhashini_translation
+    from app.main import app
+
+    original_key = bhashini_translation.auth_key
+    bhashini_translation.auth_key = ""  # simulate missing credentials
+    try:
+        client = TestClient(app)
+        r = client.post(
+            "/api/v1/voice/translate",
+            json={"text": "I have a headache", "source_language": "en", "target_language": "hi"},
+        )
+        assert r.status_code == 200
+        body = r.json()
+        assert "translation" in body
+        assert body["translation"] == "I have a headache"
+    finally:
+        bhashini_translation.auth_key = original_key
