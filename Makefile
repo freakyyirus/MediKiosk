@@ -43,22 +43,22 @@ db-reset: ## Reset database (drop all + re-migrate + seed)
 # ---- Testing ----
 test: ## Run all tests
 	cd backend && pytest --cov=app --cov-report=term-missing -v
-	cd frontend && npm test
+	cd frontend && npm run test:e2e
 
 test-backend: ## Run backend tests only
 	cd backend && pytest --cov=app --cov-report=term-missing -v
 
 test-frontend: ## Run frontend tests only
-	cd frontend && npm test
+	cd frontend && npm run test:e2e
 
 # ---- Linting ----
 lint: ## Run linters
 	cd backend && ruff check . && ruff format --check .
-	cd frontend && npm run lint
+	cd frontend && tsc --noEmit
 
 lint-fix: ## Fix linting issues
 	cd backend && ruff check --fix . && ruff format .
-	cd frontend && npm run lint:fix
+	cd frontend && tsc --noEmit
 
 # ---- Cleanup ----
 clean: ## Remove build artifacts and caches
