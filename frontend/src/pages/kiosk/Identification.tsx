@@ -6,6 +6,7 @@ import { patientApi, sessionApi } from '../../api/client';
 import { useUIStore } from '../../stores';
 import Stepper from '../../components/Stepper';
 import EmergencyFab from '../../components/EmergencyFab';
+import { kt } from '../../lib/kioskI18n';
 
 const ABHA_REGEX = /^\d{10}$/;
 const PHONE_REGEX = /^\d{10}$/;
@@ -172,7 +173,15 @@ export default function Identification() {
   return (
     <div className="min-h-screen mesh-bg flex flex-col text-surface-900 font-sans">
       <div className="px-4 sm:px-10 pt-5 sm:pt-10">
-        <Stepper steps={[{ label: 'Language' }, { label: 'Health Check' }, { label: 'Documents' }, { label: 'Done' }]} current={0} />
+        <Stepper
+          steps={[
+            { label: kt(language.code, 'stepperLanguage') },
+            { label: kt(language.code, 'stepperBasicDetails') },
+            { label: kt(language.code, 'stepperHealthCheck') },
+            { label: kt(language.code, 'stepperDocuments') },
+            { label: kt(language.code, 'stepperDone') },
+          ]}
+          current={1} />
       </div>
       <div className="flex-1 flex flex-col items-center px-4 sm:px-6 py-6 sm:py-8 max-w-4xl mx-auto w-full">
         
