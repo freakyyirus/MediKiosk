@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, ClipboardList, MapPin, Phone, CalendarDays, Star, CheckCircle2 } from 'lucide-react';
 import { useUIStore } from '../../stores';
 import AnatomyMap, { type BodyPart } from '../../components/kiosk/AnatomyMap';
-import VoiceInterview, { type InterviewSummary } from '../../components/kiosk/VoiceInterview';
+import Interview, { type InterviewResult } from './Interview';
+import KioskConsent from '../../components/kiosk/KioskConsent';
 import KioskDocuments from '../../components/kiosk/KioskDocuments';
 import Stepper from '../../components/Stepper';
 import { kioskApi, type KioskHospital } from '../../api/client';
@@ -10,6 +12,7 @@ import { kt } from '../../lib/kioskI18n';
 
 type Step =
   | 'details'
+  | 'consent'
   | 'anatomy'
   | 'interview'
   | 'summary'
@@ -56,8 +59,7 @@ export default function AnatomyFlow() {
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [bodyPart, setBodyPart] = useState('');
-  const [organ, setOrgan] = useState<string | null>(null);
-  const [summary, setSummary] = useState<InterviewSummary | null>(null);
+  const [summary, setSummary] = useState<InterviewResult | null>(null);
   const [hospitals, setHospitals] = useState<KioskHospital[]>([]);
   const [selectedHospital, setSelectedHospital] = useState<KioskHospital | null>(null);
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -67,7 +69,7 @@ export default function AnatomyFlow() {
   const [emergencyLoading, setEmergencyLoading] = useState(false);
   const [showEmergencyHospitals, setShowEmergencyHospitals] = useState(false);
 
-  const rootCls = `min-h-screen ${highContrast ? 'high-contrast' : 'bg-slate-50'}`;
+  const rootCls = `min-h-screen mesh-bg ${highContrast ? 'high-contrast' : ''}`;
 
   // Load session ID from sessionStorage
   useEffect(() => {
@@ -90,12 +92,11 @@ export default function AnatomyFlow() {
         // Backend offline — continue with local state
       }
     }
-    setStep('anatomy');
+    setStep('consent');
   };
 
   const handleAnatomySelect = async (part: BodyPart, organSel: string | null) => {
     setBodyPart(part.id);
-    setOrgan(organSel);
 
     if (sessionId) {
       try {
@@ -107,7 +108,7 @@ export default function AnatomyFlow() {
     setStep('interview');
   };
 
-  const handleInterviewComplete = useCallback((s: InterviewSummary) => {
+  const handleInterviewComplete = useCallback((s: InterviewResult) => {
     setSummary(s);
     setStep(s.isEmergency ? 'emergency' : 'summary');
   }, []);
@@ -209,15 +210,21 @@ export default function AnatomyFlow() {
 
   const hcClass = highContrast ? 'high-contrast' : '';
 
+  const tt = (hi: string, en: string) => (langCode === 'hi' ? hi : en);
+
   const sharedInput =
-    'p-4 text-lg border-2 border-blue-500 rounded-xl rounded-xl bg-transparent';
+    'w-full bg-white border-2 border-surface-200 rounded-2xl px-5 py-4 text-lg font-medium text-surface-900 placeholder-surface-400 focus:outline-none focus:border-primary-500 transition-colors';
 
   const renderStep = () => {
     switch (step) {
       case 'details':
         return (
           <div className={`${rootCls} p-6 flex flex-col items-center ${hcClass}`}>
-            <h1 className="text-3xl font-bold mb-6 text-slate-900">{kt(langCode, 'tellUsAboutYou')}</h1>
+            <div className="w-16 h-16 rounded-[22px] bg-primary-100 border border-primary-200 flex items-center justify-center mb-5">
+              <ClipboardList className="w-8 h-8 text-primary-700" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2 text-surface-900">{kt(langCode, 'tellUsAboutYou')}</h1>
+            <p className="text-lg text-surface-500 mb-6">{tt('कुछ बुनियादी जानकारी।', 'Just a few basic details to begin.')}</p>
             <div className="flex flex-col gap-4 max-w-sm w-full">
               <input
                 value={name}
@@ -253,16 +260,30 @@ export default function AnatomyFlow() {
               <button
                 disabled={!name.trim() || !phone.trim()}
                 onClick={() => void handleDetailsSubmit()}
-                className={`p-5 text-2xl font-bold rounded-xl border-2 border-slate-900 ${
-                  name.trim() && phone.trim() ? 'bg-yellow-400 hover:bg-yellow-300 cursor-pointer' : 'bg-slate-300 cursor-not-allowed'
+                className={`touch-target p-5 text-2xl font-bold rounded-2xl flex items-center justify-center gap-3 transition-all ${
+                  name.trim() && phone.trim()
+                    ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white cursor-pointer shadow-lg shadow-primary-600/25'
+                    : 'bg-surface-200 text-surface-400 cursor-not-allowed'
                 }`}
               >
-                {kt(langCode, 'continueBtn')}
+                {kt(langCode, 'continueBtn')} <ChevronRight className="w-6 h-6" />
               </button>
-              <button onClick={() => navigate('/kiosk/home')} className="p-3 bg-transparent text-slate-600">
+              <button onClick={() => navigate('/kiosk/home')} className="p-3 bg-transparent text-surface-500 font-medium">
                 {kt(langCode, 'backToHome')}
               </button>
             </div>
+          </div>
+        );
+
+      case 'consent':
+        return (
+          <div className={`${rootCls} ${hcClass}`}>
+            <KioskConsent
+              sessionId={sessionId}
+              language={langCode}
+              onComplete={() => setStep('anatomy')}
+              onBack={() => setStep('details')}
+            />
           </div>
         );
 
@@ -270,48 +291,37 @@ export default function AnatomyFlow() {
         return <AnatomyMap onSelect={handleAnatomySelect} language={langCode} />;
 
       case 'interview':
-        return sessionId ? (
-          <VoiceInterview
-            sessionId={sessionId}
+        return (
+          <Interview
             bodyPart={bodyPart}
-            organ={organ}
-            language={langCode}
             onComplete={handleInterviewComplete}
+            onBack={() => setStep('anatomy')}
           />
-        ) : (
-          <div className={`${rootCls} flex items-center justify-center ${hcClass}`}>
-            <button
-              onClick={() => handleInterviewComplete({ summary: 'Demo interview', department: 'General Medicine', isEmergency: false, conversation: [] })}
-              className="p-6 text-2xl bg-blue-500 text-white rounded-xl"
-            >
-              {kt(langCode, 'skipInterviewDemo')}
-            </button>
-          </div>
         );
 
       case 'emergency':
         return (
           <div className={`${rootCls} p-6 flex flex-col items-center ${hcClass}`}>
             <div className="max-w-2xl w-full">
-              <div className="border-4 border-red-600 rounded-2xl p-8 mb-6 text-center">
+              <div className="card border-danger-300 bg-danger-50/60 rounded-2xl p-8 mb-6 text-center">
                 <div className="text-6xl mb-4">🚨</div>
-                <h1 className="text-4xl font-bold mb-3 text-red-700">
+                <h1 className="text-4xl font-bold mb-3 text-danger-700">
                   {kt(langCode, 'alertEmergency')}
                 </h1>
-                <p className="text-2xl text-slate-800">{kt(langCode, 'emergencyVisit')}</p>
-                <p className="text-xl mt-3 text-slate-600">{kt(langCode, 'emergencySuggestion')}</p>
+                <p className="text-2xl text-surface-800">{kt(langCode, 'emergencyVisit')}</p>
+                <p className="text-xl mt-3 text-surface-600">{kt(langCode, 'emergencySuggestion')}</p>
               </div>
 
               <div className="flex flex-col gap-4 mb-6">
                 <a
                   href={LEGACY_TEL}
-                  className="p-6 text-2xl font-bold rounded-2xl border-4 border-red-600 bg-red-600 hover:bg-red-700 text-white text-center"
+                  className="p-6 text-2xl font-bold rounded-2xl bg-danger-600 hover:bg-danger-700 text-white text-center shadow-lg shadow-danger-600/25"
                 >
                   📞 {kt(langCode, 'callAmbulance')}
                 </a>
                 <a
                   href={ALTERNATE_TEL}
-                  className="p-4 text-xl font-bold rounded-2xl border-4 border-red-600 text-red-700 hover:bg-red-50 text-center"
+                  className="p-4 text-xl font-bold rounded-2xl border-2 border-danger-400 text-danger-700 hover:bg-danger-50 text-center"
                 >
                   📞 Emergency (112)
                 </a>
@@ -319,28 +329,28 @@ export default function AnatomyFlow() {
 
               <button
                 onClick={() => void showEmergencyER()}
-                className="w-full p-5 text-2xl font-bold rounded-2xl border-4 border-red-600 bg-yellow-400 hover:bg-yellow-300"
+                className="touch-target w-full p-5 text-2xl font-bold rounded-2xl bg-gradient-to-r from-warning-500 to-warning-400 hover:from-warning-600 text-white shadow-lg shadow-warning-500/25"
               >
                 {kt(langCode, 'findNearestER')}
               </button>
 
               {showEmergencyHospitals && (
                 <div className="mt-6">
-                  <h2 className="text-2xl font-bold mb-3">{kt(langCode, 'erNote')}</h2>
+                  <h2 className="text-2xl font-bold mb-3 text-surface-900">{kt(langCode, 'erNote')}</h2>
                   {emergencyLoading ? (
-                    <p className="text-lg">{kt(langCode, 'findingHospitals')}</p>
+                    <p className="text-lg text-surface-500">{kt(langCode, 'findingHospitals')}</p>
                   ) : hospitals.length === 0 ? (
-                    <p className="text-lg">{kt(langCode, 'noEmergHospitals')}</p>
+                    <p className="text-lg text-surface-500">{kt(langCode, 'noEmergHospitals')}</p>
                   ) : (
                     <div className="flex flex-col gap-3">
                       {hospitals.map((h) => (
                         <div
                           key={h.id}
-                          className="flex items-center justify-between gap-4 p-5 border-4 border-red-600 rounded-2xl"
+                          className="card flex items-center justify-between gap-4 p-5 rounded-2xl"
                         >
                           <div>
-                            <div className="text-xl font-bold">{h.name}</div>
-                            <div className="text-sm mt-1">
+                            <div className="text-xl font-bold text-surface-900">{h.name}</div>
+                            <div className="text-sm mt-1 text-surface-500">
                               {h.distance_km != null && `${h.distance_km} km`}
                               {h.distance_km != null && h.address ? ' · ' : ''}
                               {h.address}
@@ -349,7 +359,7 @@ export default function AnatomyFlow() {
                           {h.phone && (
                             <a
                               href={`tel:${h.phone.replace(/[^+\d]/g, '')}`}
-                              className="shrink-0 p-4 text-lg font-bold rounded-xl border-2 border-slate-900 bg-yellow-400 hover:bg-yellow-300"
+                              className="shrink-0 p-4 text-lg font-bold rounded-2xl bg-danger-600 hover:bg-danger-700 text-white shadow-md shadow-danger-600/20"
                             >
                               {kt(langCode, 'callHospital')}
                             </a>
@@ -361,7 +371,7 @@ export default function AnatomyFlow() {
                 </div>
               )}
 
-              <button onClick={() => navigate('/kiosk/home')} className="mt-6 p-3 text-lg bg-transparent text-slate-600">
+              <button onClick={() => navigate('/kiosk/home')} className="mt-6 p-3 text-lg text-surface-500 font-medium">
                 {kt(langCode, 'startNewSession')}
               </button>
             </div>
@@ -372,26 +382,32 @@ export default function AnatomyFlow() {
         return (
           <div className={`${rootCls} p-6 flex flex-col items-center ${hcClass}`}>
             <div className="max-w-xl w-full">
-              <h1 className="text-3xl font-bold mb-4 text-slate-900">{kt(langCode, 'yourHealthSummary')}</h1>
-
-              <div className={`p-6 mb-4 rounded-xl border-2 ${hcClass ? 'border-slate-300' : 'bg-slate-50 border-slate-200'}`}>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">{kt(langCode, 'departmentLabel')}</h2>
-                <p className="text-lg text-blue-600 font-semibold">{summary?.department || 'General Medicine'}</p>
+              <div className="text-center pb-6">
+                <div className="w-16 h-16 rounded-[22px] bg-primary-100 border border-primary-200 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-primary-700" />
+                </div>
+                <h1 className="text-3xl font-bold text-surface-900">{kt(langCode, 'yourHealthSummary')}</h1>
+                <p className="text-lg text-surface-500 mt-2">{tt('यह आपका स्वास्थ्य सारांश है।', 'Here is your health summary.')}</p>
               </div>
 
-              <div className={`p-6 mb-6 rounded-xl border-2 ${hcClass ? 'border-slate-300' : 'bg-slate-50 border-slate-200'}`}>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">{kt(langCode, 'summaryLabel')}</h2>
-                <p className="text-lg text-slate-700">{summary?.summary || 'No summary available.'}</p>
+              <div className="card rounded-2xl p-6 mb-4">
+                <h2 className="text-xl font-bold text-surface-900 mb-2">{kt(langCode, 'departmentLabel')}</h2>
+                <p className="text-lg text-primary-600 font-semibold">{summary?.department || tt('सामान्य चिकित्सा', 'General Medicine')}</p>
+              </div>
+
+              <div className="card rounded-2xl p-6 mb-6">
+                <h2 className="text-xl font-bold text-surface-900 mb-2">{kt(langCode, 'summaryLabel')}</h2>
+                <p className="text-lg text-surface-700 leading-relaxed">{summary?.summary || tt('कोई सारांश उपलब्ध नहीं।', 'No summary available.')}</p>
               </div>
 
               {summary?.conversation && summary.conversation.length > 0 && (
-                <div className={`p-6 mb-6 rounded-xl border-2 ${hcClass ? 'border-slate-300' : 'bg-slate-50 border-slate-200'}`}>
-                  <h2 className="text-xl font-bold text-slate-900 mb-3">{kt(langCode, 'conversationLabel')}</h2>
+                <div className="card rounded-2xl p-6 mb-6">
+                  <h2 className="text-xl font-bold text-surface-900 mb-3">{kt(langCode, 'conversationLabel')}</h2>
                   <div className="space-y-2">
                     {summary.conversation.map((item, i) => (
-                      <div key={i} className="text-sm">
-                        <p className="text-blue-600 font-semibold">Q: {item.q}</p>
-                        <p className="text-slate-700">A: {item.a}</p>
+                      <div key={i} className="text-base">
+                        <p className="text-primary-700 font-semibold">Q: {item.q}</p>
+                        <p className="text-surface-600">A: {item.a}</p>
                       </div>
                     ))}
                   </div>
@@ -400,9 +416,9 @@ export default function AnatomyFlow() {
 
               <button
                 onClick={() => void proceedToHospitals()}
-                className="w-full p-5 text-2xl font-bold rounded-xl border-2 border-slate-900 bg-yellow-400 hover:bg-yellow-300"
+                className="touch-target w-full p-5 text-2xl font-bold rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white flex items-center justify-center gap-3 shadow-lg shadow-primary-600/25"
               >
-                {kt(langCode, 'findNearbyHospitals')}
+                {kt(langCode, 'findNearbyHospitals')} <ChevronRight className="w-6 h-6" />
               </button>
             </div>
           </div>
@@ -411,14 +427,14 @@ export default function AnatomyFlow() {
       case 'hospitals':
         return (
           <div className={`${rootCls} p-6 ${hcClass}`}>
-            <h1 className="text-3xl font-bold mb-2 text-slate-900">{kt(langCode, 'chooseHospital')}</h1>
-            <p className="text-lg mb-4 text-slate-500">
-              {kt(langCode, 'suggestedDept')}: {summary?.department || 'General Medicine'}
+            <h1 className="text-3xl font-bold mb-2 text-surface-900">{kt(langCode, 'chooseHospital')}</h1>
+            <p className="text-lg mb-4 text-surface-500">
+              {kt(langCode, 'suggestedDept')}: {summary?.department || tt('सामान्य चिकित्सा', 'General Medicine')}
             </p>
 
             {loadingHospitals ? (
               <div className="text-center py-8">
-                <p className="text-lg text-slate-500">{kt(langCode, 'findingHospitals')}</p>
+                <p className="text-lg text-surface-500">{kt(langCode, 'findingHospitals')}</p>
               </div>
             ) : (
               <div className="flex flex-col gap-3 max-w-xl">
@@ -426,18 +442,29 @@ export default function AnatomyFlow() {
                   <button
                     key={h.id}
                     onClick={() => setSelectedHospital(h)}
-                    className={`text-left p-5 border-2 rounded-xl transition-colors ${
+                    className={`card text-left p-5 rounded-2xl transition-all ${
                       selectedHospital?.id === h.id
-                        ? 'bg-blue-50 border-blue-500'
-                        : 'bg-slate-50 hover:bg-blue-50 border-slate-300 hover:border-blue-500'
+                        ? 'border-primary-500 bg-primary-50/50 shadow-md'
+                        : 'hover:border-primary-300 hover:shadow-md'
                     }`}
                   >
-                    <div className="text-xl font-bold text-slate-900">{h.name}</div>
-                    <div className="text-sm text-slate-600">{h.address}</div>
-                    <div className="flex items-center gap-3 mt-2">
-                      {h.rating && <span className="text-sm text-amber-600 font-semibold">★ {h.rating}</span>}
+                    <div className="text-xl font-bold text-surface-900">{h.name}</div>
+                    <div className="flex items-start gap-1.5 text-sm text-surface-500 mt-1">
+                      <MapPin className="w-4 h-4 shrink-0 mt-0.5" /> <span>{h.address}</span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      {h.rating && (
+                        <span className="flex items-center gap-1 text-sm text-amber-600 font-semibold">
+                          <Star className="w-4 h-4 fill-amber-400 text-amber-400" /> {h.rating}
+                        </span>
+                      )}
+                      {h.phone && (
+                        <span className="flex items-center gap-1 text-sm text-surface-500">
+                          <Phone className="w-4 h-4" /> {h.phone}
+                        </span>
+                      )}
                       <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${
-                        h.is_partner ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        h.is_partner ? 'bg-success-50 text-success-700' : 'bg-warning-50 text-warning-700'
                       }`}>
                         {h.is_partner ? kt(langCode, 'partner') : kt(langCode, 'nonPartner')}
                       </span>
@@ -448,24 +475,29 @@ export default function AnatomyFlow() {
             )}
 
             {selectedHospital && (
-              <div className={`mt-6 max-w-xl ${hcClass ? '' : 'bg-white'} border-2 border-blue-500 rounded-xl p-6`}>
-                <h2 className="text-xl font-bold text-slate-900 mb-4">{kt(langCode, 'selectDateAndTime')}</h2>
+              <div className="card mt-6 max-w-xl rounded-2xl p-6 border-primary-200">
+                <h2 className="text-xl font-bold text-surface-900 mb-4">{kt(langCode, 'selectDateAndTime')}</h2>
+                <div className="flex items-center gap-2 text-surface-500 mb-2">
+                  <CalendarDays className="w-5 h-5 text-primary-600" />
+                  <span className="text-base">{tt('तारीख चुनें', 'Select a date')}</span>
+                </div>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full p-4 text-lg border-2 border-blue-500 rounded-xl mb-4 bg-transparent"
+                  className={`w-full p-4 text-lg border-2 border-surface-200 rounded-2xl mb-4 bg-white focus:border-primary-500 focus:outline-none ${hcClass ? 'text-slate-900' : 'text-surface-900'}`}
                 />
+                <p className="text-base text-surface-500 mb-2">{tt('समय चुनें', 'Select a time slot')}</p>
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {TIME_SLOTS.map((slot) => (
                     <button
                       key={slot}
                       onClick={() => setSelectedSlot(slot)}
-                      className={`p-3 text-lg font-semibold rounded-xl border-2 transition-colors ${
+                      className={`p-3 text-lg font-semibold rounded-2xl border-2 transition-colors ${
                         selectedSlot === slot
-                          ? 'bg-blue-500 text-white border-blue-500'
-                          : 'bg-transparent text-slate-700 border-slate-300 hover:border-blue-500'
+                          ? 'bg-primary-600 text-white border-primary-600 shadow-md shadow-primary-600/25'
+                          : 'bg-white text-surface-700 border-surface-200 hover:border-primary-400'
                       }`}
                     >
                       {slot}
@@ -479,17 +511,20 @@ export default function AnatomyFlow() {
                       ? void handleBookPartner(selectedHospital)
                       : void handleNonPartnerRequest(selectedHospital)
                   }
-                  className={`w-full p-5 text-xl font-bold rounded-xl border-2 border-slate-900 ${
-                    selectedDate && selectedSlot ? 'bg-yellow-400 hover:bg-yellow-300 cursor-pointer' : 'bg-slate-300 cursor-not-allowed'
+                  className={`touch-target w-full p-5 text-xl font-bold rounded-2xl flex items-center justify-center gap-2 transition-all ${
+                    selectedDate && selectedSlot
+                      ? 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white cursor-pointer shadow-lg shadow-primary-600/25'
+                      : 'bg-surface-200 text-surface-400 cursor-not-allowed'
                   }`}
                 >
                   {selectedHospital.is_partner ? kt(langCode, 'bookAppointment') : kt(langCode, 'sendRequest')}
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
             )}
 
-            <button onClick={() => setStep('summary')} className="mt-4 p-3 text-lg bg-transparent text-slate-600">
-              {kt(langCode, 'backToSummary')}
+            <button onClick={() => setStep('summary')} className="mt-4 p-3 text-lg text-surface-500 font-medium flex items-center gap-2">
+              <ChevronLeft className="w-5 h-5" /> {kt(langCode, 'backToSummary')}
             </button>
           </div>
         );
@@ -508,18 +543,20 @@ export default function AnatomyFlow() {
         return (
           <div className={`${rootCls} flex items-center justify-center p-10 ${hcClass}`}>
             <div className="text-center max-w-md">
-              <div className="text-6xl mb-6">✅</div>
-              <h1 className="text-4xl font-bold mb-4 text-slate-900">{kt(langCode, 'allDone')}</h1>
+              <div className="w-20 h-20 rounded-[26px] bg-success-100 border border-success-200 flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 className="w-11 h-11 text-success-600" />
+              </div>
+              <h1 className="text-4xl font-bold mb-4 text-surface-900">{kt(langCode, 'allDone')}</h1>
               {bookingResult && (
-                <div className="bg-green-50 border-2 border-green-500 rounded-xl p-6 mb-6">
-                  <p className="text-lg font-bold text-green-700 mb-2">{bookingResult.id}</p>
-                  <p className="text-lg text-slate-700">{bookingResult.message}</p>
+                <div className="card border-success-200 bg-success-50/50 rounded-2xl p-6 mb-6">
+                  <p className="text-lg font-bold text-success-700 mb-2">{bookingResult.id}</p>
+                  <p className="text-lg text-surface-700">{bookingResult.message}</p>
                 </div>
               )}
-              <p className="text-xl text-slate-500 mb-6">{kt(langCode, 'thankYou')}</p>
+              <p className="text-xl text-surface-500 mb-6">{kt(langCode, 'thankYou')}</p>
               <button
                 onClick={() => navigate('/kiosk/home')}
-                className="p-4 text-xl bg-blue-500 text-white rounded-xl hover:bg-blue-600"
+                className="touch-target w-full p-4 text-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 text-white rounded-2xl shadow-lg shadow-primary-600/25"
               >
                 {kt(langCode, 'startNewSession')}
               </button>
@@ -532,10 +569,14 @@ export default function AnatomyFlow() {
     }
   };
 
-  const stepIndex = step === 'done' ? 4 : step === 'documents' ? 3 : step === 'details' ? 1 : 2;
+  const stepIndex = step === 'done' ? 4 : step === 'documents' ? 3 : step === 'details' || step === 'consent' ? 1 : 2;
+
+  if (step === 'interview') {
+    return renderStep();
+  }
 
   return (
-    <div className={`min-h-screen ${highContrast ? 'high-contrast' : 'bg-slate-50'}`}>
+    <div className={`min-h-screen mesh-bg ${highContrast ? 'high-contrast' : ''}`}>
       <button
         onClick={toggleHighContrast}
         aria-pressed={highContrast}

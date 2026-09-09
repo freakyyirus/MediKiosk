@@ -55,24 +55,31 @@ test('kiosk anatomy: body map shows and prompts for selection', async ({ page })
   await gotoAndWait(page, '/kiosk/anatomy');
   // The anatomy flow first shows the "patient details" step
   await expect(page.getByRole('heading', { name: /Tell us about you|अपने बारे में बताएं/i })).toBeVisible();
-  // Enter basic details to reach the body map
+  // Enter basic details to reach the consent step
   await page.getByPlaceholder(/Full name|पूरा नाम/i).fill('Test Patient');
   await page.getByPlaceholder(/Mobile|मोबाइल/i).fill('9876543210');
   await page.getByRole('button', { name: /Continue|आगे बढ़ें/i }).click();
+  // Consent step: grant all required permissions, then continue
+  await expect(page.getByRole('heading', { name: /Your Consent|आपकी सहमति/i })).toBeVisible();
+  await page.getByRole('button', { name: /Medical Data Collection|मेडिकल डेटा संग्रह/i }).click();
+  await page.getByRole('button', { name: /AI-Assisted Analysis|एआई/i }).click();
+  await page.getByRole('button', { name: /Physician Review|चिकित्सक/i }).click();
+  await page.getByRole('button', { name: /Continue|जारी रखें/i }).click();
   // Body-map prompt appears
   await expect(page.getByRole('heading', { name: /Touch Where You Have|समस्या वाले/i })).toBeVisible();
 });
 
-test('kiosk flow: 4-step stepper (Language → Health Check → Documents → Done)', async ({ page }) => {
+test('kiosk flow: 5-step stepper (Language → Basic Details → Health Check → Documents → Done)', async ({ page }) => {
   await gotoAndWait(page, '/kiosk/anatomy');
-  // The combined flow starts at step 2 ("Health Check"), localized to the store language
-  await expect(page.locator('.step-pill')).toHaveCount(4);
+  // The combined flow shows all 5 pills
+  await expect(page.locator('.step-pill')).toHaveCount(5);
   await expect(page.locator('.step-pill').first()).toContainText(/Language|भाषा/i);
-  await expect(page.locator('.step-pill').nth(1)).toContainText(/Health Check|स्वास्थ्य/i);
-  await expect(page.locator('.step-pill').nth(2)).toContainText(/Documents|दस्तावेज़/i);
-  await expect(page.locator('.step-pill').nth(3)).toContainText(/Done|पूर्ण/i);
-  // Health Check pill is the active step
-  await expect(page.locator('.step-pill.active')).toContainText(/Health Check|स्वास्थ्य/i);
+  await expect(page.locator('.step-pill').nth(1)).toContainText(/Basic Details|मूल विवरण/i);
+  await expect(page.locator('.step-pill').nth(2)).toContainText(/Health Check|स्वास्थ्य/i);
+  await expect(page.locator('.step-pill').nth(3)).toContainText(/Documents|दस्तावेज़/i);
+  await expect(page.locator('.step-pill').nth(4)).toContainText(/Done|पूर्ण/i);
+  // "Basic Details" is the active step while filling the details form
+  await expect(page.locator('.step-pill.active')).toContainText(/Basic Details|मूल विवरण/i);
 });
 
 test('protected routes gate unauthenticated users', async ({ page }) => {

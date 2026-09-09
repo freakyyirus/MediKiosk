@@ -24,12 +24,26 @@ const QUICK_REPLIES = [
   { key: 'cantExplain', hi: 'समझा नहीं पा रहा', en: "Can't explain" },
 ];
 
-export default function Interview() {
+export interface InterviewResult {
+  summary: string;
+  department: string;
+  isEmergency: boolean;
+  conversation: Array<{ q: string; a: string }>;
+}
+
+interface InterviewProps {
+  bodyPart?: string | null;
+  onComplete?: (result: InterviewResult) => void;
+  onBack?: () => void;
+}
+
+export default function Interview({ bodyPart, onComplete, onBack }: InterviewProps) {
   const navigate = useNavigate();
   const { language, lowLiteracyMode } = useUIStore();
   const { session, setSession, addMessage, addRedFlag, conversationHistory } = useSessionStore();
   const { transcription, setTranscription, resetAudio } = useAudioStore();
-  const lastBodyPart = useAdvancedStore((s) => s.bodyTaps[0]?.body_part ?? null);
+  const advancedBodyPart = useAdvancedStore((s) => s.bodyTaps[0]?.body_part ?? null);
+  const lastBodyPart = bodyPart ?? advancedBodyPart ?? null;
 
   const [bubbles, setBubbles] = useState<ChatBubble[]>(() =>
     conversationHistory.map((m) => ({
@@ -220,13 +234,44 @@ export default function Interview() {
     sendQuickReply(text);
   };
 
-  const endConversation = () => navigate('/kiosk/ayush');
+  const criticalFlag = redFlags.some((f) => /chest|breath|blood|weak|stroke|confus/i.test(f));
+
+  const endConversation = () => {
+    if (onComplete) {
+      const clinical = aiTurn?.clinical;
+      const parts = [
+        clinical?.chief_complaint ? `Chief complaint: ${clinical.chief_complaint}` : '',
+        clinical?.past_medical_history && (clinical.past_medical_history as string[]).length > 0
+          ? `Past history: ${(clinical.past_medical_history as string[]).join(', ')}`
+          : '',
+        clinical?.current_medications && (clinical.current_medications as string[]).length > 0
+          ? `Medicines: ${(clinical.current_medications as string[]).join(', ')}`
+          : '',
+        clinical?.allergies && (clinical.allergies as string[]).length > 0
+          ? `Allergies: ${(clinical.allergies as string[]).join(', ')}`
+          : '',
+      ].filter(Boolean);
+      const conversation = bubbles.flatMap((b, i) =>
+        b.role === 'assistant' ? [{ q: b.content, a: bubbles[i + 1]?.content ?? '' }] : []
+      );
+      onComplete({
+        summary: parts.length > 0 ? parts.join('. ') : 'Health check complete.',
+        department: 'General Medicine',
+        isEmergency: criticalFlag,
+        conversation,
+      });
+      return;
+    }
+    navigate('/kiosk/ayush');
+  };
   const goBack = () => {
     resetAudio();
+    if (onBack) {
+      onBack();
+      return;
+    }
     navigate('/kiosk/body-map');
   };
-
-  const criticalFlag = redFlags.some((f) => /chest|breath|blood|weak|stroke|confus/i.test(f));
 
   if (crisis) {
     return <CrisisResponse onContinue={endConversation} />;
