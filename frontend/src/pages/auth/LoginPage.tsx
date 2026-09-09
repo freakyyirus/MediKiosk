@@ -205,6 +205,11 @@ export default function LoginPage() {
                   <span className="text-xs font-medium text-surface-700">Doctor</span>
                 </button>
               </div>
+              <p className="mt-3 text-center text-xs text-accent-600">
+                Or sign in with any email &mdash; <span className="font-semibold">patient@demo.com</span>,
+                {' '}<span className="font-semibold">admin@demo.com</span> or{' '}
+                <span className="font-semibold">doctor@demo.com</span> (any password).
+              </p>
             </div>
           )}
         </div>

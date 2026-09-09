@@ -399,6 +399,8 @@ function buildMockTable(table: string) {
 }
 
 // ─── createMockSupabase ────────────────────────────────────────────
+let mockSessionUser: { id: string; email: string } | null = null;
+
 export function createMockSupabase() {
   return {
     auth: {
@@ -408,42 +410,44 @@ export function createMockSupabase() {
         return { data: { user, session: { user } }, error: null };
       },
       signInWithPassword: async ({ email }: { email: string; password: string }) => {
-        if (email === 'patient@demo.com') {
-          return {
-            data: {
-              user: { id: mockCurrentUser.id, email: mockCurrentUser.email },
-              session: { user: { id: mockCurrentUser.id, email: mockCurrentUser.email } },
-            },
-            error: null,
-          };
+        const normalized = (email || '').trim().toLowerCase();
+        const isEmail = (e: string) => normalized === (e || '').toLowerCase();
+
+        let user: { id: string; email: string };
+        if (isEmail(mockHospitalAdmin.email)) {
+          user = { id: mockHospitalAdmin.id, email: mockHospitalAdmin.email };
+        } else if (isEmail(mockDoctor.email)) {
+          user = { id: mockDoctor.id, email: mockDoctor.email };
+        } else if (isEmail(mockCurrentUser.email)) {
+          user = { id: mockCurrentUser.id, email: mockCurrentUser.email };
+        } else if (normalized.includes('admin')) {
+          user = { id: mockHospitalAdmin.id, email: mockHospitalAdmin.email };
+        } else if (normalized.includes('doctor') || normalized.includes('dr.')) {
+          user = { id: mockDoctor.id, email: mockDoctor.email };
+        } else if (normalized.includes('@')) {
+          user = { id: mockCurrentUser.id, email: mockCurrentUser.email };
+        } else {
+          return { data: { user: null, session: null }, error: { message: 'Invalid email address' } };
         }
-        if (email === 'admin@demo.com') {
-          return {
-            data: {
-              user: { id: mockHospitalAdmin.id, email: mockHospitalAdmin.email },
-              session: { user: { id: mockHospitalAdmin.id, email: mockHospitalAdmin.email } },
-            },
-            error: null,
-          };
-        }
-        if (email === 'doctor@demo.com') {
-          return {
-            data: {
-              user: { id: mockDoctor.id, email: mockDoctor.email },
-              session: { user: { id: mockDoctor.id, email: mockDoctor.email } },
-            },
-            error: null,
-          };
-        }
-        return { data: { user: null, session: null }, error: { message: 'Invalid demo credentials' } };
+        mockSessionUser = user;
+        return {
+          data: {
+            user,
+            session: { user },
+          },
+          error: null,
+        };
       },
-      signOut: async () => ({ error: null }),
+      signOut: async () => {
+        mockSessionUser = null;
+        return { error: null };
+      },
       getSession: async () => ({
-        data: { session: null },
+        data: { session: mockSessionUser ? { user: mockSessionUser } : null },
         error: null,
       }),
       getUser: async () => ({
-        data: { user: null },
+        data: { user: mockSessionUser },
         error: null,
       }),
       onAuthStateChange: () => ({
